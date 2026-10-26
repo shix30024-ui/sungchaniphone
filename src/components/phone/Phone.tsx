@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import wallpaper from "@/assets/wallpaper.jpeg.asset.json";
-import { type App, DEFAULT_APPS, PASSCODE, loadApps, saveApps } from "./apps";
+import { type App, DEFAULT_APPS, SETTINGS_ICON, PASSCODE, loadApps, saveApps } from "./apps";
 import { LANGS, type Lang, fmtDate, fmtTime, t } from "./i18n";
 
 function useNow() {
@@ -22,11 +22,16 @@ function StatusBar({ now }: { now: Date | null }) {
   );
 }
 
+const isImg = (i: string) => /^(\/|https?:|data:)/.test(i);
+function IconFace({ icon }: { icon: string }) {
+  return isImg(icon) ? <img src={icon} alt="" className="icon-img" draggable={false} /> : <span className="text-[28px] leading-none">{icon}</span>;
+}
+
 function Icon({ app, onClick, wiggle, label = true }: { app: App; onClick: () => void; wiggle: boolean; label?: boolean }) {
   return (
     <button onClick={onClick} className="flex flex-col items-center gap-1.5 min-w-0">
       <div className={`app-icon ${wiggle ? "wiggle" : ""}`} style={{ background: app.color }}>
-        <span className="text-[28px] leading-none">{app.icon}</span>
+        <IconFace icon={app.icon} />
       </div>
       {label && <span className="app-label truncate max-w-[72px]">{app.name}</span>}
     </button>
@@ -119,6 +124,13 @@ function Editor({ lang, app, onSave, onRemove, onClose }: { lang: Lang; app: App
         <div className="space-y-3">
           {field("name", t(lang, "name"))}
           {field("icon", t(lang, "icon"))}
+          <label className="block text-sm text-primary cursor-pointer">
+            ⬆ {t(lang, "upload")}
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+              const f = e.target.files?.[0]; if (!f) return;
+              const r = new FileReader(); r.onload = () => setA({ ...a, icon: String(r.result) }); r.readAsDataURL(f);
+            }} />
+          </label>
           <div>
             <span className="text-xs text-muted-foreground">{t(lang, "color")}</span>
             <div className="flex gap-2 mt-1 flex-wrap">
@@ -165,7 +177,7 @@ function AppView({ lang, app, setLang, onClose, onLock, onReset }: { lang: Lang;
         </div>
       ) : app.url ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6 text-center">
-          <div className="app-icon scale-150" style={{ background: app.color }}><span className="text-[28px]">{app.icon}</span></div>
+          <div className="app-icon scale-150" style={{ background: app.color }}><IconFace icon={app.icon} /></div>
           <a href={app.url} target="_blank" rel="noreferrer" className="mt-6 px-5 py-2.5 rounded-full bg-primary text-primary-foreground">{app.name} ↗</a>
         </div>
       ) : (
@@ -192,7 +204,7 @@ export default function Phone() {
   const setLang = (l: Lang) => { setLangState(l); localStorage.setItem("phone-lang", l); };
   const update = (a: App[]) => { setApps(a); saveApps(a); };
 
-  const settingsApp: App = { id: "settings", name: t(lang, "settings"), icon: "⚙️", color: "#8e8e93", url: "", dock: false };
+  const settingsApp: App = { id: "settings", name: t(lang, "settings"), icon: SETTINGS_ICON, color: "#8e8e93", url: "", dock: false };
   const grid = [...apps.filter((a) => !a.dock), settingsApp];
   const dock = apps.filter((a) => a.dock).slice(0, 4);
 
