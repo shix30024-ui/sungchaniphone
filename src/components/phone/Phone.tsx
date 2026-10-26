@@ -17,7 +17,7 @@ function StatusBar({ now }: { now: Date | null }) {
   return (
     <div className="status-bar">
       <span>{now ? fmtTime(now) : ""}</span>
-      <span className="opacity-90">▂▄▆ 􀙇 ▮</span>
+      <span className="opacity-90">▂▄▆ ᯤ ▮</span>
     </div>
   );
 }
