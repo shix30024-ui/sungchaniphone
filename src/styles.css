@@ -142,3 +142,42 @@
     color: var(--color-foreground);
   }
 }
+
+:root {
+  --glass: oklch(1 0 0 / 0.22);
+  --glass-strong: oklch(1 0 0 / 0.35);
+  --on-glass: oklch(1 0 0);
+  --stage: oklch(0.16 0.01 60);
+  --primary: oklch(0.6 0.19 255);
+  --primary-foreground: oklch(1 0 0);
+}
+@utility text-on-glass { color: var(--on-glass); }
+.phone-stage { min-height: 100dvh; display: grid; place-items: center; background: var(--stage); font-family: -apple-system, "SF Pro Display", "Apple SD Gothic Neo", "PingFang SC", system-ui, sans-serif; }
+.phone-screen { position: relative; width: min(100vw, 393px); height: min(100dvh, 852px); overflow: hidden; background-size: cover; background-position: center top; border-radius: 0; user-select: none; }
+@media (min-width: 500px) { .phone-screen { border-radius: 48px; } }
+.status-bar { position: absolute; top: 0; inset-inline: 0; z-index: 40; display: flex; justify-content: space-between; padding: 14px 28px; font-size: 15px; font-weight: 600; color: var(--on-glass); text-shadow: 0 1px 3px oklch(0 0 0 / .3); }
+.lock-time { font-size: 92px; font-weight: 700; line-height: 1; letter-spacing: -2px; text-shadow: 0 2px 12px oklch(0 0 0 / .25); }
+.frost { backdrop-filter: blur(24px) brightness(.75); background: oklch(0 0 0 / .2); }
+.glass-pill { background: var(--glass); backdrop-filter: blur(20px); border-radius: 999px; }
+.lang-btn { padding: 4px 12px; border-radius: 999px; font-size: 13px; color: var(--on-glass); }
+.lang-on { background: var(--glass-strong); font-weight: 600; }
+.dot { width: 13px; height: 13px; border-radius: 99px; border: 1.5px solid var(--on-glass); }
+.dot-on { background: var(--on-glass); }
+.key { width: 76px; height: 76px; border-radius: 99px; background: var(--glass); backdrop-filter: blur(10px); font-size: 32px; transition: background .15s; }
+.key:active { background: var(--glass-strong); }
+.app-icon { width: 60px; height: 60px; border-radius: 14px; display: grid; place-items: center; box-shadow: 0 4px 14px oklch(0 0 0 / .22); font-weight: 700; color: var(--on-glass); transition: transform .15s; }
+button:active > .app-icon { transform: scale(.9); }
+.app-label { font-size: 11.5px; color: var(--on-glass); text-shadow: 0 1px 3px oklch(0 0 0 / .5); }
+.dock { display: flex; justify-content: space-around; padding: 16px 12px; border-radius: 32px; background: var(--glass); backdrop-filter: blur(28px) saturate(1.6); }
+.home-bar { width: 134px; height: 5px; border-radius: 9px; background: var(--on-glass); margin: 0 auto 8px; }
+.sheet { width: 100%; max-height: 85%; overflow-y: auto; background: var(--background); color: var(--foreground); border-radius: 24px 24px 0 0; padding: 18px; animation: up .25s ease-out; }
+.sheet-input { width: 100%; margin-top: 4px; padding: 9px 12px; border-radius: 10px; background: var(--muted); font-size: 15px; outline: none; }
+.swatch { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border); }
+.wiggle { animation: wiggle .3s ease-in-out infinite alternate; }
+.shake { animation: shake .4s; }
+.home-in { animation: zoomin .35s ease-out; }
+.app-open { animation: zoomin .25s ease-out; }
+@keyframes wiggle { from { transform: rotate(-2deg); } to { transform: rotate(2deg); } }
+@keyframes shake { 0%,100% { transform: translateX(0); } 25%,75% { transform: translateX(-10px); } 50% { transform: translateX(10px); } }
+@keyframes zoomin { from { opacity: 0; transform: scale(1.08); } to { opacity: 1; transform: scale(1); } }
+@keyframes up { from { transform: translateY(100%); } }
