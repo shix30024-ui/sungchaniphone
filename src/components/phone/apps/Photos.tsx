@@ -36,8 +36,8 @@ export default function Photos({ lang, onHome }: AppProps) {
           right={<button className="text-sm" onClick={() => setDraft({ ...photo })}>{tr(lang, { en: "Edit", ko: "편집", zh: "编辑" })}</button>} />
         <div className="flex-1 flex items-center justify-center relative">
           <img src={resolveImg(photo.image)} alt={photo.note} className="max-w-full max-h-full object-contain" />
-          {idx > 0 && <button className="viewer-nav left-2" onClick={() => setPid(photos[idx - 1].id)}>‹</button>}
-          {idx < photos.length - 1 && <button className="viewer-nav right-2" onClick={() => setPid(photos[idx + 1].id)}>›</button>}
+          {idx > 0 && <button className="viewer-nav left-2" onClick={() => setPid(photos[idx - 1]!.id)}>‹</button>}
+          {idx < photos.length - 1 && <button className="viewer-nav right-2" onClick={() => setPid(photos[idx + 1]!.id)}>›</button>}
         </div>
         <div className="p-4 text-sm text-center opacity-80">{photo.note}</div>
       </div>

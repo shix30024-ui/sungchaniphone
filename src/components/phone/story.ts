@@ -14,7 +14,7 @@ export const IMG: Record<string, string> = { football, hanriver, cinema, bbq, pr
 export type MsgType = "text" | "image" | "system" | "date";
 export type Msg = {
   id: string; contactId: string; sender: "me" | "them"; type: MsgType;
-  ko: string; zh: string; date: string; time: string; image?: string; order: number;
+  ko: string; zh: string; date: string; time: string; image?: string | undefined; order: number;
 };
 export type Contact = { id: string; name: string; avatar: string; status: string; unread: number };
 
@@ -215,8 +215,8 @@ export const MESSAGES: Msg[] = [
   ]),
 ];
 // system rows need text
-MESSAGES[0].ko = "찬영님을 친구로 추가했습니다.";
-MESSAGES[0].zh = "已添加灿荣为好友。";
+MESSAGES[0]!.ko = "찬영님을 친구로 추가했습니다.";
+MESSAGES[0]!.zh = "已添加灿荣为好友。";
 
 /* ---------- Instagram ---------- */
 export type Comment = { id: string; user: string; text: string };
