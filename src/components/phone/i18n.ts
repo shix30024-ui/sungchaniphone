@@ -41,3 +41,7 @@ export const fmtTime = (d: Date) =>
   `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
 export const fmtDate = (lang: Lang, d: Date) =>
   d.toLocaleDateString(locale[lang], { weekday: "long", month: "long", day: "numeric" });
+
+/** Inline translation helper for app-specific labels. */
+export const tr = (lang: Lang, o: { en: string; ko: string; zh: string }) => o[lang];
+export type AppProps = { lang: Lang; onHome: () => void };
