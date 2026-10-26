@@ -18,7 +18,7 @@ export const BackBtn = ({ onClick, label = "‹" }: { onClick: () => void; label
   <button onClick={onClick} className="text-2xl leading-none px-1">{label}</button>
 );
 
-export function ImageField({ value, onChange, label }: { value?: string; onChange: (v: string) => void; label: string }) {
+export function ImageField({ value, onChange, label }: { value?: string | undefined; onChange: (v: string) => void; label: string }) {
   const src = resolveImg(value);
   return (
     <div className="flex items-center gap-2">

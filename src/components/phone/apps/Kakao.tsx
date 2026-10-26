@@ -14,7 +14,7 @@ const koDate = (d: string, zh: boolean) => {
 };
 const listTime = (m?: Msg) => (!m ? "" : m.date === TODAY ? m.time : m.date.startsWith("2026") ? m.date.slice(5).replace("-", ".") : m.date.replaceAll("-", "."));
 const fmt12 = (t: string, zh: boolean) => {
-  const [h, mm] = t.split(":").map(Number);
+  const [h = 0, mm = 0] = t.split(":").map(Number);
   const pm = h >= 12;
   return `${zh ? (pm ? "下午" : "上午") : pm ? "오후" : "오전"} ${h % 12 || 12}:${String(mm).padStart(2, "0")}`;
 };
@@ -96,7 +96,7 @@ export default function Kakao({ lang, onHome }: AppProps) {
     const j = i + d;
     if (j < 0 || j >= draft.length) return;
     const a = [...draft];
-    const [x, y] = [a[i], a[j]];
+    const x = a[i]!, y = a[j]!;
     a[i] = { ...y, date: x.date, time: x.time };
     a[j] = { ...x, date: y.date, time: y.time };
     setDraft(a);
@@ -171,7 +171,7 @@ export default function Kakao({ lang, onHome }: AppProps) {
           <button className="text-xs kkt-lang" onClick={() => setCl(zh ? "ko" : "zh")}>{zh ? "한국어" : "中文翻译"}</button>
           <button className="text-sm font-medium" onClick={startEdit}>{L.edit}</button>
         </>} />
-      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5" ref={(el) => { if (el && !el.dataset.s) { el.scrollTop = el.scrollHeight; el.dataset.s = "1"; } }}>
+      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5" ref={(el) => { if (el && !el.dataset["s"]) { el.scrollTop = el.scrollHeight; el.dataset["s"] = "1"; } }}>
         {thread.map((m, i) => {
           const parts = [];
           if (m.date !== lastDate) {
