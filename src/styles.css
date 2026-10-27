@@ -387,3 +387,8 @@ button:active > .app-icon { transform: scale(.9); }
 .dialer-actions { display: grid; grid-template-columns: repeat(3, 72px); gap: 23px; align-items: center; justify-items: center; margin-top: 15px; }
 .dialer-call { width: 64px; height: 64px; border-radius: 50%; background: var(--system-switch); color: var(--on-glass); }
 @media(max-height: 700px) { .dialer-keypad { padding-top: 5px; } .dialer-number { min-height: 45px; } .dialer-grid { grid-template-columns: repeat(3, 63px); gap: 8px 23px; } .dialer-digit { width: 63px; height: 63px; } }
+.calendar-month { font-size: 23px; color: var(--destructive); }
+.calendar-day { border-radius: 50%; }
+.calendar-day[aria-pressed="true"] { background: var(--destructive); color: var(--destructive-foreground); }
+.calendar-bottom { display: flex; justify-content: space-between; border-top: 1px solid var(--border); padding: 5px 12px; }
+.calendar-bottom button, .music-native .app-topbar button, .music-tabs button[aria-pressed="true"] { color: var(--destructive); }
