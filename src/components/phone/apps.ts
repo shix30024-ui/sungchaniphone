@@ -42,7 +42,17 @@ export const loadApps = (): App[] => {
   try {
     const s = localStorage.getItem(KEY);
     if (s) {
-      const saved: App[] = JSON.parse(s);
+      let saved: App[] = JSON.parse(s);
+      // One-time removal of apps the user asked to delete; never re-runs, so a later
+      // manual re-add is kept. Everything else (renames, icons, order) is untouched.
+      if (!localStorage.getItem("phone-apps-removed-v1")) {
+        localStorage.setItem("phone-apps-removed-v1", "true");
+        const gone = new Set(["yt", "wv", "spotify"]);
+        if (saved.some((app) => gone.has(app.id))) {
+          saved = saved.filter((app) => !gone.has(app.id));
+          saveApps(saved);
+        }
+      }
       // Add the new app only once; retain every existing customization/deletion.
       if (!localStorage.getItem("phone-calendar-added-v1")) {
         const calendar = DEFAULT_APPS.find((app) => app.id === "calendar");
