@@ -7,7 +7,7 @@ import { BackBtn, EditBar, Field, ImageField, KktAvatar, TopBar, resolveImg } fr
 import { Button } from "@/components/ui/button";
 import { Send, Phone, PhoneIncoming } from "lucide-react";
 import Call from "./Call";
-import { pendingReplies, QUEUE_KEY, sendChat } from "../conversation";
+import { type PendingReply, QUEUE_KEY, sendChat } from "../conversation";
 import { STORY_DATE, messageText, sortMessages } from "../chronology";
 import { confirmDelete, label, localeFor } from "../labels";
 import { completeTranslations } from "../translations";
@@ -59,7 +59,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const [addingContact, setAddingContact] = useState(false);
   const [compose, setCompose] = useState("");
   const [call, setCall] = useState<"outgoing" | "incoming" | null>(null);
-  const [queue, setQueue] = usePersist(QUEUE_KEY, pendingReplies());
+  const [queue] = usePersist<PendingReply[]>(QUEUE_KEY, []);
   const scroll = useRef<HTMLDivElement>(null);
   const editIds = useRef(new Set<string>());
   const typing = queue.some((q) => q.channel === "kkt" && q.contactId === openId);
