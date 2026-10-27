@@ -5,7 +5,7 @@ import { uid, usePersist } from "../store";
 import { BackBtn, EditBar, Field, TopBar, resolveImg } from "../ui";
 import { label, confirmDelete } from "../labels";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, MessageCircle, Repeat2, Heart, BarChart2, Share, Home, Search, Bell, Mail, ChevronLeft } from "lucide-react";
 
 export default function XApp({ lang, onHome }: AppProps) {
   const [tweets, setTweets] = usePersist<Tweet[]>("x-tweets-v1", TWEETS);
@@ -46,35 +46,39 @@ export default function XApp({ lang, onHome }: AppProps) {
     );
   }
 
+  const actions = (t: Tweet) => <div className="x-actions"><span><MessageCircle size={16} />{t.replies?.length || ""}</span><span><Repeat2 size={17} />{t.rts}</span><span><Heart size={16} />{t.likes}</span><span><BarChart2 size={16} />{t.likes * 37 + t.rts * 11}</span><Share size={16} /></div>;
   if (open) return <div className="app-page bg-background">
-    <TopBar title="𝕏" left={<BackBtn onClick={() => setOpenId(null)} />} right={<Button variant="ghost" onClick={() => setDraft({ ...open, replies: (open.replies ?? []).map((r) => ({ ...r })) })}>{label(lang, "edit")}</Button>} />
+    <TopBar title={tr(lang, { en: "Post", ko: "게시물", zh: "帖子" })} left={<BackBtn onClick={() => setOpenId(null)} />} right={<Button variant="ghost" onClick={() => setDraft({ ...open, replies: (open.replies ?? []).map((r) => ({ ...r })) })}>{label(lang, "edit")}</Button>} />
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      <b>성찬 <span className="text-muted-foreground font-normal">@zcc_daily</span></b>
-      <p className="text-lg whitespace-pre-wrap">{open.text}</p>
-      <p className="text-xs text-muted-foreground">{open.date} {open.time} · ♡ {open.likes} · ⟲ {open.rts}</p>
+      <div className="flex gap-3 items-center"><img src={resolveImg(PROFILE.avatar)} alt="" className="w-10 h-10 rounded-full object-cover" /><span className="leading-tight"><b className="block">성찬</b><span className="text-sm text-muted-foreground">@zcc_daily</span></span></div>
+      <p className="text-[17px] whitespace-pre-wrap">{open.text}</p>
+      <p className="text-sm text-muted-foreground">{open.time} · {open.date.replaceAll("-", ".")}</p>
+      <p className="text-sm border-y py-2.5"><b>{open.rts}</b> <span className="text-muted-foreground">{tr(lang, { en: "Reposts", ko: "재게시", zh: "转帖" })}</span>  <b className="ml-3">{open.likes}</b> <span className="text-muted-foreground">{tr(lang, { en: "Likes", ko: "마음에 들어요", zh: "喜欢" })}</span></p>
       <h2 className="text-sm font-semibold border-t pt-4">{label(lang, "replies")}</h2>
-      {(open.replies ?? []).map((reply) => <div key={reply.id} className="border-b pb-3"><b className="text-sm">{reply.user}</b><p className="whitespace-pre-wrap">{reply.text}</p><p className="text-xs text-muted-foreground">{reply.date} {reply.time}</p></div>)}
+      {(open.replies ?? []).map((reply) => <div key={reply.id} className="flex gap-3 border-b pb-3"><span className="x-reply-avatar">{reply.user.slice(0, 1).toUpperCase()}</span><div className="min-w-0"><p className="text-sm"><b>{reply.user}</b> <span className="text-muted-foreground">· {reply.date.replaceAll("-", ".")} {reply.time}</span></p><p className="text-[15px] whitespace-pre-wrap">{reply.text}</p></div></div>)}
       <Button variant="secondary" onClick={() => setDraft({ ...open, replies: [...(open.replies ?? []), { id: uid(), user: "", text: "", date: "2026-10-26", time: "20:26" }] })}><Plus />{label(lang, "reply")}</Button>
     </div>
   </div>;
 
   return (
     <div className="app-page bg-background">
-      <TopBar left={<BackBtn onClick={onHome} />} title={<span className="text-xl">𝕏</span>} />
+      <header className="x-header"><button aria-label={tr(lang, { en: "Back", ko: "뒤로", zh: "返回" })} onClick={onHome} className="x-back"><ChevronLeft size={20} /><img src={resolveImg(PROFILE.avatar)} alt="" /></button><span className="x-logo">𝕏</span></header>
+      <div className="x-tabs"><b>{tr(lang, { en: "For you", ko: "추천", zh: "为你推荐" })}</b><span>{tr(lang, { en: "Following", ko: "팔로우 중", zh: "正在关注" })}</span></div>
       <div className="flex-1 overflow-y-auto">
         {sorted.map((t) => (
           <button key={t.id} onClick={() => setOpenId(t.id)} className="w-full text-left flex gap-3 px-4 py-3 border-b">
             <img src={resolveImg(PROFILE.avatar)} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
             <div className="min-w-0 flex-1">
-              <div className="text-sm"><b>성찬</b> <span className="text-muted-foreground">@zcc_daily · {t.date.replaceAll("-", ".")} {t.time}</span></div>
+              <div className="text-[15px] truncate"><b>성찬</b> <span className="text-muted-foreground">@zcc_daily · {t.date.slice(5).replace("-", "/")}</span></div>
               <p className="text-[15px] mt-0.5 whitespace-pre-line">{t.text}</p>
-              <div className="flex gap-8 mt-2 text-xs text-muted-foreground"><span>💬</span><span>⟲ {t.rts}</span><span>♡ {t.likes}</span></div>
+              {actions(t)}
             </div>
           </button>
         ))}
         <p className="text-[10px] text-center text-muted-foreground py-3">{label(lang, "fictional")}</p>
       </div>
-      <button className="x-fab" onClick={() => setDraft({ id: uid(), text: "", date: "2026-10-26", time: "20:00", likes: 0, rts: 0 })}>＋</button>
+      <button className="x-fab" aria-label={tr(lang, { en: "Post", ko: "게시하기", zh: "发帖" })} onClick={() => setDraft({ id: uid(), text: "", date: "2026-10-26", time: "20:00", likes: 0, rts: 0 })}><Plus /></button>
+      <nav className="x-nav"><Home strokeWidth={2.6} /><Search /><Bell /><Mail /></nav>
     </div>
   );
 }

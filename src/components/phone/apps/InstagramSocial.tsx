@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, X, ChevronLeft, ChevronRight, Send, Plus, Trash2 } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Send, Plus, Trash2, Camera, SquarePen, Search } from "lucide-react";
 import { CONTACTS, type Msg, type Post, type Profile } from "../story";
 import { usePersist, uid } from "../store";
 import { DM_KEY, QUEUE_KEY, sendChat, type PendingReply } from "../conversation";
@@ -70,15 +70,22 @@ export function InstagramDM({ lang, onClose }: { lang: Lang; onClose: () => void
     if (scroll.current) scroll.current.scrollTop = scroll.current.scrollHeight;
     if (thread.some((m) => m.sender === "them" && !m.read)) setMsgs((current) => current.map((m) => m.contactId === open && m.sender === "them" ? { ...m, read: true } : m));
   }, [msgs, open, typing]);
-  return <div className="app-page bg-background">
-    <TopBar title={contact?.name ?? tr(lang, { en: "Messages", ko: "메시지", zh: "私信" })} left={<Button variant="ghost" size="icon" aria-label={label(lang, "cancel")} onClick={() => contact ? setOpen(null) : onClose()}><ArrowLeft /></Button>} />
-    {!contact ? <div className="flex-1 overflow-y-auto">{contacts.filter((c) => ["anton", "minjae", "doyun"].includes(c.id)).map((c) => {
+  const shown = contacts.filter((c) => ["anton", "minjae", "doyun"].includes(c.id));
+  return <div className="app-page bg-background ig-dm">
+    <header className="ig-header"><Button variant="ghost" size="icon" aria-label={label(lang, "cancel")} onClick={() => contact ? setOpen(null) : onClose()}><ChevronLeft /></Button>
+      {contact ? <><KktAvatar src={contact.avatar} /><span className="min-w-0 flex-1"><b className="block text-sm truncate">{contact.name}</b><span className="block text-[11px] text-muted-foreground">{tr(lang, { en: "Active now", ko: "현재 활동 중", zh: "在线" })}</span></span></> : <><b className="flex-1 text-lg">{tr(lang, { en: "Messages", ko: "메시지", zh: "私信" })}</b><SquarePen size={22} /></>}
+    </header>
+    {!contact ? <div className="flex-1 overflow-y-auto">
+      <div className="ig-dm-search"><Search size={16} /><span>{label(lang, "search")}</span></div>
+      <div className="ig-dm-notes">{shown.map((c) => <button key={c.id} onClick={() => setOpen(c.id)}><KktAvatar src={c.avatar} /><span>{c.name}</span></button>)}</div>
+      <div className="flex justify-between px-4 py-2 text-sm"><b>{tr(lang, { en: "Messages", ko: "메시지", zh: "消息" })}</b><span className="text-muted-foreground">{tr(lang, { en: "Requests", ko: "요청", zh: "请求" })}</span></div>
+      {shown.map((c) => {
       const latest = msgs.filter((m) => m.contactId === c.id).at(-1);
       const unread = msgs.filter((m) => m.contactId === c.id && m.sender === "them" && !m.read).length;
-      return <Button key={c.id} variant="ghost" className="w-full h-auto justify-start py-4 gap-3" onClick={() => setOpen(c.id)}><KktAvatar src={c.avatar} /><span className="min-w-0 text-left flex-1"><b className="block">{c.name}</b><span className="block truncate text-xs text-muted-foreground">{latest ? messageText(latest, lang) : ""}</span></span>{unread > 0 && <span className="kkt-badge">{unread}</span>}</Button>;
+      return <Button key={c.id} variant="ghost" className="w-full h-auto justify-start py-2.5 px-4 gap-3 rounded-none" onClick={() => setOpen(c.id)}><span className="ig-dm-avatar"><KktAvatar src={c.avatar} /></span><span className="min-w-0 text-left flex-1"><span className={`block text-sm ${unread ? "font-bold" : "font-normal"}`}>{c.name}</span><span className={`block truncate text-xs ${unread ? "text-foreground font-semibold" : "text-muted-foreground"}`}>{latest ? `${messageText(latest, lang)} · ${latest.time}` : ""}</span></span>{unread > 0 ? <span className="ig-dm-dot" /> : <Camera size={20} className="text-muted-foreground" />}</Button>;
     })}</div> : <>
-      <div ref={scroll} className="flex-1 overflow-y-auto p-3 space-y-3">{thread.map((m) => <div key={m.id} className={`flex flex-col ${m.sender === "me" ? "items-end" : "items-start"}`}><div className={`ig-dm-bubble ${m.sender === "me" ? "ig-dm-mine" : ""}`}>{messageText(m, lang)}</div><span className="text-[10px] text-muted-foreground mt-1">{m.time}</span></div>)}{typing && <span role="status" aria-label={tr(lang, { en: "Typing", ko: "입력 중", zh: "正在输入" })} className="typing-dots"><i /><i /><i /></span>}</div>
-      <form className="kkt-input" onSubmit={(e) => { e.preventDefault(); if (!text.trim()) return; sendChat("ig", contact.id, text.trim(), lang); setText(""); }}><input className="kkt-compose" aria-label={tr(lang, { en: "DM message", ko: "메시지 입력", zh: "输入私信" })} value={text} onChange={(e) => setText(e.target.value)} /><Button size="icon" disabled={!text.trim()} aria-label={tr(lang, { en: "Send DM", ko: "메시지 보내기", zh: "发送私信" })}><Send /></Button></form>
+      <div ref={scroll} className="flex-1 overflow-y-auto p-3 space-y-1.5">{thread.map((m) => <div key={m.id} className={`flex flex-col ${m.sender === "me" ? "items-end" : "items-start"}`}><div className={`ig-dm-bubble ${m.sender === "me" ? "ig-dm-mine" : ""}`} title={m.time}>{messageText(m, lang)}</div></div>)}{thread.at(-1)?.sender === "me" && thread.at(-1)?.read !== false && <span className="block text-right text-[11px] text-muted-foreground">{tr(lang, { en: "Seen", ko: "읽음", zh: "已读" })}</span>}{typing && <span role="status" aria-label={tr(lang, { en: "Typing", ko: "입력 중", zh: "正在输入" })} className="typing-dots"><i /><i /><i /></span>}</div>
+      <form className="ig-dm-compose" onSubmit={(e) => { e.preventDefault(); if (!text.trim()) return; sendChat("ig", contact.id, text.trim(), lang); setText(""); }}><span className="ig-dm-cam"><Camera size={18} /></span><input aria-label={tr(lang, { en: "DM message", ko: "메시지 입력", zh: "输入私信" })} placeholder={tr(lang, { en: "Message...", ko: "메시지 보내기...", zh: "发消息…" })} value={text} onChange={(e) => setText(e.target.value)} /><Button variant="ghost" size="sm" className="ig-dm-send" disabled={!text.trim()} aria-label={tr(lang, { en: "Send DM", ko: "메시지 보내기", zh: "发送私信" })}>{tr(lang, { en: "Send", ko: "보내기", zh: "发送" })}</Button></form>
     </>}
   </div>;
 }
