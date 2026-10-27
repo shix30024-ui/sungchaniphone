@@ -1,6 +1,7 @@
 import { type Lang, tr } from "./i18n";
 
 const labels = {
+  back: { en: "Back", ko: "뒤로", zh: "返回" },
   save: { en: "Save", ko: "저장", zh: "保存" },
   cancel: { en: "Cancel", ko: "취소", zh: "取消" },
   edit: { en: "Edit", ko: "편집", zh: "编辑" },
@@ -38,6 +39,11 @@ const labels = {
   songTitle: { en: "Song title", ko: "곡 제목", zh: "歌曲名称" },
 } as const;
 export type Label = keyof typeof labels;
-export const label = (lang: Lang, key: Label) => tr(lang, labels[key]);
+export const label = (lang: Lang, key: Label) => {
+  // A stale app module can still request an older key during a live update.
+  // Never send an absent entry to tr and blank the whole phone screen.
+  const entry = Object.prototype.hasOwnProperty.call(labels, key) ? labels[key] : undefined;
+  return entry ? tr(lang, entry) : String(key ?? "");
+};
 export const confirmDelete = (lang: Lang) => window.confirm(label(lang, "confirmDelete"));
 export const localeFor = (lang: Lang) => ({ en: "en-US", ko: "ko-KR", zh: "zh-CN" })[lang];
