@@ -15,3 +15,4 @@
 - Use one Phone-owned system language for every app; legacy chats gain translations only by exact original-text match, preserving explicit edits.
 - Extend existing versioned local-store records with optional fields; snapshot phone storage once before changes and never reseed or reset saved data.
 - Keep ordered post images, tweet replies, calendar events and music collections in browser-safe dedicated utilities; captions/comments and unrelated records remain isolated during edits.
+- Simulated Anton messages live in phone/live.ts: append-only with fixed ids and one timer in Phone, so saved chats are never rewritten and each message arrives once.
