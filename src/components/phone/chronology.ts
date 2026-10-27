@@ -5,5 +5,5 @@ export function sortMessages<T extends { date: string; time: string; order: numb
   return [...messages].sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time) || a.order - b.order);
 }
 
-export const messageText = (message: { ko: string; zh: string }, language: "ko" | "zh") =>
-  language === "ko" ? message.ko : message.zh || "暂无翻译";
+export const messageText = (message: { ko: string; zh: string; en?: string }, language: "ko" | "zh" | "en") =>
+  message[language] || ({ ko: "번역 없음 — 편집에서 추가", zh: "暂无翻译", en: "Translation missing — add in Edit" })[language];

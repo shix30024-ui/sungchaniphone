@@ -14,7 +14,7 @@ export const IMG: Record<string, string> = { football, hanriver, cinema, bbq, pr
 export type MsgType = "text" | "image" | "system" | "date";
 export type Msg = {
   id: string; contactId: string; sender: "me" | "them"; type: MsgType;
-  ko: string; zh: string; date: string; time: string; image?: string | undefined; order: number;
+  ko: string; zh: string; en?: string; date: string; time: string; image?: string | undefined; order: number;
 };
 export type Contact = { id: string; name: string; avatar: string; status: string; unread: number };
 
@@ -215,12 +215,15 @@ export const MESSAGES: Msg[] = [
   ]),
 ];
 // system rows need text
-MESSAGES[0]!.ko = "찬영님을 친구로 추가했습니다.";
-MESSAGES[0]!.zh = "已添加灿荣为好友。";
+const firstMessage = MESSAGES[0];
+if (firstMessage) {
+  firstMessage.ko = "찬영님을 친구로 추가했습니다.";
+  firstMessage.zh = "已添加灿荣为好友。";
+}
 
 /* ---------- Instagram ---------- */
 export type Comment = { id: string; user: string; text: string };
-export type Post = { id: string; image: string; caption: string; date: string; likes: number; comments: Comment[] };
+export type Post = { id: string; image: string; images?: string[]; caption: string; date: string; time?: string; likes: number; comments: Comment[] };
 export type Profile = { username: string; name: string; bio: string; avatar: string; followers: string; following: string };
 
 export const PROFILE: Profile = {
@@ -240,7 +243,8 @@ export const POSTS: Post[] = [
 ];
 
 /* ---------- X ---------- */
-export type Tweet = { id: string; text: string; date: string; time: string; likes: number; rts: number };
+export type Reply = { id: string; user: string; text: string; date: string; time: string };
+export type Tweet = { id: string; text: string; date: string; time: string; likes: number; rts: number; replies?: Reply[] };
 export const TWEETS: Tweet[] = [
   { id: "t10", text: "오늘 본래 그냥 밥만 먹으려고 했음", date: "2026-10-26", time: "14:30", likes: 812, rts: 40 },
   { id: "t9", text: "이 노래 요즘 계속 듣는 중", date: "2026-10-25", time: "00:12", likes: 1203, rts: 88 },
@@ -266,7 +270,7 @@ export const ALBUMS: Album[] = [
 ];
 
 /* ---------- Notes ---------- */
-export type Note = { id: string; title: string; body: string; date: string };
+export type Note = { id: string; title: string; body: string; date: string; updatedAt?: string };
 export const NOTES: Note[] = [
   { id: "n1", title: "영화 리스트", date: "2026-10-24", body: "✓ 어바웃 타임 (2023.03 우리집)\n✓ 인터스텔라 심야 (2023.10)\n✓ 라라랜드 재관람 (2024.12.26)\n- 듄 파트2 다시 보기\n- 비포 선라이즈\n- 이터널 선샤인\n- 퍼펙트 데이즈" },
   { id: "n2", title: "듣고 싶은 노래", date: "2026-10-25", body: "Daniel Caesar - Best Part (앤톤 추천)\nThe 1975 - Somebody Else\n잔나비 - 주저하는 연인들을 위해\nfrank ocean - Pink + White\nDay6 - 한 페이지가 될 수 있게" },

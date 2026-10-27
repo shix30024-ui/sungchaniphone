@@ -2,12 +2,17 @@ import { useState } from "react";
 import { type AppProps, tr } from "../i18n";
 import { ALBUMS, type Album, type Photo } from "../story";
 import { fileToDataUrl, uid, usePersist } from "../store";
+import { label, confirmDelete } from "../labels";
+import { movePhoto } from "../media";
+import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
 import { BackBtn, EditBar, Field, ImageField, TopBar, resolveImg } from "../ui";
 
 export default function Photos({ lang, onHome }: AppProps) {
   const [albums, setAlbums] = usePersist<Album[]>("photos-v1", ALBUMS);
   const [aid, setAid] = useState<string | null>(null);
   const [pid, setPid] = useState<string | null>(null);
+  const [targetAlbum, setTargetAlbum] = useState<string>("");
   const [draft, setDraft] = useState<Photo | null>(null);
   const album = albums.find((a) => a.id === aid);
   const photos = album ? [...album.photos].sort((a, b) => a.date.localeCompare(b.date)) : [];
@@ -24,16 +29,17 @@ export default function Photos({ lang, onHome }: AppProps) {
             <ImageField label={tr(lang, { en: "Replace", ko: "사진 변경", zh: "替换图片" })} value={draft.image} onChange={(v) => setDraft({ ...draft, image: v })} />
             <Field label={tr(lang, { en: "Date", ko: "날짜", zh: "日期" })}><input type="date" className="sheet-input" value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} /></Field>
             <Field label={tr(lang, { en: "Caption", ko: "메모", zh: "备注" })}><input className="sheet-input" value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} /></Field>
-            <button className="w-full py-2.5 rounded-xl bg-muted text-destructive" onClick={() => { saveAlbum({ ...album, photos: album.photos.filter((p) => p.id !== draft.id) }); setDraft(null); setPid(null); }}>{tr(lang, { en: "Delete photo", ko: "사진 삭제", zh: "删除照片" })}</button>
+            <Field label={label(lang, "move")}><select className="sheet-input" value={targetAlbum || album.id} onChange={(e) => setTargetAlbum(e.target.value)}>{albums.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}</select></Field>
+            <button className="w-full py-2.5 rounded-xl bg-muted text-destructive" onClick={() => { if (!confirmDelete(lang)) return; saveAlbum({ ...album, photos: album.photos.filter((p) => p.id !== draft.id) }); setDraft(null); setPid(null); }}>{tr(lang, { en: "Delete photo", ko: "사진 삭제", zh: "删除照片" })}</button>
           </div>
           <EditBar save={tr(lang, { en: "Save", ko: "저장", zh: "保存" })} cancel={tr(lang, { en: "Cancel", ko: "취소", zh: "取消" })}
-            onCancel={() => setDraft(null)} onSave={() => { saveAlbum({ ...album, photos: album.photos.map((p) => (p.id === draft.id ? draft : p)) }); setDraft(null); }} />
+            onCancel={() => setDraft(null)} onSave={() => { const updated = albums.map((a) => a.id === album.id ? { ...a, photos: a.photos.map((p) => p.id === draft.id ? draft : p) } : a); setAlbums(movePhoto(updated, album.id, targetAlbum || album.id, draft.id)); if (targetAlbum && targetAlbum !== album.id) setPid(null); setDraft(null); setTargetAlbum(""); }} />
         </div>
       );
     return (
       <div className="app-page photo-viewer">
         <TopBar className="photo-viewer-top" left={<BackBtn onClick={() => setPid(null)} />} title={<span className="text-sm">{photo.date.replaceAll("-", ".")}</span>}
-          right={<button className="text-sm" onClick={() => setDraft({ ...photo })}>{tr(lang, { en: "Edit", ko: "편집", zh: "编辑" })}</button>} />
+          right={<button className="text-sm" onClick={() => { setDraft({ ...photo }); setTargetAlbum(album.id); }}>{tr(lang, { en: "Edit", ko: "편집", zh: "编辑" })}</button>} />
         <div className="flex-1 flex items-center justify-center relative">
           <img src={resolveImg(photo.image)} alt={photo.note} className="max-w-full max-h-full object-contain" />
           {idx > 0 && <button className="viewer-nav left-2" onClick={() => setPid(photos[idx - 1]?.id ?? null)}>‹</button>}
@@ -47,10 +53,11 @@ export default function Photos({ lang, onHome }: AppProps) {
   if (album)
     return (
       <div className="app-page bg-background">
-        <TopBar left={<BackBtn onClick={() => setAid(null)} />} title={album.name}
+        <TopBar left={<BackBtn onClick={() => setAid(null)} />} title={<span className="flex items-center justify-center gap-1 truncate">{album.name}<Button size="icon" variant="ghost" aria-label={label(lang, "rename")} onClick={() => { const name = prompt(label(lang, "rename"), album.name); if (name?.trim()) saveAlbum({ ...album, name }); }}><Pencil /></Button></span>}
           right={<label className="text-xl cursor-pointer">＋<input type="file" accept="image/*" className="hidden" onChange={async (e) => {
             const f = e.target.files?.[0];
-            if (f) saveAlbum({ ...album, photos: [...album.photos, { id: uid(), image: await fileToDataUrl(f), date: `${/^\d{4}$/.test(album.name) ? album.name : "2026"}-10-26`, note: "" }] });
+            if (f) { const image = await fileToDataUrl(f); saveAlbum({ ...album, photos: [...album.photos, { id: uid(), image, date: "2026-10-26", note: "" }] }); }
+            e.target.value = "";
           }} /></label>} />
         <div className="flex-1 overflow-y-auto">
           <div className="grid grid-cols-3 gap-0.5">

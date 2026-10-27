@@ -8,6 +8,10 @@ import XApp from "./apps/XApp";
 import Photos from "./apps/Photos";
 import Notes from "./apps/Notes";
 import { STORY_NOW } from "./chronology";
+import Calendar from "./apps/Calendar";
+import Music from "./apps/Music";
+import { backupPhoneData } from "./store";
+import { label as appLabel } from "./labels";
 
 function useNow() {
   const [now, setNow] = useState<Date | null>(null);
@@ -161,7 +165,9 @@ function AppView({ lang, app, setLang, onClose, onLock, onReset }: { lang: Lang;
     : app.id === "ig" ? <Instagram lang={lang} onHome={onClose} />
     : app.id === "x" ? <XApp lang={lang} onHome={onClose} />
     : app.id === "photos" ? <Photos lang={lang} onHome={onClose} />
-    : app.id === "notes" ? <Notes lang={lang} onHome={onClose} /> : null;
+    : app.id === "notes" ? <Notes lang={lang} onHome={onClose} />
+    : app.id === "calendar" ? <Calendar lang={lang} onHome={onClose} />
+    : app.id === "music" ? <Music lang={lang} onHome={onClose} /> : null;
   if (builtIn) return <div className="phone-app-container app-open">{builtIn}</div>;
   const isSettings = app.id === "settings";
   return (
@@ -207,15 +213,24 @@ export default function Phone() {
   const [open, setOpen] = useState<App | null>(null);
 
   useEffect(() => {
+    backupPhoneData();
     setApps(loadApps());
     const l = localStorage.getItem("phone-lang") as Lang | null;
-    if (l) setLangState(l);
+    if (l && LANGS.some((language) => language.id === l)) setLangState(l);
   }, []);
   const setLang = (l: Lang) => { setLangState(l); localStorage.setItem("phone-lang", l); };
   const update = (a: App[]) => { setApps(a); saveApps(a); };
 
   const settingsApp: App = { id: "settings", name: t(lang, "settings"), icon: SETTINGS_ICON, color: "#8e8e93", url: "", dock: false };
-  const grid = [...apps.filter((a) => !a.dock), settingsApp];
+  const translatedApps = apps.map((a) => {
+    const original = DEFAULT_APPS.find((item) => item.id === a.id);
+    if (a.name !== original?.name) return a;
+    const name = a.id === "photos" ? { en: "Photos", ko: "사진", zh: "照片" }[lang]
+      : a.id === "notes" ? { en: "Notes", ko: "메모", zh: "备忘录" }[lang]
+      : a.id === "calendar" || a.id === "music" ? appLabel(lang, a.id) : a.name;
+    return { ...a, name };
+  });
+  const grid = [...translatedApps.filter((a) => !a.dock), settingsApp];
   const dock = apps.filter((a) => a.dock).slice(0, 4);
 
   const tap = (a: App) => {
@@ -253,7 +268,7 @@ export default function Phone() {
       {open && (
         <AppView lang={lang} app={open} setLang={setLang} onClose={() => setOpen(null)}
           onLock={() => { setOpen(null); setLocked(true); }}
-          onReset={() => { update(DEFAULT_APPS); setOpen(null); }} />
+          onReset={() => { if (confirm(appLabel(lang, "confirmDelete"))) { update(DEFAULT_APPS); setOpen(null); } }} />
       )}
       {editing && (
         <Editor key={editing.id} lang={lang} app={editing} onClose={() => setEditing(null)}

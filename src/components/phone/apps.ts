@@ -36,6 +36,7 @@ export const DEFAULT_APPS: App[] = [
   { id: "notes", name: "Notes", icon: i_notes.url, color: "#ffd60a", url: "", dock: false },
   { id: "spotify", name: "Spotify", icon: i_spotify.url, color: "#1db954", url: "https://spotify.com", dock: false },
   { id: "tiktok", name: "TikTok", icon: i_tiktok.url, color: "#111111", url: "https://tiktok.com", dock: false },
+  { id: "calendar", name: "Calendar", icon: "/icons/calendar.svg", color: "var(--background)", url: "", dock: false },
   { id: "phone", name: "Phone", icon: i_phone.url, color: "#34c759", url: "", dock: true },
   { id: "msg", name: "Messages", icon: i_msg.url, color: "#30d158", url: "", dock: true },
   { id: "safari", name: "Safari", icon: i_safari.url, color: "#ffffff", url: "https://google.com", dock: true },
@@ -46,7 +47,20 @@ const KEY = "phone-apps-v2";
 export const loadApps = (): App[] => {
   try {
     const s = localStorage.getItem(KEY);
-    if (s) return JSON.parse(s);
+    if (s) {
+      const saved: App[] = JSON.parse(s);
+      // Add the new app only once; retain every existing customization/deletion.
+      if (!localStorage.getItem("phone-calendar-added-v1")) {
+        const calendar = DEFAULT_APPS.find((app) => app.id === "calendar");
+        localStorage.setItem("phone-calendar-added-v1", "true");
+        if (calendar && !saved.some((app) => app.id === "calendar")) {
+          const next = [...saved, calendar];
+          saveApps(next);
+          return next;
+        }
+      }
+      return saved;
+    }
   } catch {}
   return DEFAULT_APPS;
 };

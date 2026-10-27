@@ -1,23 +1,43 @@
 import { useEffect, useState } from "react";
 
 /** Persisted state in localStorage. Loads after mount so SSR markup matches. */
-export function usePersist<T>(key: string, def: T): [T, (v: T) => void] {
+export function backupPhoneData() {
+  try {
+    if (localStorage.getItem("phone-backup-before-completion-v1")) return;
+    const backup: Record<string, string> = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && /^(phone-|kkt-|ig-|x-|photos-|notes-|calendar-|music-)/.test(key)) {
+        const value = localStorage.getItem(key);
+        if (value !== null) backup[key] = value;
+      }
+    }
+    localStorage.setItem("phone-backup-before-completion-v1", JSON.stringify(backup));
+  } catch { /* Never stop loading existing data if backup space is unavailable. */ }
+}
+
+export function usePersist<T>(key: string, def: T, normalize?: (value: T) => T): [T, (v: T) => void] {
   const [val, setVal] = useState<T>(def);
   useEffect(() => {
     try {
       const s = localStorage.getItem(key);
-      if (s) setVal(JSON.parse(s));
+      if (s) {
+        backupPhoneData();
+        const loaded = JSON.parse(s) as T;
+        setVal(normalize ? normalize(loaded) : loaded);
+      }
     } catch {}
   }, [key]);
   const set = (v: T) => {
-    setVal(v);
     try {
+      backupPhoneData();
       localStorage.setItem(key, JSON.stringify(v));
+      setVal(v);
     } catch {
       alert("Storage full — try a smaller image. / 저장 공간이 부족합니다 / 存储空间不足");
     }
   };
-  return [val, set];
+  return [normalize ? normalize(val) : val, set];
 }
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
