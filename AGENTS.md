@@ -16,7 +16,8 @@
 - Extend existing versioned local-store records with optional fields; snapshot phone storage once before changes and never reseed or reset saved data.
 - Keep ordered post images, tweet replies, calendar events and music collections in browser-safe dedicated utilities; captions/comments and unrelated records remain isolated during edits.
 - Simulated Anton messages live in phone/live.ts: append-only with fixed ids and one timer in Phone, so saved chats are never rewritten and each message arrives once.
-- Phone owns the single foreground conversation scheduler; persisted reply jobs reference source IDs and append deduplicated contextual presets, so replies survive app switches without pretending to use AI.
+- Phone owns the single foreground conversation scheduler; persisted source-linked reply jobs use genuine server-side AI, cross-tab locks and completion-time rereads to append deduplicated replies without rewriting saved edits. Failed jobs stay stopped, never become character templates.
+- AI prompts and gateway credentials remain behind server functions; send only source-bounded contact history and image-presence metadata, keeping all phone records in the existing browser store.
 - Instagram Stories and DMs use separate versioned keys; feed and profile share existing posts by ID, so captions, comments and KKT records remain isolated.
 - Store added fictional Instagram accounts/posts separately from legacy owner records and merge read-only by author ID; author profile, Feed and detail use the same record, so upgrades never reseed owner captions or comments.
 - Local reply intents and prior-statement matching live in reply-context; use only history up to the source message, so future queued messages cannot leak into an earlier reply.

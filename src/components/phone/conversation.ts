@@ -11,7 +11,7 @@ export { replyFromContext as contextualReply } from "./reply-context";
 import { buildReplyContext, type ReplyContext } from "./ai-context";
 import { generatePhoneReply } from "@/lib/phone-reply.functions";
 export const REPLY_ERROR_EVENT = "phone-reply-error";
-type ReplyResult = { ok: true; reply: { ko: string; zh: string; en: string }; runId?: string } | { ok: false; status: number; error: string };
+type ReplyResult = { ok: true; reply: { ko: string; zh: string; en: string }; runId?: string | undefined } | { ok: false; status: number; error: string };
 type Generator = (context: ReplyContext) => Promise<ReplyResult>;
 let busy = false;
 
