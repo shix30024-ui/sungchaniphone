@@ -499,3 +499,44 @@ button:active > .app-icon { transform: scale(.9); }
 .kkt-input { position: relative; }
 .kkt-input::after { content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 18px; background: var(--background); }
 @media(max-width: 360px) { .kkt-list-top > :last-child { gap: 3px; } .kkt-bottom-nav button { font-size: 9px; } .safari-favorites { gap: 18px 5px; } }
+:root { --widget-surface: oklch(1 0 0 / .9); --widget-event: oklch(0.58 0.2 300); --camera-surface: oklch(0.07 0 0); --camera-accent: oklch(0.86 0.17 92); }
+.home-widgets { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; padding: 14px 20px 0; }
+.home-calendar-widget, .home-photo-widget { aspect-ratio: 1; height: auto; min-width: 0; border-radius: 22px; padding: 14px; overflow: hidden; box-shadow: 0 4px 14px oklch(0 0 0 / .2); }
+.home-calendar-widget { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; background: var(--widget-surface); color: var(--foreground); }
+.home-calendar-widget:hover { background: var(--widget-surface); }
+.widget-weekday { color: var(--destructive); font-size: 12px; font-weight: 700; }
+.home-calendar-widget strong { font-size: 39px; line-height: 1; font-weight: 400; margin: 2px 0 8px; }
+.widget-event-list { display: grid; gap: 5px; width: 100%; }
+.widget-event-list > span { display: grid; border-left: 3px solid var(--widget-event); padding-left: 5px; text-align: left; min-width: 0; }
+.widget-event-list b, .widget-event-list small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.widget-event-list small { color: var(--muted-foreground); font-weight: 400; }
+.widget-event-list .widget-no-events { display: flex; gap: 4px; border: 0; padding: 0; font-size: 11px; white-space: normal; }
+.home-photo-widget { position: relative; display: grid; place-items: center; background: var(--glass-strong); color: var(--on-glass); }
+.home-photo-widget img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.home-photo-widget span { position: absolute; left: 12px; bottom: 10px; font-size: 13px; text-shadow: 0 1px 4px oklch(0 0 0 / .6); }
+.home-widgets + .grid { margin-top: 16px; row-gap: 14px; }
+.camera-native { background: var(--camera-surface); color: var(--on-glass); padding-top: 42px; }
+.camera-top { display: flex; justify-content: space-between; align-items: center; height: 46px; padding: 0 12px; }
+.camera-viewfinder { position: relative; flex: 1; min-height: 0; overflow: hidden; background: var(--camera-surface); display: grid; place-items: center; }
+.camera-viewfinder video, .camera-captured { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.camera-mirrored { transform: scaleX(-1); }
+.camera-grid { position: absolute; inset: 0; background-image: linear-gradient(to right, transparent 33.1%, var(--glass) 33.3%, transparent 33.5%, transparent 66.4%, var(--glass) 66.6%, transparent 66.8%), linear-gradient(transparent 33.1%, var(--glass) 33.3%, transparent 33.5%, transparent 66.4%, var(--glass) 66.6%, transparent 66.8%); }
+.camera-permission { position: relative; z-index: 2; display: grid; justify-items: center; gap: 16px; max-width: 260px; text-align: center; padding: 20px; }
+.camera-permission p { font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.camera-bottom { padding: 12px 22px 26px; background: var(--camera-surface); }
+.camera-mode { text-align: center; color: var(--camera-accent); font-size: 12px; font-weight: 700; margin-bottom: 14px; }
+.phone-screen:has(.camera-native) .status-bar-app { background: var(--camera-surface); color: var(--on-glass); }
+.phone-screen:has(.camera-native) .app-home-indicator span { background: var(--on-glass); }
+.camera-controls, .camera-review { display: flex; align-items: center; justify-content: space-between; min-height: 76px; }
+.camera-controls > button:first-child { width: 48px; height: 48px; overflow: hidden; border-radius: 8px; background: var(--glass); }
+.camera-controls img { width: 100%; height: 100%; object-fit: cover; }
+.camera-shutter { width: 72px; height: 72px; border-radius: 50%; border: 4px solid var(--on-glass); background: transparent; padding: 4px; }
+.camera-shutter span { width: 100%; height: 100%; border-radius: 50%; background: var(--on-glass); }
+.camera-save-error { color: var(--destructive); font-size: 12px; text-align: center; }
+.device-contact-detail { display: grid; justify-items: center; gap: 10px; text-align: center; }
+.device-contact-detail h1 { font-size: 27px; font-weight: 700; overflow-wrap: anywhere; }
+.sms-recents { margin: 0 20px 16px; padding: 10px; background: var(--muted); border-radius: 12px; }
+.sms-recents h2 { font-weight: 700; margin: 0 0 4px 8px; }
+.note-language-tabs { display: flex; justify-content: center; gap: 4px; margin-bottom: 4px; }
+.note-language-tabs button[aria-pressed="true"] { color: var(--notes-accent); background: var(--background); }
+@media(max-height: 700px) { .home-widgets { padding-top: 4px; gap: 10px; } .home-calendar-widget, .home-photo-widget { aspect-ratio: 1.3; padding: 10px; } .home-calendar-widget strong { font-size: 28px; margin-bottom: 3px; } .widget-event-list > span:nth-child(2) { display: none; } .home-widgets + .grid { row-gap: 8px; } }

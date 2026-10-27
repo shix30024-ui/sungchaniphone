@@ -1,4 +1,10 @@
 # Phone story completion
+# Widgets, camera, contacts and Notes language
+- [x] Add tappable current-date calendar and photo widgets without replacing saved icons; no invented weather data.
+- [x] Add permission-based camera, capture/review/retake/save to Photos and mobile capture fallback; stop streams on exit or hidden page.
+- [x] Extend Phone editable recent call types and contact details; Messages shares contact selection and recent-call entry without replacing its own history.
+- [x] Add editable three-language Notes content; translate unchanged seed notes only and preserve all edited originals.
+- [x] Verify camera capture/save/readback with Chromium test camera, stream stop, widgets, contact creation/shared SMS, missed records, Chinese Notes after reload and 375×667 layout. 43 tests passed; actual player camera permission/hardware remains device-dependent. No user preview storage reset.
 # Notes, browser, Messages and KKT adjustment
 - [x] Compare reference KKT and Notes/browser inner screens; align KKT list, five tabs, date pills, avatars, bubbles and composer while keeping this phone's story.
 - [x] Add editable Safari favorites/page content/history and independent native Messages; keep legacy KKT records isolated and Notes on their existing key. External websites open separately, not as editable third-party pages.
