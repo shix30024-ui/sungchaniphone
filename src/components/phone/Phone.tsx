@@ -10,6 +10,7 @@ import Notes from "./apps/Notes";
 import { STORY_NOW } from "./chronology";
 import Calendar from "./apps/Calendar";
 import Music from "./apps/Music";
+import Settings from "./apps/Settings";
 import { backupPhoneData } from "./store";
 import { label as appLabel } from "./labels";
 import { tr } from "./i18n";
@@ -210,65 +211,23 @@ function Editor({ lang, app, onSave, onRemove, onClose }: { lang: Lang; app: App
   );
 }
 
-function AppView({ lang, app, setLang, onClose, onLock, onReset, initialChat, live, setLive }: { lang: Lang; app: App; setLang: (l: Lang) => void; onClose: () => void; onLock: () => void; onReset: () => void; initialChat: string | null; live: LiveSettings; setLive: (s: LiveSettings) => void }) {
+function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initialChat, live, setLive }: { lang: Lang; app: App; apps: App[]; setLang: (l: Lang) => void; onClose: () => void; onLock: () => void; onEditApps: () => void; initialChat: string | null; live: LiveSettings; setLive: (s: LiveSettings) => void }) {
   const builtIn = app.id === "kkt" || app.id === "msg" ? <Kakao lang={lang} onHome={onClose} initialChat={initialChat} />
     : app.id === "ig" ? <Instagram lang={lang} onHome={onClose} />
     : app.id === "x" ? <XApp lang={lang} onHome={onClose} />
     : app.id === "photos" ? <Photos lang={lang} onHome={onClose} />
     : app.id === "notes" ? <Notes lang={lang} onHome={onClose} />
     : app.id === "calendar" ? <Calendar lang={lang} onHome={onClose} />
-    : app.id === "music" ? <Music lang={lang} onHome={onClose} /> : null;
+    : app.id === "music" ? <Music lang={lang} onHome={onClose} />
+    : app.id === "settings" ? <Settings lang={lang} setLang={setLang} live={live} setLive={setLive} apps={apps} onHome={onClose} onLock={onLock} onEditApps={onEditApps} /> : null;
   if (builtIn) return <div className="phone-app-container app-open">{builtIn}</div>;
-  const isSettings = app.id === "settings";
   return (
     <div className="absolute inset-0 z-20 bg-background text-foreground flex flex-col app-open">
       <div className="pt-12 px-4 pb-3 flex items-center gap-3 border-b">
         <button onClick={onClose} className="text-primary">‹ {t(lang, "back")}</button>
         <b className="mx-auto pr-10">{app.name}</b>
       </div>
-      {isSettings ? (
-        <div className="p-4 space-y-5 overflow-y-auto min-h-0">
-          <div>
-            <div className="text-xs text-muted-foreground mb-2">{t(lang, "language")}</div>
-            <div className="rounded-xl bg-muted divide-y">
-              {LANGS.map((l) => (
-                <button key={l.id} onClick={() => setLang(l.id)} className="w-full flex justify-between px-4 py-3">
-                  {l.label}{lang === l.id && <span className="text-primary">✓</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-2">{tr(lang, { en: "KakaoTalk live messages", ko: "카카오톡 실시간 메시지", zh: "KKT 实时消息" })}</div>
-            <div className="rounded-xl bg-muted divide-y">
-              <label className="w-full flex justify-between items-center px-4 py-3">
-                {tr(lang, { en: "Auto messages from Anton", ko: "찬영 자동 메시지", zh: "灿荣自动发消息" })}
-                <input type="checkbox" aria-label="auto-messages" checked={live.enabled} onChange={(e) => setLive({ ...live, enabled: e.target.checked })} />
-              </label>
-              <label className="w-full flex justify-between items-center px-4 py-3">
-                {tr(lang, { en: "Show message previews", ko: "미리보기 표시", zh: "显示通知预览" })}
-                <input type="checkbox" aria-label="previews" checked={live.preview} onChange={(e) => setLive({ ...live, preview: e.target.checked })} />
-              </label>
-              <div className="px-4 py-3 hidden">
-                <div className="mb-2">{tr(lang, { en: "Frequency", ko: "빈도", zh: "频率" })}</div>
-                <div className="flex gap-2">
-                  {(["low", "normal", "high"] as Frequency[]).map((f) => (
-                    <button key={f} onClick={() => setLive({ ...live, frequency: f })}
-                      className={`flex-1 py-1.5 rounded-lg text-sm ${live.frequency === f ? "bg-primary text-primary-foreground" : "bg-background"}`}>
-                      {tr(lang, f === "low" ? { en: "Less", ko: "적게", zh: "较少" } : f === "normal" ? { en: "Normal", ko: "보통", zh: "正常" } : { en: "More", ko: "자주", zh: "较频繁" })}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button onClick={() => deliverLiveMessage({ test: true })} className="hidden w-full text-left px-4 py-3 text-primary">
-                {tr(lang, { en: "Send a test message now", ko: "지금 테스트 메시지 받기", zh: "立即接收一条测试消息" })}
-              </button>
-            </div>
-          </div>
-          <button onClick={onLock} className="w-full py-3 rounded-xl bg-muted">{t(lang, "lock")}</button>
-          <button onClick={onReset} className="w-full py-3 rounded-xl bg-muted text-destructive">{t(lang, "reset")}</button>
-        </div>
-      ) : app.url ? (
+      {app.url ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6 text-center">
           <div className="app-icon scale-150" style={{ background: app.color }}><IconFace icon={app.icon} /></div>
           <a href={app.url} target="_blank" rel="noreferrer" className="mt-6 px-5 py-2.5 rounded-full bg-primary text-primary-foreground">{app.name} ↗</a>
@@ -397,9 +356,9 @@ export default function Phone() {
         </div>
       )}
       {open && (
-        <AppView initialChat={open.id === "kkt" ? chatTarget : null} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onClose={() => setOpen(null)}
+        <AppView initialChat={open.id === "kkt" ? chatTarget : null} apps={apps} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onClose={() => setOpen(null)}
           onLock={() => { setOpen(null); setLocked(true); }}
-          onReset={() => { if (confirm(appLabel(lang, "confirmDelete"))) { update(DEFAULT_APPS); setOpen(null); } }} />
+          onEditApps={() => { setOpen(null); setEditMode(true); }} />
       )}
       {editing && (
         <Editor key={editing.id} lang={lang} app={editing} onClose={() => setEditing(null)}
