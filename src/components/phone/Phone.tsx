@@ -25,7 +25,8 @@ import {
 import { messageText } from "./chronology";
 import { tickReplies } from "./conversation";
 import { getActiveChat } from "./live";
-import { Wifi, ChevronUp, ChevronDown, X, Search } from "lucide-react";
+import { Wifi, ChevronUp, ChevronDown, X, Search, Plane } from "lucide-react";
+import { SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from "./system";
 
 const notifText = (m: Msg, lang: Lang) => (m.type === "image" ? tr(lang, { en: "Sent a photo", ko: "사진을 보냈습니다", zh: "发送了一张照片" }) : messageText(m, lang));
 
@@ -55,12 +56,13 @@ function useNow() {
 }
 
 function StatusBar({ now, inApp }: { now: Date | null; inApp: boolean }) {
+  const [system] = usePersist<SystemSettings>(SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS);
   return (
     <div className={`status-bar ${inApp ? "status-bar-app" : ""}`}>
       <span>{now ? fmtTime(now) : ""}</span>
       <span className="status-indicators" aria-label="Simulated signal, Wi-Fi and battery 82%">
-        <span className="cellular-signal" aria-hidden="true"><i /><i /><i /><i /></span>
-        <Wifi size={17} strokeWidth={2.5} aria-hidden="true" />
+        {system.airplane ? <Plane size={17} aria-label="Simulated airplane mode" /> : <span className="cellular-signal" aria-hidden="true"><i /><i /><i /><i /></span>}
+        {system.wifi && <Wifi size={17} strokeWidth={2.5} aria-hidden="true" />}
         <span className="battery-icon" aria-hidden="true"><span className="battery-fill" /></span>
       </span>
     </div>
