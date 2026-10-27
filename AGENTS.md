@@ -12,3 +12,6 @@
 - Keep phone app views inside the existing Phone shell, dispatched by stable app ID, so icon edits cannot change app identity or replace the home screen.
 - Persist fictional phone edits through the existing browser-local store; load only after mount to keep server and browser markup consistent.
 - Centralize story dates and message sorting in browser-safe data utilities so all app views use the same chronology.
+- Use one Phone-owned system language for every app; legacy chats gain translations only by exact original-text match, preserving explicit edits.
+- Extend existing versioned local-store records with optional fields; snapshot phone storage once before changes and never reseed or reset saved data.
+- Keep ordered post images, tweet replies, calendar events and music collections in browser-safe dedicated utilities; captions/comments and unrelated records remain isolated during edits.
