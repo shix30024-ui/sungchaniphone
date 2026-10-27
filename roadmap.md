@@ -1,5 +1,7 @@
 # Phone story completion
 # Context-understanding replies
+- [ ] Adjust Phone, Calendar, Music and Settings inner views to the reference without copying its story.
+- [ ] Make lock/status clocks follow the player's local device time while preserving saved story dates.
 - [ ] Replace primary keyword replies with genuine AI reading source-bound recent history and story context.
 - [ ] Preserve queued jobs, all manual edits and original text; expose failures without fabricated replies.
 - [ ] Verify direct questions, fatigue, short acknowledgment, image limits and follow-up context through real chat.
