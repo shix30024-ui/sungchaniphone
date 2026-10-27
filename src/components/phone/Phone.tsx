@@ -9,6 +9,8 @@ import Photos from "./apps/Photos";
 import Notes from "./apps/Notes";
 import Safari from "./apps/Safari";
 import Messages from "./apps/Messages";
+import Camera from "./apps/Camera";
+import HomeWidgets from "./HomeWidgets";
 import { useDeviceNow } from "./clock";
 import PhoneApp from "./apps/PhoneApp";
 import Calendar from "./apps/Calendar";
@@ -216,6 +218,7 @@ function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initia
     : app.id === "ig" ? <Instagram lang={lang} onHome={onClose} />
     : app.id === "x" ? <XApp lang={lang} onHome={onClose} />
     : app.id === "photos" ? <Photos lang={lang} onHome={onClose} />
+    : app.id === "cam" ? <Camera lang={lang} onHome={onClose} />
     : app.id === "notes" ? <Notes lang={lang} onHome={onClose} />
     : app.id === "calendar" ? <Calendar lang={lang} onHome={onClose} />
     : app.id === "music" ? <Music lang={lang} onHome={onClose} />
@@ -347,6 +350,7 @@ export default function Phone() {
               {editMode ? t(lang, "done") : t(lang, "edit")}
             </button>
           </div>
+          {!editMode && <HomeWidgets lang={lang} now={now} openApp={(id) => { const app = translatedApps.find((a) => a.id === id); if (app) tap(app); }} />}
           <div className="grid grid-cols-4 gap-y-6 gap-x-2 px-5 mt-5">
             {grid.map((a) => <Icon key={a.id} app={a} badge={a.id === "kkt" ? unread : 0} wiggle={editMode && a.id !== "settings"} onClick={() => tap(a)} />)}
           </div>
