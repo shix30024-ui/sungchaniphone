@@ -20,8 +20,11 @@ export default function Music({ lang, onHome }: AppProps) {
       {playlistDraft && <><Field label={label(lang, "playlistName")}><input className="sheet-input" value={playlistDraft.name} onChange={(e) => setPlaylistDraft({ ...playlistDraft, name: e.target.value })} /></Field>{data.songs.map((song) => <label key={song.id} className="flex gap-3 items-center py-2"><input type="checkbox" checked={playlistDraft.songIds.includes(song.id)} onChange={(e) => setPlaylistDraft({ ...playlistDraft, songIds: e.target.checked ? [...playlistDraft.songIds, song.id] : playlistDraft.songIds.filter((id) => id !== song.id) })} />{song.title} · {song.artist}</label>)}</>}
     </div>
     <EditBar save={label(lang, "save")} cancel={label(lang, "cancel")} onCancel={() => { setSongDraft(null); setPlaylistDraft(null); }} onSave={() => {
-      if (songDraft?.title.trim()) { setData({ ...data, songs: data.songs.some((s) => s.id === songDraft.id) ? data.songs.map((s) => s.id === songDraft.id ? songDraft : s) : [...data.songs, songDraft] }); setSongDraft(null); }
-      if (playlistDraft?.name.trim()) { setData({ ...data, playlists: data.playlists.some((p) => p.id === playlistDraft.id) ? data.playlists.map((p) => p.id === playlistDraft.id ? playlistDraft : p) : [...data.playlists, playlistDraft] }); setPlaylistDraft(null); }
+      setData((current) => ({ ...current,
+        songs: songDraft?.title.trim() ? current.songs.some((s) => s.id === songDraft.id) ? current.songs.map((s) => s.id === songDraft.id ? songDraft : s) : [...current.songs, songDraft] : current.songs,
+        playlists: playlistDraft?.name.trim() ? current.playlists.some((p) => p.id === playlistDraft.id) ? current.playlists.map((p) => p.id === playlistDraft.id ? playlistDraft : p) : [...current.playlists, playlistDraft] : current.playlists,
+      }));
+      setSongDraft(null); setPlaylistDraft(null);
     }} />
   </div>;
   const songs = data.songs.filter((song) => open ? open.songIds.includes(song.id) : tab !== "favorites" || song.favorite);

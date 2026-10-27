@@ -5,6 +5,7 @@
  */
 import { CONTACTS, MESSAGES, type Contact, type Msg } from "./story";
 import { STORY_DATE } from "./chronology";
+import { backupPhoneData, readStored } from "./store";
 
 export const MSGS_KEY = "kkt-msgs-v1";
 export const CONTACTS_KEY = "kkt-contacts-v1";
@@ -76,6 +77,7 @@ export const nextDelay = (f: Frequency, rand = Math.random) => {
 /** Which chat is currently on screen (set by the KakaoTalk app). */
 let activeChat: string | null = null;
 export const setActiveChat = (id: string | null) => { activeChat = id; };
+export const getActiveChat = () => activeChat;
 
 const addMinutes = (time: string, n: number) => {
   const [h = 0, m = 0] = time.split(":").map(Number);
@@ -94,6 +96,7 @@ export function nextLine(msgs: Msg[], delivered: string[]): LiveLine | undefined
  * there is nothing new to send. Never rewrites existing messages.
  */
 export function deliverLiveMessage(opts: { test?: boolean } = {}): Msg | null {
+  backupPhoneData();
   const msgs = read<Msg[]>(MSGS_KEY, MESSAGES);
   const contacts = read<Contact[]>(CONTACTS_KEY, CONTACTS);
   const state = loadLiveState();
@@ -128,6 +131,10 @@ export function deliverLiveMessage(opts: { test?: boolean } = {}): Msg | null {
 export function tickLive(now = Date.now()): Msg | null {
   const settings = loadLiveSettings();
   if (!settings.enabled) return null;
+  // Let the current conversation finish instead of interrupting with an unrelated story node.
+  const pending = readStored<{ dueAt: number }[]>("phone-reply-queue-v1", []);
+  const recent = read<Msg[]>(MSGS_KEY, []).filter((m) => m.originalText).at(-1);
+  if (pending.length || (recent?.createdAt && now - new Date(recent.createdAt).getTime() < 120000)) return null;
   const state = loadLiveState();
   if (!state.nextAt) { saveLiveState({ ...state, nextAt: now + nextDelay(settings.frequency) }); return null; }
   if (now < state.nextAt) return null;

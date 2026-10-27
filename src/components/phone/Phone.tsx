@@ -20,6 +20,9 @@ import {
   deliverLiveMessage, liveContactName, loadLiveSettings, rescheduleLive, saveLiveSettings, tickLive, totalUnread, unreadLive,
 } from "./live";
 import { messageText } from "./chronology";
+import { tickReplies } from "./conversation";
+import { getActiveChat } from "./live";
+import { Wifi } from "lucide-react";
 
 const notifText = (m: Msg, lang: Lang) => (m.type === "image" ? tr(lang, { en: "Sent a photo", ko: "사진을 보냈습니다", zh: "发送了一张照片" }) : messageText(m, lang));
 
@@ -50,7 +53,11 @@ function StatusBar({ now, inApp }: { now: Date | null; inApp: boolean }) {
   return (
     <div className={`status-bar ${inApp ? "status-bar-app" : ""}`}>
       <span>{now ? fmtTime(now) : ""}</span>
-      <span className="opacity-90">▂▄▆ ᯤ ▮</span>
+      <span className="status-indicators" aria-label="Simulated signal, Wi-Fi and battery 82%">
+        <span className="cellular-signal" aria-hidden="true"><i /><i /><i /><i /></span>
+        <Wifi size={17} strokeWidth={2.5} aria-hidden="true" />
+        <span className="battery-icon" aria-hidden="true"><span className="battery-fill" /></span>
+      </span>
     </div>
   );
 }
@@ -62,7 +69,7 @@ function IconFace({ icon }: { icon: string }) {
 
 function Icon({ app, onClick, wiggle, label = true, badge = 0 }: { app: App; onClick: () => void; wiggle: boolean; label?: boolean; badge?: number }) {
   return (
-    <button onClick={onClick} className="flex flex-col items-center gap-1.5 min-w-0">
+    <button aria-label={app.name} onClick={onClick} className="flex flex-col items-center gap-1.5 min-w-0">
       <div className={`app-icon ${wiggle ? "wiggle" : ""}`} style={{ background: app.color }}>
         <IconFace icon={app.icon} />
         {badge > 0 && <span className="icon-badge">{badge > 99 ? "99+" : badge}</span>}
@@ -209,7 +216,7 @@ function AppView({ lang, app, setLang, onClose, onLock, onReset, initialChat, li
         <b className="mx-auto pr-10">{app.name}</b>
       </div>
       {isSettings ? (
-        <div className="p-4 space-y-5">
+        <div className="p-4 space-y-5 overflow-y-auto min-h-0">
           <div>
             <div className="text-xs text-muted-foreground mb-2">{t(lang, "language")}</div>
             <div className="rounded-xl bg-muted divide-y">
@@ -231,7 +238,7 @@ function AppView({ lang, app, setLang, onClose, onLock, onReset, initialChat, li
                 {tr(lang, { en: "Show message previews", ko: "미리보기 표시", zh: "显示通知预览" })}
                 <input type="checkbox" aria-label="previews" checked={live.preview} onChange={(e) => setLive({ ...live, preview: e.target.checked })} />
               </label>
-              <div className="px-4 py-3">
+              <div className="px-4 py-3 hidden">
                 <div className="mb-2">{tr(lang, { en: "Frequency", ko: "빈도", zh: "频率" })}</div>
                 <div className="flex gap-2">
                   {(["low", "normal", "high"] as Frequency[]).map((f) => (
@@ -242,7 +249,7 @@ function AppView({ lang, app, setLang, onClose, onLock, onReset, initialChat, li
                   ))}
                 </div>
               </div>
-              <button onClick={() => deliverLiveMessage({ test: true })} className="w-full text-left px-4 py-3 text-primary">
+              <button onClick={() => deliverLiveMessage({ test: true })} className="hidden w-full text-left px-4 py-3 text-primary">
                 {tr(lang, { en: "Send a test message now", ko: "지금 테스트 메시지 받기", zh: "立即接收一条测试消息" })}
               </button>
             </div>
@@ -287,8 +294,8 @@ export default function Phone() {
       clearTimeout(hide);
       hide = setTimeout(() => setBanner(null), 5000);
     };
-    const tick = () => { if (document.visibilityState === "visible") tickLive(); };
-    const timer = setInterval(tick, 5000);
+    const tick = () => { if (document.visibilityState === "visible") { tickReplies(Date.now(), getActiveChat()); tickLive(); } };
+    const timer = setInterval(tick, 500);
     window.addEventListener(STORE_EVENT, refresh);
     window.addEventListener("storage", refresh);
     window.addEventListener(LIVE_EVENT, onLive);

@@ -16,3 +16,7 @@
 - Extend existing versioned local-store records with optional fields; snapshot phone storage once before changes and never reseed or reset saved data.
 - Keep ordered post images, tweet replies, calendar events and music collections in browser-safe dedicated utilities; captions/comments and unrelated records remain isolated during edits.
 - Simulated Anton messages live in phone/live.ts: append-only with fixed ids and one timer in Phone, so saved chats are never rewritten and each message arrives once.
+- Phone owns the single foreground conversation scheduler; persisted reply jobs reference source IDs and append deduplicated contextual presets, so replies survive app switches without pretending to use AI.
+- Instagram Stories and DMs use separate versioned keys; feed and profile share existing posts by ID, so captions, comments and KKT records remain isolated.
+- Use functional persistence updates for async message and social interactions; parse failures must prevent writes rather than replace saved content with defaults.
+- Call screens simulate state transitions without requesting microphone access or loading unapproved audio.

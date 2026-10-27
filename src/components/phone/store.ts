@@ -16,7 +16,20 @@ export function backupPhoneData() {
   } catch { /* Never stop loading existing data if backup space is unavailable. */ }
 }
 
-export function usePersist<T>(key: string, def: T, normalize?: (value: T) => T): [T, (v: T) => void] {
+export function readStored<T>(key: string, fallback: T): T {
+  const raw = localStorage.getItem(key);
+  return raw === null ? fallback : JSON.parse(raw) as T;
+}
+
+export function updateStored<T>(key: string, fallback: T, update: (current: T) => T): T {
+  backupPhoneData();
+  const next = update(readStored(key, fallback));
+  localStorage.setItem(key, JSON.stringify(next));
+  window.dispatchEvent(new CustomEvent("phone-store", { detail: key }));
+  return next;
+}
+
+export function usePersist<T>(key: string, def: T, normalize?: (value: T) => T): [T, (v: T | ((current: T) => T)) => void] {
   const [val, setVal] = useState<T>(def);
   useEffect(() => {
     try {
@@ -40,12 +53,10 @@ export function usePersist<T>(key: string, def: T, normalize?: (value: T) => T):
     window.addEventListener("storage", onStorage);
     return () => { window.removeEventListener("phone-store", onStore); window.removeEventListener("storage", onStorage); };
   }, [key]);
-  const set = (v: T) => {
+  const set = (v: T | ((current: T) => T)) => {
     try {
-      backupPhoneData();
-      localStorage.setItem(key, JSON.stringify(v));
-      setVal(v);
-      window.dispatchEvent(new CustomEvent("phone-store", { detail: key }));
+      const next = updateStored(key, def, (current) => typeof v === "function" ? (v as (current: T) => T)(current) : v);
+      setVal(next);
     } catch {
       alert("Storage full — try a smaller image. / 저장 공간이 부족합니다 / 存储空间不足");
     }

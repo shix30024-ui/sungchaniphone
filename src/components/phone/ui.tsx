@@ -1,21 +1,22 @@
 import type { ReactNode } from "react";
 import { fileToDataUrl } from "./store";
 import { IMG } from "./story";
+import { Button } from "@/components/ui/button";
 
 export const resolveImg = (s?: string) => (s ? (s.startsWith("img:") ? IMG[s.slice(4)] ?? "" : s) : "");
 
 export function TopBar({ title, left, right, className = "" }: { title: ReactNode; left?: ReactNode; right?: ReactNode; className?: string }) {
   return (
     <div className={`app-topbar ${className}`}>
-      <div className="min-w-16">{left}</div>
+      <div className="min-w-8">{left}</div>
       <div className="font-semibold truncate text-center flex-1">{title}</div>
-      <div className="min-w-16 flex justify-end gap-3">{right}</div>
+      <div className="min-w-8 flex justify-end gap-1">{right}</div>
     </div>
   );
 }
 
 export const BackBtn = ({ onClick, label = "‹" }: { onClick: () => void; label?: string }) => (
-  <button onClick={onClick} className="text-2xl leading-none px-1">{label}</button>
+  <Button variant="ghost" size="icon" onClick={onClick} className="text-2xl leading-none">{label}</Button>
 );
 
 export function ImageField({ value, onChange, label }: { value?: string | undefined; onChange: (v: string) => void; label: string }) {
@@ -26,8 +27,11 @@ export function ImageField({ value, onChange, label }: { value?: string | undefi
       <label className="edit-chip cursor-pointer">
         {label}
         <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-          const f = e.target.files?.[0];
-          if (f) onChange(await fileToDataUrl(f));
+          const input = e.currentTarget;
+          const f = input.files?.[0];
+          try { if (f) onChange(await fileToDataUrl(f)); }
+          catch { alert("Could not open image / 이미지를 열 수 없습니다 / 无法打开图片"); }
+          finally { input.value = ""; }
         }} />
       </label>
       {value && <button className="edit-chip text-destructive" onClick={() => onChange("")}>✕</button>}
@@ -56,7 +60,7 @@ export function KktAvatar({ src, size = 44 }: { src?: string; size?: number }) {
 /** Editing bar with Save / Cancel. */
 export const EditBar = ({ onSave, onCancel, save, cancel }: { onSave: () => void; onCancel: () => void; save: string; cancel: string }) => (
   <div className="edit-bar">
-    <button onClick={onCancel} className="edit-chip">{cancel}</button>
-    <button onClick={onSave} className="edit-chip edit-chip-primary">{save}</button>
+    <Button variant="secondary" onClick={onCancel}>{cancel}</Button>
+    <Button onClick={onSave}>{save}</Button>
   </div>
 );

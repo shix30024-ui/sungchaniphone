@@ -55,9 +55,11 @@ export default function Photos({ lang, onHome }: AppProps) {
       <div className="app-page bg-background">
         <TopBar left={<BackBtn onClick={() => setAid(null)} />} title={<span className="flex items-center justify-center gap-1 truncate">{album.name}<Button size="icon" variant="ghost" aria-label={label(lang, "rename")} onClick={() => { const name = prompt(label(lang, "rename"), album.name); if (name?.trim()) saveAlbum({ ...album, name }); }}><Pencil /></Button></span>}
           right={<label className="text-xl cursor-pointer">＋<input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-            const f = e.target.files?.[0];
-            if (f) { const image = await fileToDataUrl(f); saveAlbum({ ...album, photos: [...album.photos, { id: uid(), image, date: "2026-10-26", note: "" }] }); }
-            e.target.value = "";
+            const input = e.currentTarget;
+            const f = input.files?.[0];
+            try { if (f) { const image = await fileToDataUrl(f); setAlbums((current) => current.map((a) => a.id === album.id ? { ...a, photos: [...a.photos, { id: uid(), image, date: "2026-10-26", note: "" }] } : a)); } }
+            catch { alert(tr(lang, { en: "Could not open image", ko: "이미지를 열 수 없습니다", zh: "无法打开图片" })); }
+            finally { input.value = ""; }
           }} /></label>} />
         <div className="flex-1 overflow-y-auto">
           <div className="grid grid-cols-3 gap-0.5">
