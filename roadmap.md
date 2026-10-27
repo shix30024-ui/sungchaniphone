@@ -10,3 +10,12 @@
 - [x] Complete X details/replies, Photos rename/move and Notes search/modification time.
 - [x] Add Calendar and Music management inside the existing phone, with empty collections rather than invented existing events/audio.
 - [x] Verify save/cancel/delete, language changes and reload persistence; thirteen tests and desktop/mobile browser flows passed.
+
+# Interaction and official app experience upgrade
+- [ ] Protect existing records and improve shared status bar/safe areas.
+- [ ] KKT original-text sending, contextual preset replies and real pending typing state.
+- [ ] Natural foreground proactive messages and correct unread notifications.
+- [ ] Simulated outgoing/incoming calls with mute, duration and hangup.
+- [ ] Instagram feed, editable Stories, post interactions and comment sending.
+- [ ] Independent Instagram DMs with contextual replies and typing.
+- [ ] Test app navigation, cancellation, saved-content preservation and reload persistence.
