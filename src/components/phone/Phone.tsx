@@ -17,7 +17,7 @@ import { resolveImg } from "./ui";
 import type { Msg } from "./story";
 import {
   LIVE_CONTACT, LIVE_EVENT, STORE_EVENT, type Frequency, type LiveSettings, DEFAULT_LIVE_SETTINGS,
-  deliverLiveMessage, loadLiveSettings, rescheduleLive, saveLiveSettings, tickLive, totalUnread, unreadLive,
+  deliverLiveMessage, liveContactName, loadLiveSettings, rescheduleLive, saveLiveSettings, tickLive, totalUnread, unreadLive,
 } from "./live";
 import { messageText } from "./chronology";
 
@@ -28,7 +28,7 @@ function NotifCard({ m, lang, preview, onClick }: { m: Msg; lang: Lang; preview:
     <button onClick={onClick} className="notif-card w-full text-left flex items-center gap-3">
       <img src={KKT_ICON} alt="" className="w-9 h-9 rounded-[9px] shrink-0" />
       <div className="min-w-0 flex-1">
-        <div className="flex justify-between text-[13px]"><b>KakaoTalk · 찬영 Anton</b><span className="opacity-70">{m.time}</span></div>
+        <div className="flex justify-between text-[13px]"><b className="truncate">{KKT_NAME}</b><span className="opacity-70">{m.time}</span></div>
         <div className="text-[14px] truncate">{preview ? notifText(m, lang) : tr(lang, { en: "New message", ko: "새 메시지", zh: "新消息" })}</div>
       </div>
       {preview && m.type === "image" && m.image && <img src={resolveImg(m.image)} alt="" className="w-9 h-9 rounded-md object-cover" />}
@@ -36,6 +36,7 @@ function NotifCard({ m, lang, preview, onClick }: { m: Msg; lang: Lang; preview:
   );
 }
 let KKT_ICON = "";
+let KKT_NAME = "";
 
 function useNow() {
   const [now, setNow] = useState<Date | null>(null);
@@ -275,9 +276,10 @@ export default function Phone() {
   const [banner, setBanner] = useState<Msg | null>(null);
   const [chatTarget, setChatTarget] = useState<string | null>(null);
   const [pendingChat, setPendingChat] = useState(false);
+  const [contactName, setContactName] = useState("");
 
   useEffect(() => {
-    const refresh = () => { setUnread(totalUnread()); setLockNotifs(unreadLive()); setLiveState(loadLiveSettings()); };
+    const refresh = () => { setContactName(liveContactName()); setUnread(totalUnread()); setLockNotifs(unreadLive()); setLiveState(loadLiveSettings()); };
     refresh();
     let hide: ReturnType<typeof setTimeout> | undefined;
     const onLive = (e: Event) => {
@@ -328,6 +330,7 @@ export default function Phone() {
 
   const kktApp = apps.find((a) => a.id === "kkt") ?? DEFAULT_APPS.find((a) => a.id === "kkt");
   KKT_ICON = kktApp?.icon ?? "";
+  KKT_NAME = contactName;
   const openChat = () => {
     setBanner(null);
     if (!kktApp) return;

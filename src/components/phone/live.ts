@@ -146,3 +146,5 @@ export const unreadLive = (): Msg[] =>
   read<Msg[]>(MSGS_KEY, []).filter((m) => m.live && !m.read).reverse();
 
 export const totalUnread = (): number => read<Contact[]>(CONTACTS_KEY, CONTACTS).reduce((n, c) => n + (c.unread || 0), 0);
+
+export const liveContactName = (): string => read<Contact[]>(CONTACTS_KEY, CONTACTS).find((c) => c.id === LIVE_CONTACT)?.name ?? "Anton";
