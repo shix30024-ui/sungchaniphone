@@ -63,7 +63,7 @@ export function InstagramDM({ lang, onClose }: { lang: Lang; onClose: () => void
   const [text, setText] = useState("");
   const scroll = useRef<HTMLDivElement>(null);
   const contact = contacts.find((c) => c.id === open);
-  const typing = queue.some((q) => q.channel === "ig" && q.contactId === open);
+  const typing = queue.some((q) => !q.failed && q.channel === "ig" && q.contactId === open);
   const thread = msgs.filter((m) => m.contactId === open);
   useEffect(() => {
     if (!open) return;

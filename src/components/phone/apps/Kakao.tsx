@@ -71,7 +71,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const [queue] = usePersist<PendingReply[]>(QUEUE_KEY, []);
   const scroll = useRef<HTMLDivElement>(null);
   const editIds = useRef(new Set<string>());
-  const typing = queue.some((q) => q.channel === "kkt" && q.contactId === openId);
+  const typing = queue.some((q) => !q.failed && q.channel === "kkt" && q.contactId === openId);
   useEffect(() => {
     if (scroll.current) scroll.current.scrollTop = scroll.current.scrollHeight;
   }, [msgs, openId, typing, editing]);

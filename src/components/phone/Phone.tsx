@@ -7,7 +7,8 @@ import Instagram from "./apps/Instagram";
 import XApp from "./apps/XApp";
 import Photos from "./apps/Photos";
 import Notes from "./apps/Notes";
-import { STORY_NOW } from "./chronology";
+import { useDeviceNow } from "./clock";
+import PhoneApp from "./apps/PhoneApp";
 import Calendar from "./apps/Calendar";
 import Music from "./apps/Music";
 import Settings from "./apps/Settings";
@@ -23,7 +24,7 @@ import {
   liveContactName, loadLiveSettings, rescheduleLive, saveLiveSettings, tickLive, totalUnread, unreadLive,
 } from "./live";
 import { messageText } from "./chronology";
-import { tickReplies } from "./conversation";
+import { tickReplies, REPLY_ERROR_EVENT } from "./conversation";
 import { getActiveChat } from "./live";
 import { Wifi, ChevronUp, ChevronDown, X, Search, Plane } from "lucide-react";
 import { SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from "./system";
@@ -46,14 +47,6 @@ function NotifCard({ m, lang, preview, onClick }: { m: Msg; lang: Lang; preview:
 }
 let KKT_ICON = "";
 let KKT_NAME = "";
-
-function useNow() {
-  const [now, setNow] = useState<Date | null>(null);
-  useEffect(() => {
-    setNow(new Date(STORY_NOW));
-  }, []);
-  return now;
-}
 
 function StatusBar({ now, inApp }: { now: Date | null; inApp: boolean }) {
   const [system] = usePersist<SystemSettings>(SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS);
@@ -222,6 +215,7 @@ function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initia
     : app.id === "notes" ? <Notes lang={lang} onHome={onClose} />
     : app.id === "calendar" ? <Calendar lang={lang} onHome={onClose} />
     : app.id === "music" ? <Music lang={lang} onHome={onClose} />
+    : app.id === "phone" ? <PhoneApp lang={lang} onHome={onClose} />
     : app.id === "settings" ? <Settings lang={lang} setLang={setLang} live={live} setLive={setLive} apps={apps} onHome={onClose} onLock={onLock} onEditApps={onEditApps} /> : null;
   if (builtIn) return <div className="phone-app-container app-open">{builtIn}</div>;
   return (
@@ -243,7 +237,7 @@ function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initia
 }
 
 export default function Phone() {
-  const now = useNow();
+  const now = useDeviceNow();
   const [lang, setLangState] = useState<Lang>("en");
   const [locked, setLocked] = useState(true);
   const [apps, setApps] = useState<App[]>(DEFAULT_APPS);
@@ -258,6 +252,7 @@ export default function Phone() {
   const [pendingChat, setPendingChat] = useState(false);
   const [contactName, setContactName] = useState("");
   const [homeSearch, setHomeSearch] = useState<string | null>(null);
+  const [replyError, setReplyError] = useState<string | null>(null);
 
   useEffect(() => {
     const refresh = () => { setContactName(liveContactName()); setUnread(totalUnread()); setLockNotifs(unreadLive()); setLiveState(loadLiveSettings()); };
@@ -268,17 +263,20 @@ export default function Phone() {
       clearTimeout(hide);
       hide = setTimeout(() => setBanner(null), 5000);
     };
-    const tick = () => { if (document.visibilityState === "visible") { tickReplies(Date.now(), getActiveChat()); tickLive(); } };
+    const onReplyError = (event: Event) => setReplyError((event as CustomEvent<string>).detail);
+    const tick = () => { if (document.visibilityState === "visible") { void tickReplies(Date.now(), getActiveChat()).catch(() => setReplyError(tr(lang, { en: "Reply paused. Saved messages remain unchanged.", ko: "답장이 중단됐습니다. 저장된 메시지는 유지됩니다.", zh: "回复已暂停，已保存的消息不会被覆盖。" }))); tickLive(); } };
     const timer = setInterval(tick, 500);
     window.addEventListener(STORE_EVENT, refresh);
     window.addEventListener("storage", refresh);
     window.addEventListener(LIVE_EVENT, onLive);
+    window.addEventListener(REPLY_ERROR_EVENT, onReplyError);
     document.addEventListener("visibilitychange", tick);
     return () => {
       clearInterval(timer); clearTimeout(hide);
       window.removeEventListener(STORE_EVENT, refresh);
       window.removeEventListener("storage", refresh);
       window.removeEventListener(LIVE_EVENT, onLive);
+      window.removeEventListener(REPLY_ERROR_EVENT, onReplyError);
       document.removeEventListener("visibilitychange", tick);
     };
   }, []);
@@ -360,6 +358,7 @@ export default function Phone() {
           <NotifCard m={banner} lang={lang} preview={live.preview} onClick={openChat} />
         </div>
       )}
+      {!locked && replyError && <div className="reply-error" role="alert"><span>{replyError}</span><Button variant="ghost" size="icon" aria-label={t(lang, "cancel")} onClick={() => setReplyError(null)}><X /></Button></div>}
       {open && (
         <AppView initialChat={open.id === "kkt" ? chatTarget : null} apps={apps} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onClose={() => setOpen(null)}
           onLock={() => { setOpen(null); setLocked(true); }}
