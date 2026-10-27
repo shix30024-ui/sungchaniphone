@@ -1,4 +1,4 @@
-import { STORY_DATE, messageText, nextMessageTime } from "./chronology";
+import { STORY_DATE, nextMessageTime } from "./chronology";
 import { CONTACTS, MESSAGES, type Msg } from "./story";
 import { LIVE_EVENT, CONTACTS_KEY, MSGS_KEY, notifyStore } from "./live";
 import { readStored, updateStored, uid } from "./store";
@@ -36,7 +36,7 @@ export function tickReplies(now = Date.now(), activeKkt: string | null = null) {
     updateStored<PendingReply[]>(QUEUE_KEY, [], (q) => q.filter((p) => p.sourceId !== item.sourceId));
     return null;
   }
-  let reply = replyFromContext(rows.filter((m) => m.contactId === item.contactId), source);
+  const reply = replyFromContext(rows.filter((m) => m.contactId === item.contactId), source);
   const incoming: Msg = { ...reply, id, contactId: item.contactId, sender: "them", type: "text", date: STORY_DATE, time: nextMessageTime(rows), order: Math.max(0, ...rows.map((m) => m.order)) + 1, replyTo: source.id, replyKind: "preset", live: item.channel === "kkt", read: item.channel === "kkt" && activeKkt === item.contactId };
   updateStored<Msg[]>(key, fallback, (current) => [...current.map((m) => m.id === source.id ? { ...m, read: true } : m), incoming]);
   updateStored<PendingReply[]>(QUEUE_KEY, [], (q) => q.filter((p) => p.sourceId !== item.sourceId));

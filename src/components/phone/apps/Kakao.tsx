@@ -5,7 +5,7 @@ import { CONTACTS, MESSAGES, type Contact, type Msg, type MsgType } from "../sto
 import { uid, usePersist } from "../store";
 import { BackBtn, EditBar, Field, ImageField, KktAvatar, TopBar, resolveImg } from "../ui";
 import { Button } from "@/components/ui/button";
-import { Send, Phone, PhoneIncoming, Search, Menu, Plus, Smile, X, ImagePlus } from "lucide-react";
+import { Send, Phone, PhoneIncoming, Search, Menu, Plus, Smile, X } from "lucide-react";
 import { fileToDataUrl } from "../store";
 import Call from "./Call";
 import { type PendingReply, QUEUE_KEY, sendChat } from "../conversation";
