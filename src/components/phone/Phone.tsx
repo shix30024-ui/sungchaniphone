@@ -229,7 +229,7 @@ export default function Phone() {
       {locked ? (
         <Lock lang={lang} setLang={setLang} now={now} onUnlock={() => setLocked(false)} />
       ) : (
-        <div className="absolute inset-0 flex flex-col pt-14 home-in">
+        <div className="absolute inset-0 flex flex-col pt-14 home-in" aria-hidden={Boolean(open)} inert={Boolean(open)}>
           <div className="flex justify-end px-5 gap-2">
             {editMode && (
               <button className="glass-pill px-3 py-1 text-sm text-on-glass" onClick={() => {
