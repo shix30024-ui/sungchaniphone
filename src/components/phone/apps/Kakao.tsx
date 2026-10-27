@@ -29,11 +29,27 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const [msgs, setMsgs] = usePersist<Msg[]>("kkt-msgs-v1", MESSAGES, completeTranslations);
   const [openId, setOpenId] = useState<string | null>(initialChat ?? null);
   useEffect(() => { setActiveChat(openId); return () => setActiveChat(null); }, [openId]);
-  // Opening a chat marks its messages read (only flips read flags; text and order stay untouched).
+  // Opening a chat marks it read. Works on the saved copy directly so defaults never overwrite saved edits.
   useEffect(() => {
     if (!openId) return;
-    if (msgs.some((m) => m.contactId === openId && m.live && !m.read)) setMsgs(msgs.map((m) => (m.contactId === openId && m.live && !m.read ? { ...m, read: true } : m)));
-    if (contacts.some((c) => c.id === openId && c.unread > 0)) setContacts(contacts.map((c) => (c.id === openId ? { ...c, unread: 0 } : c)));
+    try {
+      const ms = localStorage.getItem("kkt-msgs-v1");
+      if (ms) {
+        const list = JSON.parse(ms) as Msg[];
+        if (list.some((m) => m.contactId === openId && m.live && !m.read)) {
+          localStorage.setItem("kkt-msgs-v1", JSON.stringify(list.map((m) => (m.contactId === openId && m.live && !m.read ? { ...m, read: true } : m))));
+          window.dispatchEvent(new CustomEvent("phone-store", { detail: "kkt-msgs-v1" }));
+        }
+      }
+      const cs = localStorage.getItem("kkt-contacts-v1");
+      if (cs) {
+        const list = JSON.parse(cs) as Contact[];
+        if (list.some((c) => c.id === openId && c.unread > 0)) {
+          localStorage.setItem("kkt-contacts-v1", JSON.stringify(list.map((c) => (c.id === openId ? { ...c, unread: 0 } : c))));
+          window.dispatchEvent(new CustomEvent("phone-store", { detail: "kkt-contacts-v1" }));
+        }
+      }
+    } catch { /* keep chat usable even if storage is unavailable */ }
   }, [openId, msgs, contacts]);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Msg[]>([]);
