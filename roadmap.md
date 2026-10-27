@@ -1,4 +1,10 @@
 # Phone story completion
+# Widgets, camera, contacts and Notes language
+- [ ] Add tappable home widgets without replacing saved icons.
+- [ ] Add permission-based camera, capture preview and save to Photos.
+- [ ] Extend Phone recent calls/contact editing and Messages shared contact selection.
+- [ ] Add editable three-language Notes content with exact-match legacy translations.
+- [ ] Test preservation, language and real camera/contact flows.
 # Notes, browser, Messages and KKT adjustment
 - [x] Compare reference KKT and Notes/browser inner screens; align KKT list, five tabs, date pills, avatars, bubbles and composer while keeping this phone's story.
 - [x] Add editable Safari favorites/page content/history and independent native Messages; keep legacy KKT records isolated and Notes on their existing key. External websites open separately, not as editable third-party pages.
