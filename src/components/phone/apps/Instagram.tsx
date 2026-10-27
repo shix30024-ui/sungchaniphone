@@ -4,7 +4,7 @@ import { POSTS, PROFILE, type Post, type Profile } from "../story";
 import { uid, usePersist } from "../store";
 import { label, confirmDelete } from "../labels";
 import { Button } from "@/components/ui/button";
-import { ArrowUp, ArrowDown, Plus, Trash2, Home, Search, User, Heart, MessageCircle, Send, Bookmark, ArrowLeft } from "lucide-react";
+import { ArrowUp, ArrowDown, Plus, Trash2, Home, Search, User, Heart, MessageCircle, Send, Bookmark, ArrowLeft, MoreHorizontal, Clapperboard, ChevronLeft } from "lucide-react";
 import { postImages, moveImage } from "../media";
 import { sendChat } from "../conversation";
 import { Stories, InstagramDM } from "./InstagramSocial";
@@ -46,9 +46,10 @@ export default function Instagram({ lang, onHome }: AppProps) {
   };
   const like = (p: Post) => updatePost(p.id, (current) => ({ ...current, liked: !current.liked, likes: Math.max(0, current.likes + (current.liked ? -1 : 1)) }));
   const nav = <nav className="ig-bottom-nav">
-    {([{ id: "home", icon: Home, title: tr(lang, { en: "Home", ko: "홈", zh: "首页" }) }, { id: "search", icon: Search, title: label(lang, "search") }] as const).map(({ id, icon: Icon, title }) => <Button key={id} variant="ghost" size="icon" aria-label={title} aria-pressed={tab === id} onClick={() => setTab(id)}><Icon /></Button>)}
-    <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "New post", ko: "새 게시물", zh: "新增帖子" })} onClick={newPost}><Plus /></Button>
-    <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Profile", ko: "프로필", zh: "个人主页" })} aria-pressed={tab === "profile"} onClick={() => showProfile(SELF_ID)}><User /></Button>
+    {([{ id: "home", icon: Home, title: tr(lang, { en: "Home", ko: "홈", zh: "首页" }) }, { id: "search", icon: Search, title: label(lang, "search") }] as const).map(({ id, icon: Icon, title }) => <Button key={id} variant="ghost" size="icon" aria-label={title} aria-pressed={tab === id} onClick={() => setTab(id)}><Icon strokeWidth={tab === id ? 2.6 : 1.8} /></Button>)}
+    <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "New post", ko: "새 게시물", zh: "新增帖子" })} onClick={newPost}><Plus strokeWidth={1.8} className="ig-plus-box" /></Button>
+    <Button variant="ghost" size="icon" aria-label="Reels" onClick={() => setTab("search")}><Clapperboard strokeWidth={1.8} /></Button>
+    <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Profile", ko: "프로필", zh: "个人主页" })} aria-pressed={tab === "profile"} onClick={() => showProfile(SELF_ID)}><img src={resolveImg(prof.avatar)} alt="" className={`ig-nav-avatar ${tab === "profile" ? "ig-nav-avatar-on" : ""}`} /></Button>
   </nav>;
   const interactions = (p: Post) => <div className="flex items-center gap-1 py-1">
     <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Like", ko: "좋아요", zh: "点赞" })} aria-pressed={!!p.liked} className={p.liked ? "text-destructive" : ""} onClick={() => like(p)}><Heart fill={p.liked ? "currentColor" : "none"} /></Button>
@@ -156,10 +157,10 @@ export default function Instagram({ lang, onHome }: AppProps) {
     );
 
   if (tab !== "profile") return <div className="app-page bg-background">
-    <TopBar left={<BackBtn onClick={onHome} />} title="Instagram" right={<Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Messages", ko: "메시지", zh: "私信" })} onClick={() => setDm(true)}><Send /></Button>} />
+    <header className="ig-header"><Button variant="ghost" size="icon" aria-label={C} onClick={onHome}><ChevronLeft /></Button><span className="ig-logo">Instagram</span><span className="flex-1" /><Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Notifications", ko: "알림", zh: "通知" })}><Heart strokeWidth={1.8} /></Button><Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Messages", ko: "메시지", zh: "私信" })} onClick={() => setDm(true)}><Send strokeWidth={1.8} /></Button></header>
     <div className="flex-1 overflow-y-auto">
       {tab === "home" ? <><Stories posts={sorted} profile={prof} accounts={accounts} lang={lang} onProfile={showProfile} />{sorted.map((p) => <article key={p.id} className="border-b pb-3">
-        <Button variant="ghost" className="h-auto w-full justify-start gap-2 py-2" onClick={() => showProfile(p.authorId)}><img src={resolveImg(account(p.authorId).avatar)} className="w-8 h-8 rounded-full object-cover" alt="" /><b>{account(p.authorId).username}</b></Button>
+        <Button variant="ghost" className="h-auto w-full justify-start gap-2 py-2" onClick={() => showProfile(p.authorId)}><img src={resolveImg(account(p.authorId).avatar)} className="w-8 h-8 rounded-full object-cover ig-ring" alt="" /><b className="text-[13px]">{account(p.authorId).username}</b><MoreHorizontal className="ml-auto" size={18} /></Button>
         <Button variant="ghost" className="ig-feed-photo" aria-label={tr(lang, { en: "Open post", ko: "게시물 열기", zh: "打开帖子" })} onClick={() => { setOpenId(p.id); setImageIndex(0); }}>{postImages(p)[0] && <img src={resolveImg(postImages(p)[0])} alt="" loading="lazy" />}{postImages(p).length > 1 && <span className="ig-image-count">1/{postImages(p).length}</span>}</Button>
         <div className="px-3 text-sm">{interactions(p)}<b>{p.likes.toLocaleString()} {tr(lang, { en: "likes", ko: "좋아요", zh: "次赞" })}</b><p className="whitespace-pre-wrap mt-1"><b>{account(p.authorId).username}</b> {p.caption}</p><Button variant="ghost" className="px-0 h-auto text-muted-foreground mt-2" onClick={() => { setOpenId(p.id); setCommentsOpen(true); }}>{tr(lang, { en: `View all ${p.comments.length} comments`, ko: `댓글 ${p.comments.length}개 모두 보기`, zh: `查看全部 ${p.comments.length} 条评论` })}</Button><p className="text-xs text-muted-foreground mt-2">{p.date}</p></div>
       </article>)}</> : <><div className="p-3"><input className="sheet-input" aria-label={label(lang, "search")} placeholder={label(lang, "search")} value={query} onChange={(e) => setQuery(e.target.value)} /></div><div className="grid grid-cols-3 gap-0.5">{sorted.filter((p) => `${p.caption} ${account(p.authorId).username}`.toLowerCase().includes(query.toLowerCase())).map((p) => <Button variant="ghost" key={p.id} className="ig-search-photo" onClick={() => { setOpenId(p.id); setImageIndex(0); }}><img src={resolveImg(postImages(p)[0])} alt="" /></Button>)}</div></>}
