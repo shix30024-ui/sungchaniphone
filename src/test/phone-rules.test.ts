@@ -10,7 +10,7 @@ describe("Fictional phone requirements", () => {
     expect(STORY_NOW.slice(0, 10)).toBe("2026-10-26");
   });
   it("preserves Anton's first Korean message", () => {
-    expect(sortMessages(MESSAGES.filter((m) => m.contactId === "anton"))[0]?.ko).toBe("드디어 형 카톡 추가했다ㅋㅋ");
+    expect(sortMessages(MESSAGES.filter((m) => m.contactId === "anton" && m.sender === "them" && m.type === "text"))[0]?.ko).toBe("드디어 형 카톡 추가했다ㅋㅋ");
   });
   it("provides at least six substantive messages in every story phase", () => {
     for (const year of ["2022", "2023", "2024", "2025", "2026"]) {
