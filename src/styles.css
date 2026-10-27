@@ -282,3 +282,9 @@ button:active > .app-icon { transform: scale(.9); }
 .ig-dm-mine { background: var(--primary); color: var(--primary-foreground); }
 @media (max-width: 499px) { .phone-screen { --status-height: max(46px, env(safe-area-inset-top)); } .app-page { padding-bottom: max(17px, env(safe-area-inset-bottom)); } }
 @media (prefers-reduced-motion: reduce) { .typing-dots i, .notif-banner { animation: none; } }
+.phone-screen:has(.call-screen) .status-bar-app { background: var(--call-surface); color: var(--on-glass); }
+.phone-screen:has(.photo-viewer, .ig-story-view) .status-bar-app { background: var(--viewer-surface); color: var(--viewer-ink); }
+.phone-screen:has(.call-screen, .photo-viewer, .ig-story-view) .phone-app-container::after { background: var(--on-glass); }
+.phone-screen:has(.kkt-chat-bg) .status-bar-app { background: var(--kkt-surface); color: var(--kkt-ink); }
+.ig-feed-photo, .ig-search-photo { background: var(--muted); }
+.phone-app-container { animation: none; }
