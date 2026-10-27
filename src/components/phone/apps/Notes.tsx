@@ -9,7 +9,7 @@ import { EditBar, TopBar } from "../ui";
 import { STORY_DATE } from "../chronology";
 
 type NoteFolder = { id: string; name: string };
-type FolderNote = Note & { folderId?: string };
+type FolderNote = Note & { folderId?: string | undefined };
 export default function Notes({ lang, onHome }: AppProps) {
   const [notes, setNotes] = usePersist<FolderNote[]>("notes-v1", NOTES);
   const [folders, setFolders] = usePersist<NoteFolder[]>("phone-note-folders-v1", []);
