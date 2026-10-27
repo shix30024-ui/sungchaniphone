@@ -233,3 +233,11 @@ button:active > .app-icon { transform: scale(.9); }
 .x-fab { position: absolute; bottom: 22px; right: 18px; width: 48px; height: 48px; border-radius: 999px; background: var(--primary); color: var(--primary-foreground); font-size: 28px; }
 @media (max-height: 650px) { .key { width: 62px; height: 62px; } .frost { padding-top: 70px; } .frost > .grid { margin-top: 30px; gap: 12px 24px; } }
 @media (prefers-reduced-motion: reduce) { .wiggle, .shake, .home-in, .app-open, .sheet, .animate-pulse { animation: none; } }
+
+/* Simulated live KakaoTalk notifications */
+.app-icon { position: relative; }
+.icon-badge { position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--destructive); color: var(--destructive-foreground); font-size: 12px; font-weight: 600; display: grid; place-items: center; line-height: 1; }
+.notif-card { padding: 10px 12px; border-radius: 18px; background: var(--glass); color: var(--on-glass); backdrop-filter: blur(28px) saturate(1.6); box-shadow: 0 6px 20px oklch(0 0 0 / .18); }
+.notif-banner { position: absolute; top: 44px; left: 8px; right: 8px; z-index: 50; animation: notif-in .3s ease-out; }
+.notif-banner .notif-card { background: var(--card); color: var(--card-foreground); }
+@keyframes notif-in { from { transform: translateY(-120%); opacity: 0; } to { transform: none; opacity: 1; } }

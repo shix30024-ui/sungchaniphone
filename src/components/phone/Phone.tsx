@@ -12,6 +12,31 @@ import Calendar from "./apps/Calendar";
 import Music from "./apps/Music";
 import { backupPhoneData } from "./store";
 import { label as appLabel } from "./labels";
+import { tr } from "./i18n";
+import { resolveImg } from "./ui";
+import type { Msg } from "./story";
+import {
+  LIVE_CONTACT, LIVE_EVENT, STORE_EVENT, type Frequency, type LiveSettings, DEFAULT_LIVE_SETTINGS,
+  deliverLiveMessage, liveContactName, loadLiveSettings, rescheduleLive, saveLiveSettings, tickLive, totalUnread, unreadLive,
+} from "./live";
+import { messageText } from "./chronology";
+
+const notifText = (m: Msg, lang: Lang) => (m.type === "image" ? tr(lang, { en: "Sent a photo", ko: "사진을 보냈습니다", zh: "发送了一张照片" }) : messageText(m, lang));
+
+function NotifCard({ m, lang, preview, onClick }: { m: Msg; lang: Lang; preview: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="notif-card w-full text-left flex items-center gap-3">
+      <img src={KKT_ICON} alt="" className="w-9 h-9 rounded-[9px] shrink-0" />
+      <div className="min-w-0 flex-1">
+        <div className="flex justify-between text-[13px]"><b className="truncate">{KKT_NAME}</b><span className="opacity-70">{m.time}</span></div>
+        <div className="text-[14px] truncate">{preview ? notifText(m, lang) : tr(lang, { en: "New message", ko: "새 메시지", zh: "新消息" })}</div>
+      </div>
+      {preview && m.type === "image" && m.image && <img src={resolveImg(m.image)} alt="" className="w-9 h-9 rounded-md object-cover" />}
+    </button>
+  );
+}
+let KKT_ICON = "";
+let KKT_NAME = "";
 
 function useNow() {
   const [now, setNow] = useState<Date | null>(null);
@@ -35,11 +60,12 @@ function IconFace({ icon }: { icon: string }) {
   return isImg(icon) ? <img src={icon} alt="" className="icon-img" draggable={false} /> : <span className="text-[28px] leading-none">{icon}</span>;
 }
 
-function Icon({ app, onClick, wiggle, label = true }: { app: App; onClick: () => void; wiggle: boolean; label?: boolean }) {
+function Icon({ app, onClick, wiggle, label = true, badge = 0 }: { app: App; onClick: () => void; wiggle: boolean; label?: boolean; badge?: number }) {
   return (
     <button onClick={onClick} className="flex flex-col items-center gap-1.5 min-w-0">
       <div className={`app-icon ${wiggle ? "wiggle" : ""}`} style={{ background: app.color }}>
         <IconFace icon={app.icon} />
+        {badge > 0 && <span className="icon-badge">{badge > 99 ? "99+" : badge}</span>}
       </div>
       {label && <span className="app-label truncate max-w-[72px]">{app.name}</span>}
     </button>
@@ -58,7 +84,7 @@ function LangPicker({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void 
   );
 }
 
-function Lock({ lang, setLang, now, onUnlock }: { lang: Lang; setLang: (l: Lang) => void; now: Date | null; onUnlock: () => void }) {
+function Lock({ lang, setLang, now, onUnlock, notifs, preview, onNotif }: { lang: Lang; setLang: (l: Lang) => void; now: Date | null; onUnlock: () => void; notifs: Msg[]; preview: boolean; onNotif: () => void }) {
   const [pad, setPad] = useState(false);
   const [code, setCode] = useState("");
   const [err, setErr] = useState(false);
@@ -81,6 +107,12 @@ function Lock({ lang, setLang, now, onUnlock }: { lang: Lang; setLang: (l: Lang)
       <div className="absolute inset-0 flex flex-col items-center pt-20 text-on-glass" onClick={() => setPad(true)}>
         <div className="text-lg font-medium opacity-90">{now ? fmtDate(lang, now) : ""}</div>
         <div className="lock-time">{now ? fmtTime(now) : ""}</div>
+        {notifs.length > 0 && (
+          <div className="w-full px-3 mt-6 space-y-2 max-h-[40%] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {notifs.slice(0, 4).map((m) => <NotifCard key={m.id} m={m} lang={lang} preview={preview} onClick={() => { onNotif(); setPad(true); }} />)}
+            {notifs.length > 4 && <div className="text-center text-xs opacity-80">+{notifs.length - 4}</div>}
+          </div>
+        )}
         <div className="mt-auto mb-10 flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
           <LangPicker lang={lang} setLang={setLang} />
           <button onClick={() => setPad(true)} className="text-sm opacity-80 animate-pulse">{t(lang, "swipe")}</button>
@@ -160,8 +192,8 @@ function Editor({ lang, app, onSave, onRemove, onClose }: { lang: Lang; app: App
   );
 }
 
-function AppView({ lang, app, setLang, onClose, onLock, onReset }: { lang: Lang; app: App; setLang: (l: Lang) => void; onClose: () => void; onLock: () => void; onReset: () => void }) {
-  const builtIn = app.id === "kkt" || app.id === "msg" ? <Kakao lang={lang} onHome={onClose} />
+function AppView({ lang, app, setLang, onClose, onLock, onReset, initialChat, live, setLive }: { lang: Lang; app: App; setLang: (l: Lang) => void; onClose: () => void; onLock: () => void; onReset: () => void; initialChat: string | null; live: LiveSettings; setLive: (s: LiveSettings) => void }) {
+  const builtIn = app.id === "kkt" || app.id === "msg" ? <Kakao lang={lang} onHome={onClose} initialChat={initialChat} />
     : app.id === "ig" ? <Instagram lang={lang} onHome={onClose} />
     : app.id === "x" ? <XApp lang={lang} onHome={onClose} />
     : app.id === "photos" ? <Photos lang={lang} onHome={onClose} />
@@ -188,6 +220,33 @@ function AppView({ lang, app, setLang, onClose, onLock, onReset }: { lang: Lang;
               ))}
             </div>
           </div>
+          <div>
+            <div className="text-xs text-muted-foreground mb-2">{tr(lang, { en: "KakaoTalk live messages", ko: "카카오톡 실시간 메시지", zh: "KKT 实时消息" })}</div>
+            <div className="rounded-xl bg-muted divide-y">
+              <label className="w-full flex justify-between items-center px-4 py-3">
+                {tr(lang, { en: "Auto messages from Anton", ko: "찬영 자동 메시지", zh: "灿荣自动发消息" })}
+                <input type="checkbox" aria-label="auto-messages" checked={live.enabled} onChange={(e) => setLive({ ...live, enabled: e.target.checked })} />
+              </label>
+              <label className="w-full flex justify-between items-center px-4 py-3">
+                {tr(lang, { en: "Show message previews", ko: "미리보기 표시", zh: "显示通知预览" })}
+                <input type="checkbox" aria-label="previews" checked={live.preview} onChange={(e) => setLive({ ...live, preview: e.target.checked })} />
+              </label>
+              <div className="px-4 py-3">
+                <div className="mb-2">{tr(lang, { en: "Frequency", ko: "빈도", zh: "频率" })}</div>
+                <div className="flex gap-2">
+                  {(["low", "normal", "high"] as Frequency[]).map((f) => (
+                    <button key={f} onClick={() => setLive({ ...live, frequency: f })}
+                      className={`flex-1 py-1.5 rounded-lg text-sm ${live.frequency === f ? "bg-primary text-primary-foreground" : "bg-background"}`}>
+                      {tr(lang, f === "low" ? { en: "Less", ko: "적게", zh: "较少" } : f === "normal" ? { en: "Normal", ko: "보통", zh: "正常" } : { en: "More", ko: "자주", zh: "较频繁" })}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button onClick={() => deliverLiveMessage({ test: true })} className="w-full text-left px-4 py-3 text-primary">
+                {tr(lang, { en: "Send a test message now", ko: "지금 테스트 메시지 받기", zh: "立即接收一条测试消息" })}
+              </button>
+            </div>
+          </div>
           <button onClick={onLock} className="w-full py-3 rounded-xl bg-muted">{t(lang, "lock")}</button>
           <button onClick={onReset} className="w-full py-3 rounded-xl bg-muted text-destructive">{t(lang, "reset")}</button>
         </div>
@@ -211,6 +270,42 @@ export default function Phone() {
   const [editMode, setEditMode] = useState(false);
   const [editing, setEditing] = useState<App | null>(null);
   const [open, setOpen] = useState<App | null>(null);
+  const [live, setLiveState] = useState<LiveSettings>(DEFAULT_LIVE_SETTINGS);
+  const [unread, setUnread] = useState(0);
+  const [lockNotifs, setLockNotifs] = useState<Msg[]>([]);
+  const [banner, setBanner] = useState<Msg | null>(null);
+  const [chatTarget, setChatTarget] = useState<string | null>(null);
+  const [pendingChat, setPendingChat] = useState(false);
+  const [contactName, setContactName] = useState("");
+
+  useEffect(() => {
+    const refresh = () => { setContactName(liveContactName()); setUnread(totalUnread()); setLockNotifs(unreadLive()); setLiveState(loadLiveSettings()); };
+    refresh();
+    let hide: ReturnType<typeof setTimeout> | undefined;
+    const onLive = (e: Event) => {
+      setBanner((e as CustomEvent<Msg>).detail);
+      clearTimeout(hide);
+      hide = setTimeout(() => setBanner(null), 5000);
+    };
+    const tick = () => { if (document.visibilityState === "visible") tickLive(); };
+    const timer = setInterval(tick, 5000);
+    window.addEventListener(STORE_EVENT, refresh);
+    window.addEventListener("storage", refresh);
+    window.addEventListener(LIVE_EVENT, onLive);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      clearInterval(timer); clearTimeout(hide);
+      window.removeEventListener(STORE_EVENT, refresh);
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener(LIVE_EVENT, onLive);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, []);
+  const setLive = (s: LiveSettings) => {
+    const prev = live;
+    setLiveState(s); saveLiveSettings(s);
+    if (s.frequency !== prev.frequency || (s.enabled && !prev.enabled)) rescheduleLive(s.frequency);
+  };
 
   useEffect(() => {
     backupPhoneData();
@@ -233,7 +328,19 @@ export default function Phone() {
   const grid = [...translatedApps.filter((a) => !a.dock), settingsApp];
   const dock = apps.filter((a) => a.dock).slice(0, 4);
 
+  const kktApp = apps.find((a) => a.id === "kkt") ?? DEFAULT_APPS.find((a) => a.id === "kkt");
+  KKT_ICON = kktApp?.icon ?? "";
+  KKT_NAME = contactName;
+  const openChat = () => {
+    setBanner(null);
+    if (!kktApp) return;
+    setChatTarget(LIVE_CONTACT);
+    setOpen(null);
+    setTimeout(() => setOpen(kktApp), 0);
+  };
+
   const tap = (a: App) => {
+    setChatTarget(null);
     if (editMode && a.id !== "settings") setEditing(a);
     else if (!editMode) setOpen(a);
   };
@@ -242,7 +349,8 @@ export default function Phone() {
     <div className="phone-screen" style={{ backgroundImage: `url(${wallpaper.url})` }}>
       <StatusBar now={now} inApp={Boolean(open || editing)} />
       {locked ? (
-        <Lock lang={lang} setLang={setLang} now={now} onUnlock={() => setLocked(false)} />
+        <Lock lang={lang} setLang={setLang} now={now} notifs={lockNotifs} preview={live.preview} onNotif={() => setPendingChat(true)}
+          onUnlock={() => { setLocked(false); if (pendingChat) { setPendingChat(false); openChat(); } }} />
       ) : (
         <div className="absolute inset-0 flex flex-col pt-14 home-in" aria-hidden={Boolean(open)} inert={Boolean(open)}>
           <div className="flex justify-end px-5 gap-2">
@@ -257,16 +365,21 @@ export default function Phone() {
             </button>
           </div>
           <div className="grid grid-cols-4 gap-y-6 gap-x-2 px-5 mt-5">
-            {grid.map((a) => <Icon key={a.id} app={a} wiggle={editMode && a.id !== "settings"} onClick={() => tap(a)} />)}
+            {grid.map((a) => <Icon key={a.id} app={a} badge={a.id === "kkt" ? unread : 0} wiggle={editMode && a.id !== "settings"} onClick={() => tap(a)} />)}
           </div>
           <div className="mt-auto mx-3 mb-3 dock">
-            {dock.map((a) => <Icon key={a.id} app={a} label={false} wiggle={editMode} onClick={() => tap(a)} />)}
+            {dock.map((a) => <Icon key={a.id} app={a} badge={a.id === "kkt" ? unread : 0} label={false} wiggle={editMode} onClick={() => tap(a)} />)}
           </div>
           <div className="home-bar" />
         </div>
       )}
+      {!locked && banner && (
+        <div className="notif-banner">
+          <NotifCard m={banner} lang={lang} preview={live.preview} onClick={openChat} />
+        </div>
+      )}
       {open && (
-        <AppView lang={lang} app={open} setLang={setLang} onClose={() => setOpen(null)}
+        <AppView initialChat={open.id === "kkt" ? chatTarget : null} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onClose={() => setOpen(null)}
           onLock={() => { setOpen(null); setLocked(true); }}
           onReset={() => { if (confirm(appLabel(lang, "confirmDelete"))) { update(DEFAULT_APPS); setOpen(null); } }} />
       )}

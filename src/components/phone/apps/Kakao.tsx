@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { setActiveChat } from "../live";
 import { type AppProps, tr } from "../i18n";
 import { CONTACTS, MESSAGES, type Contact, type Msg, type MsgType } from "../story";
 import { uid, usePersist } from "../store";
@@ -23,10 +24,33 @@ const fmt12 = (t: string, lang: AppProps["lang"]) => {
   return `${lang === "zh" ? (pm ? "下午" : "上午") : lang === "en" ? (pm ? "PM" : "AM") : pm ? "오후" : "오전"} ${h % 12 || 12}:${String(mm).padStart(2, "0")}`;
 };
 
-export default function Kakao({ lang, onHome }: AppProps) {
+export default function Kakao({ lang, onHome, initialChat }: AppProps & { initialChat?: string | null }) {
   const [contacts, setContacts] = usePersist<Contact[]>("kkt-contacts-v1", CONTACTS);
   const [msgs, setMsgs] = usePersist<Msg[]>("kkt-msgs-v1", MESSAGES, completeTranslations);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(initialChat ?? null);
+  useEffect(() => { setActiveChat(openId); return () => setActiveChat(null); }, [openId]);
+  // Opening a chat marks it read. Works on the saved copy directly so defaults never overwrite saved edits.
+  useEffect(() => {
+    if (!openId) return;
+    try {
+      const ms = localStorage.getItem("kkt-msgs-v1");
+      if (ms) {
+        const list = JSON.parse(ms) as Msg[];
+        if (list.some((m) => m.contactId === openId && m.live && !m.read)) {
+          localStorage.setItem("kkt-msgs-v1", JSON.stringify(list.map((m) => (m.contactId === openId && m.live && !m.read ? { ...m, read: true } : m))));
+          window.dispatchEvent(new CustomEvent("phone-store", { detail: "kkt-msgs-v1" }));
+        }
+      }
+      const cs = localStorage.getItem("kkt-contacts-v1");
+      if (cs) {
+        const list = JSON.parse(cs) as Contact[];
+        if (list.some((c) => c.id === openId && c.unread > 0)) {
+          localStorage.setItem("kkt-contacts-v1", JSON.stringify(list.map((c) => (c.id === openId ? { ...c, unread: 0 } : c))));
+          window.dispatchEvent(new CustomEvent("phone-store", { detail: "kkt-contacts-v1" }));
+        }
+      }
+    } catch { /* keep chat usable even if storage is unavailable */ }
+  }, [openId, msgs, contacts]);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Msg[]>([]);
   const [draftC, setDraftC] = useState<Contact | null>(null);

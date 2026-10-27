@@ -27,12 +27,25 @@ export function usePersist<T>(key: string, def: T, normalize?: (value: T) => T):
         setVal(normalize ? normalize(loaded) : loaded);
       }
     } catch {}
+    // Pick up changes written elsewhere (live messages, other tabs) without resetting anything.
+    const reload = () => {
+      try {
+        const s = localStorage.getItem(key);
+        if (s) { const loaded = JSON.parse(s) as T; setVal(normalize ? normalize(loaded) : loaded); }
+      } catch {}
+    };
+    const onStore = (e: Event) => { if ((e as CustomEvent<string>).detail === key) reload(); };
+    const onStorage = (e: StorageEvent) => { if (e.key === key) reload(); };
+    window.addEventListener("phone-store", onStore);
+    window.addEventListener("storage", onStorage);
+    return () => { window.removeEventListener("phone-store", onStore); window.removeEventListener("storage", onStorage); };
   }, [key]);
   const set = (v: T) => {
     try {
       backupPhoneData();
       localStorage.setItem(key, JSON.stringify(v));
       setVal(v);
+      window.dispatchEvent(new CustomEvent("phone-store", { detail: key }));
     } catch {
       alert("Storage full — try a smaller image. / 저장 공간이 부족합니다 / 存储空间不足");
     }
