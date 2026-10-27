@@ -19,3 +19,9 @@
 - [x] Instagram feed from existing posts, editable Stories, post interactions and comment sending.
 - [x] Independent Instagram DMs with contextual replies and typing.
 - [x] Test app navigation, cancellation, saved-content preservation and reload persistence in isolated browsers; user preview storage was not accessed or reset. 21 rule tests passed.
+
+# Reference styling and focused repairs
+- [ ] Match KKT chat hierarchy to p2 and grouped lock notifications to p1 without replacing wallpaper or messages.
+- [ ] Repair contextual local replies, short answers, laughter and known commitments; retain honest non-AI scope.
+- [ ] Add separate fictional authors to Instagram Feed with correct profiles, shared detail/editing and Stories authors.
+- [ ] Test reference layouts, notification navigation, message meaning and unchanged saved records on reload.
