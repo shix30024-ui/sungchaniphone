@@ -1,6 +1,7 @@
 # Phone story completion
 # Wonbin reference adjustment
 - [ ] Inspect reference app navigation and settings.
+- [ ] Inspect unlocked reference apps using the user-provided reference passcode; keep this phone's passcode unchanged.
 - [ ] Adjust settings and shared phone interactions without changing saved content or app order.
 - [ ] Verify language, navigation and preservation at desktop/mobile sizes.
 
