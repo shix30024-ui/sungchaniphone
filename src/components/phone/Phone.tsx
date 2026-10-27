@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import wallpaper from "@/assets/wallpaper.jpeg.asset.json";
 import { type App, DEFAULT_APPS, SETTINGS_ICON, PASSCODE, loadApps, saveApps } from "./apps";
 import { LANGS, type Lang, fmtDate, fmtTime, t } from "./i18n";
@@ -102,6 +102,7 @@ function Lock({ lang, setLang, now, onUnlock, notifs, preview, onNotif }: { lang
   const [err, setErr] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [dismissed, setDismissed] = useState<string[]>([]);
+  const touchStart = useRef<number | null>(null);
   const visibleNotifs = notifs.filter((m) => !dismissed.includes(m.id));
 
   const press = (d: string) => {
@@ -119,7 +120,7 @@ function Lock({ lang, setLang, now, onUnlock, notifs, preview, onNotif }: { lang
 
   if (!pad)
     return (
-      <div className="lock-screen absolute inset-0 flex flex-col items-center pt-20 text-on-glass" onClick={() => setPad(true)}>
+      <div className="lock-screen absolute inset-0 flex flex-col items-center pt-20 text-on-glass" onClick={() => setPad(true)} onTouchStart={(e) => { touchStart.current = e.touches[0]?.clientY ?? null; }} onTouchEnd={(e) => { const end = e.changedTouches[0]?.clientY; if (touchStart.current !== null && end !== undefined && touchStart.current - end > 50) setPad(true); touchStart.current = null; }}>
         <div className="text-lg font-medium opacity-90">{now ? fmtDate(lang, now) : ""}</div>
         <div className="lock-time">{now ? fmtTime(now) : ""}</div>
         {visibleNotifs.length > 0 && (
@@ -362,6 +363,7 @@ export default function Phone() {
           onLock={() => { setOpen(null); setLocked(true); }}
           onEditApps={() => { setOpen(null); setEditMode(true); }} />
       )}
+      {!locked && open && !editing && <Button variant="ghost" className="app-home-indicator" aria-label={t(lang, "back")} onClick={() => setOpen(null)}><span /></Button>}
       {editing && (
         <Editor key={editing.id} lang={lang} app={editing} onClose={() => setEditing(null)}
           onSave={(a) => { update(apps.map((x) => (x.id === a.id ? a : x))); setEditing(null); }}

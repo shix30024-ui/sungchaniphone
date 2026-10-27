@@ -366,3 +366,7 @@ button:active > .app-icon { transform: scale(.9); }
 .kkt-bottom-nav button { flex-direction: column; gap: 3px; height: 48px; min-width: 80px; color: var(--muted-foreground); font-size: 10px; }
 .kkt-bottom-nav button[aria-pressed="true"] { color: var(--foreground); }
 .kkt-bottom-nav button[aria-pressed="true"] svg { fill: var(--kkt-outgoing); }
+.app-home-indicator { position: absolute; bottom: 0; left: calc(50% - 82px); z-index: 38; width: 164px; height: 17px; padding: 0; border-radius: 0; background: transparent; }
+.app-home-indicator:hover { background: transparent; }
+.app-home-indicator span { width: 134px; height: 5px; border-radius: 9px; background: var(--foreground); }
+.phone-screen:has(.call-screen, .photo-viewer, .ig-story-view) .app-home-indicator span { background: var(--on-glass); }
