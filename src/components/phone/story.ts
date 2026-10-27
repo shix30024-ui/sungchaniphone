@@ -16,6 +16,7 @@ export type Msg = {
   id: string; contactId: string; sender: "me" | "them"; type: MsgType;
   ko: string; zh: string; en?: string; date: string; time: string; image?: string | undefined; order: number;
   live?: boolean; read?: boolean; notified?: boolean; createdAt?: string;
+  originalText?: string; replyTo?: string; replyKind?: "preset";
 };
 export type Contact = { id: string; name: string; avatar: string; status: string; unread: number };
 
@@ -223,8 +224,8 @@ if (firstMessage) {
 }
 
 /* ---------- Instagram ---------- */
-export type Comment = { id: string; user: string; text: string };
-export type Post = { id: string; image: string; images?: string[]; caption: string; date: string; time?: string; likes: number; comments: Comment[] };
+export type Comment = { id: string; user: string; text: string; date?: string; time?: string };
+export type Post = { id: string; image: string; images?: string[]; caption: string; date: string; time?: string; likes: number; comments: Comment[]; liked?: boolean; saved?: boolean };
 export type Profile = { username: string; name: string; bio: string; avatar: string; followers: string; following: string };
 
 export const PROFILE: Profile = {
