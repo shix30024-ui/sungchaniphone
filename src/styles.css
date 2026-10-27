@@ -349,7 +349,7 @@ button:active > .app-icon { transform: scale(.9); }
 .settings-section-title { color: var(--muted-foreground); font-size: 12px; padding: 22px 14px 0; }
 .settings-switch { width: 44px; height: 27px; }
 .settings-switch[data-state="checked"] { background: var(--system-switch); }
-.settings-switch > span { width: 23px; height: 23px; }
+.settings-switch > span { width: 23px; height: 23px; translate: none; }
 .settings-switch > span[data-state="checked"] { transform: translateX(17px); }
 .home-search-button { background: var(--glass); color: var(--on-glass); border-radius: 99px; height: 27px; font-size: 12px; gap: 4px; backdrop-filter: blur(20px); }
 .home-search-button:hover { background: var(--glass-strong); color: var(--on-glass); }
