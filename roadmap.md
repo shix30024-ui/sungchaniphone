@@ -1,4 +1,9 @@
 # Phone story completion
+# Context-understanding replies
+- [ ] Replace primary keyword replies with genuine AI reading source-bound recent history and story context.
+- [ ] Preserve queued jobs, all manual edits and original text; expose failures without fabricated replies.
+- [ ] Verify direct questions, fatigue, short acknowledgment, image limits and follow-up context through real chat.
+
 # Wonbin reference adjustment
 - [x] Inspect reference app navigation and settings.
 - [x] Inspect unlocked reference home, Settings and Instagram using the user-provided reference passcode; keep this phone's passcode unchanged. Reference Music could not be opened.
