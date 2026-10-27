@@ -14,18 +14,23 @@ describe("Widgets, camera, contacts and Notes language", () => {
   });
   it("lets device contact edits override shared names without altering legacy contacts", () => {
     const legacy: Contact[] = [{ id: "a", name: "Legacy", avatar: "", status: "", unread: 0 }];
-    const merged = mergeDeviceContacts(legacy, [{ ...legacy[0]!, name: "Edited", number: "010" }]);
+    const first = legacy[0];
+    if (!first) throw new Error("Missing contact fixture");
+    const merged = mergeDeviceContacts(legacy, [{ ...first, name: "Edited", number: "010" }]);
     expect(merged[0]?.name).toBe("Edited");
     expect(legacy[0]?.name).toBe("Legacy");
   });
   it("translates unchanged seed notes but keeps manually edited original text", () => {
-    const note = NOTES[0]!;
+    const note = NOTES[0];
+    if (!note) throw new Error("Missing note fixture");
     expect(noteContent(note, "zh").title).toBe("电影清单");
     expect(noteContent({ ...note, title: "My saved title" }, "zh").title).toBe("My saved title");
   });
   it("edits one note language without changing other languages", () => {
-    const note = editNoteContent(NOTES[0]!, "en", { title: "My English title" });
+    const original = NOTES[0];
+    if (!original) throw new Error("Missing note fixture");
+    const note = editNoteContent(original, "en", { title: "My English title" });
     expect(noteContent(note, "en").title).toBe("My English title");
-    expect(noteContent(note, "ko").title).toBe(NOTES[0]!.title);
+    expect(noteContent(note, "ko").title).toBe(original.title);
   });
 });
