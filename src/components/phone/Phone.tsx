@@ -7,7 +7,8 @@ import Instagram from "./apps/Instagram";
 import XApp from "./apps/XApp";
 import Photos from "./apps/Photos";
 import Notes from "./apps/Notes";
-import { STORY_NOW } from "./chronology";
+import { useDeviceNow } from "./clock";
+import PhoneApp from "./apps/PhoneApp";
 import Calendar from "./apps/Calendar";
 import Music from "./apps/Music";
 import Settings from "./apps/Settings";
@@ -46,14 +47,6 @@ function NotifCard({ m, lang, preview, onClick }: { m: Msg; lang: Lang; preview:
 }
 let KKT_ICON = "";
 let KKT_NAME = "";
-
-function useNow() {
-  const [now, setNow] = useState<Date | null>(null);
-  useEffect(() => {
-    setNow(new Date(STORY_NOW));
-  }, []);
-  return now;
-}
 
 function StatusBar({ now, inApp }: { now: Date | null; inApp: boolean }) {
   const [system] = usePersist<SystemSettings>(SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS);
@@ -222,6 +215,7 @@ function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initia
     : app.id === "notes" ? <Notes lang={lang} onHome={onClose} />
     : app.id === "calendar" ? <Calendar lang={lang} onHome={onClose} />
     : app.id === "music" ? <Music lang={lang} onHome={onClose} />
+    : app.id === "phone" ? <PhoneApp lang={lang} onHome={onClose} />
     : app.id === "settings" ? <Settings lang={lang} setLang={setLang} live={live} setLive={setLive} apps={apps} onHome={onClose} onLock={onLock} onEditApps={onEditApps} /> : null;
   if (builtIn) return <div className="phone-app-container app-open">{builtIn}</div>;
   return (
@@ -243,7 +237,7 @@ function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initia
 }
 
 export default function Phone() {
-  const now = useNow();
+  const now = useDeviceNow();
   const [lang, setLangState] = useState<Lang>("en");
   const [locked, setLocked] = useState(true);
   const [apps, setApps] = useState<App[]>(DEFAULT_APPS);
