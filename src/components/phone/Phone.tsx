@@ -69,7 +69,7 @@ function IconFace({ icon }: { icon: string }) {
 
 function Icon({ app, onClick, wiggle, label = true, badge = 0 }: { app: App; onClick: () => void; wiggle: boolean; label?: boolean; badge?: number }) {
   return (
-    <button onClick={onClick} className="flex flex-col items-center gap-1.5 min-w-0">
+    <button aria-label={app.name} onClick={onClick} className="flex flex-col items-center gap-1.5 min-w-0">
       <div className={`app-icon ${wiggle ? "wiggle" : ""}`} style={{ background: app.color }}>
         <IconFace icon={app.icon} />
         {badge > 0 && <span className="icon-badge">{badge > 99 ? "99+" : badge}</span>}
