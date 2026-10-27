@@ -8,3 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep phone app views inside the existing Phone shell, dispatched by stable app ID, so icon edits cannot change app identity or replace the home screen.
+- Persist fictional phone edits through the existing browser-local store; load only after mount to keep server and browser markup consistent.
+- Centralize story dates and message sorting in browser-safe data utilities so all app views use the same chronology.

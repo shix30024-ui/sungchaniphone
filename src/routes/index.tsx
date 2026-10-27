@@ -4,10 +4,10 @@ import Phone from "@/components/phone/Phone";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "My Phone — Home Screen" },
-      { name: "description", content: "An iPhone-style home screen with lock screen, editable apps and EN/KO/ZH languages." },
-      { property: "og:title", content: "My Phone — Home Screen" },
-      { property: "og:description", content: "iPhone-style lock & home screen with editable apps." },
+      { title: "Sungchan’s Phone — Fictional Seoul Stories" },
+      { name: "description", content: "Explore a fictional Seoul campus story through editable Korean chats, Instagram posts, X, albums and notes on Sungchan’s phone." },
+      { property: "og:title", content: "Sungchan’s Phone — Fictional Seoul Stories" },
+      { property: "og:description", content: "A fictional fan-work phone with connected 2022–2026 chats, photos, posts and notes." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
