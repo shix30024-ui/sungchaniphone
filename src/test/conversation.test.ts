@@ -41,6 +41,25 @@ describe("safe contextual phone conversations", () => {
     expect(() => updateStored("ig-posts-v1", [], () => [])).toThrow();
     expect(localStorage.getItem("ig-posts-v1")).toBe("broken saved value");
   });
+  it("keeps one AI request in flight and preserves unrelated edits", async () => {
+    sendChat("kkt", "anton", "今天好累", "zh", 1000);
+    let resolve: (value: Awaited<ReturnType<typeof generate>>) => void = () => {};
+    const waiting = new Promise<Awaited<ReturnType<typeof generate>>>((done) => { resolve = done; });
+    const first = tickReplies(6000, null, () => waiting);
+    expect(await tickReplies(6000, null, generate)).toBeNull();
+    expect(pendingReplies()).toHaveLength(1);
+    resolve(await generate());
+    expect((await first)?.replyKind).toBe("ai");
+    expect(pendingReplies()).toHaveLength(0);
+  });
+  it("stops failed requests without fabricating a character response", async () => {
+    sendChat("kkt", "anton", "吃饭了吗？", "zh", 1000);
+    const before = localStorage.getItem("kkt-msgs-v1");
+    await tickReplies(6000, null, async () => ({ ok: false, status: 403, error: "AI unavailable" }));
+    expect(localStorage.getItem("kkt-msgs-v1")).toBe(before);
+    expect(pendingReplies()[0]?.failed).toBe(true);
+    expect(await tickReplies(7000, null, generate)).toBeNull();
+  });
   it("responds to fatigue before other topics", () => {
     const sent = sendChat("kkt", "anton", "我今天练习好累", "zh", 1000);
     const reply = contextualReply([sent], sent);

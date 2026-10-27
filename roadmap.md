@@ -1,10 +1,10 @@
 # Phone story completion
 # Context-understanding replies
-- [ ] Adjust Phone, Calendar, Music and Settings inner views to the reference without copying its story.
-- [ ] Make lock/status clocks follow the player's local device time while preserving saved story dates.
-- [ ] Replace primary keyword replies with genuine AI reading source-bound recent history and story context.
-- [ ] Preserve queued jobs, all manual edits and original text; expose failures without fabricated replies.
-- [ ] Verify direct questions, fatigue, short acknowledgment, image limits and follow-up context through real chat.
+- [x] Adjust Phone dialer/contacts/recents/favorites, Calendar month/today/search, Music library/tabs and grouped Settings using familiar native hierarchy without copying story. Settings directly compared; remaining reference inner screens were not reliably accessible.
+- [x] Make lock/status clocks follow the player's local device time while preserving saved story dates; browser checks passed.
+- [x] Replace primary keyword replies with genuine AI reading source-bound recent history and story context.
+- [x] Preserve queued jobs, all manual edits and original text; expose failures without fabricated replies.
+- [x] Verify real AI fatigue response and direct follow-up recalling noodles/staying home; image-presence context excludes raw images, source/future isolation tested. Dialer simulation, Calendar/Music saves and reload verified.
 
 # Wonbin reference adjustment
 - [x] Inspect reference app navigation and settings.
