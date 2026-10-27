@@ -52,7 +52,8 @@ export function contextualReply(thread: Msg[], source: Msg) {
   const previous = recent.filter((m) => m.sender === "them" && m.replyKind === "preset");
   if (chosen) {
     const options = lines[chosen];
-    return options[previous.length % options.length] ?? options[0];
+    const selected = options[previous.length % options.length];
+    if (selected) return selected;
   }
   const excerpt = sourceText.length > 48 ? `${sourceText.slice(0, 48)}…` : sourceText;
   return previous.length % 2 === 0
