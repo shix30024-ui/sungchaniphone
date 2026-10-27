@@ -7,6 +7,8 @@ import Instagram from "./apps/Instagram";
 import XApp from "./apps/XApp";
 import Photos from "./apps/Photos";
 import Notes from "./apps/Notes";
+import Safari from "./apps/Safari";
+import Messages from "./apps/Messages";
 import { useDeviceNow } from "./clock";
 import PhoneApp from "./apps/PhoneApp";
 import Calendar from "./apps/Calendar";
@@ -208,7 +210,9 @@ function Editor({ lang, app, onSave, onRemove, onClose }: { lang: Lang; app: App
 }
 
 function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initialChat, live, setLive }: { lang: Lang; app: App; apps: App[]; setLang: (l: Lang) => void; onClose: () => void; onLock: () => void; onEditApps: () => void; initialChat: string | null; live: LiveSettings; setLive: (s: LiveSettings) => void }) {
-  const builtIn = app.id === "kkt" || app.id === "msg" ? <Kakao lang={lang} onHome={onClose} initialChat={initialChat} />
+  const builtIn = app.id === "kkt" ? <Kakao lang={lang} onHome={onClose} initialChat={initialChat} />
+    : app.id === "msg" ? <Messages lang={lang} onHome={onClose} />
+    : app.id === "safari" ? <Safari lang={lang} onHome={onClose} />
     : app.id === "ig" ? <Instagram lang={lang} onHome={onClose} />
     : app.id === "x" ? <XApp lang={lang} onHome={onClose} />
     : app.id === "photos" ? <Photos lang={lang} onHome={onClose} />

@@ -4,7 +4,6 @@ import i_x from "@/assets/icons/x.png.asset.json";
 import i_photos from "@/assets/icons/photos.png.asset.json";
 import i_cam from "@/assets/icons/cam.png.asset.json";
 import i_notes from "@/assets/icons/notes.png.asset.json";
-import i_tiktok from "@/assets/icons/tiktok.png.asset.json";
 import i_phone from "@/assets/icons/phone.png.asset.json";
 import i_msg from "@/assets/icons/msg.png.asset.json";
 import i_safari from "@/assets/icons/safari.png.asset.json";
@@ -29,7 +28,6 @@ export const DEFAULT_APPS: App[] = [
   { id: "photos", name: "Photos", icon: i_photos.url, color: "#ffffff", url: "", dock: false },
   { id: "cam", name: "Camera", icon: i_cam.url, color: "#8e8e93", url: "", dock: false },
   { id: "notes", name: "Notes", icon: i_notes.url, color: "#ffd60a", url: "", dock: false },
-  { id: "tiktok", name: "TikTok", icon: i_tiktok.url, color: "#111111", url: "https://tiktok.com", dock: false },
   { id: "calendar", name: "Calendar", icon: "/icons/calendar.svg", color: "var(--background)", url: "", dock: false },
   { id: "phone", name: "Phone", icon: i_phone.url, color: "#34c759", url: "", dock: true },
   { id: "msg", name: "Messages", icon: i_msg.url, color: "#30d158", url: "", dock: true },
@@ -43,6 +41,13 @@ export const loadApps = (): App[] => {
     const s = localStorage.getItem(KEY);
     if (s) {
       let saved: App[] = JSON.parse(s);
+      if (!localStorage.getItem("phone-tiktok-removed-v1")) {
+        if (saved.some((app) => app.id === "tiktok")) {
+          saved = saved.filter((app) => app.id !== "tiktok");
+          saveApps(saved);
+        }
+        localStorage.setItem("phone-tiktok-removed-v1", "true");
+      }
       // One-time removal of apps the user asked to delete; never re-runs, so a later
       // manual re-add is kept. Everything else (renames, icons, order) is untouched.
       if (!localStorage.getItem("phone-apps-removed-v1")) {
