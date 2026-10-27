@@ -5,6 +5,7 @@ export type DeviceContact = Contact & { number?: string | undefined; email?: str
 export type RecentCall = { id: string; contactId: string; name: string; time: string; direction?: "outgoing" | "incoming" | "missed" | undefined };
 export function mergeDeviceContacts(legacy: Contact[], edits: DeviceContact[]): DeviceContact[] {
   const overrides = new Map(edits.map((c) => [c.id, c]));
-  return [...legacy.map((c) => overrides.get(c.id) ?? c), ...edits.filter((c) => !legacy.some((old) => old.id === c.id))].filter((c) => !c.hidden);
+  const combined: DeviceContact[] = [...legacy.map((c) => overrides.get(c.id) ?? c), ...edits.filter((c) => !legacy.some((old) => old.id === c.id))];
+  return combined.filter((c) => !c.hidden);
 }
 export const DEFAULT_DEVICE_CONTACTS = CONTACTS;
