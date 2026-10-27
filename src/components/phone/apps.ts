@@ -1,12 +1,9 @@
 import i_ig from "@/assets/icons/ig.png.asset.json";
 import i_kkt from "@/assets/icons/kkt.png.asset.json";
 import i_x from "@/assets/icons/x.png.asset.json";
-import i_yt from "@/assets/icons/yt.png.asset.json";
-import i_wv from "@/assets/icons/wv.png.asset.json";
 import i_photos from "@/assets/icons/photos.png.asset.json";
 import i_cam from "@/assets/icons/cam.png.asset.json";
 import i_notes from "@/assets/icons/notes.png.asset.json";
-import i_spotify from "@/assets/icons/spotify.png.asset.json";
 import i_tiktok from "@/assets/icons/tiktok.png.asset.json";
 import i_phone from "@/assets/icons/phone.png.asset.json";
 import i_msg from "@/assets/icons/msg.png.asset.json";
@@ -29,12 +26,9 @@ export const DEFAULT_APPS: App[] = [
   { id: "ig", name: "Instagram", icon: i_ig.url, color: "linear-gradient(45deg,#f9ce34,#ee2a7b,#6228d7)", url: "https://instagram.com", dock: false },
   { id: "kkt", name: "KakaoTalk", icon: i_kkt.url, color: "#fee500", url: "", dock: false },
   { id: "x", name: "X", icon: i_x.url, color: "#000000", url: "https://x.com", dock: false },
-  { id: "yt", name: "YouTube", icon: i_yt.url, color: "#ff0033", url: "https://youtube.com", dock: false },
-  { id: "wv", name: "Weverse", icon: i_wv.url, color: "linear-gradient(135deg,#16e0c4,#3b82f6)", url: "https://weverse.io", dock: false },
   { id: "photos", name: "Photos", icon: i_photos.url, color: "#ffffff", url: "", dock: false },
   { id: "cam", name: "Camera", icon: i_cam.url, color: "#8e8e93", url: "", dock: false },
   { id: "notes", name: "Notes", icon: i_notes.url, color: "#ffd60a", url: "", dock: false },
-  { id: "spotify", name: "Spotify", icon: i_spotify.url, color: "#1db954", url: "https://spotify.com", dock: false },
   { id: "tiktok", name: "TikTok", icon: i_tiktok.url, color: "#111111", url: "https://tiktok.com", dock: false },
   { id: "calendar", name: "Calendar", icon: "/icons/calendar.svg", color: "var(--background)", url: "", dock: false },
   { id: "phone", name: "Phone", icon: i_phone.url, color: "#34c759", url: "", dock: true },
@@ -48,7 +42,17 @@ export const loadApps = (): App[] => {
   try {
     const s = localStorage.getItem(KEY);
     if (s) {
-      const saved: App[] = JSON.parse(s);
+      let saved: App[] = JSON.parse(s);
+      // One-time removal of apps the user asked to delete; never re-runs, so a later
+      // manual re-add is kept. Everything else (renames, icons, order) is untouched.
+      if (!localStorage.getItem("phone-apps-removed-v1")) {
+        localStorage.setItem("phone-apps-removed-v1", "true");
+        const gone = new Set(["yt", "wv", "spotify"]);
+        if (saved.some((app) => gone.has(app.id))) {
+          saved = saved.filter((app) => !gone.has(app.id));
+          saveApps(saved);
+        }
+      }
       // Add the new app only once; retain every existing customization/deletion.
       if (!localStorage.getItem("phone-calendar-added-v1")) {
         const calendar = DEFAULT_APPS.find((app) => app.id === "calendar");
