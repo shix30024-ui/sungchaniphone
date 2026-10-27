@@ -41,7 +41,7 @@ export const LIVE_LINES: LiveLine[] = [
   { id: "live-2026-06", ko: "아 그리고 형이 말한 노래 들어봤는데 생각보다 좋더라", zh: "对了，哥说的那首歌我听了，比想象中好听", en: "Oh and I listened to that song you mentioned, it's better than I expected" },
   { id: "live-2026-07", ko: "베이스 라인 따라 쳐보고 싶어짐", zh: "有点想跟着弹一下贝斯线", en: "Kinda want to try playing along to the bass line" },
   { id: "live-2026-08", ko: "형 이번 주 목요일에 시간 돼?", zh: "哥这周四有空吗？", en: "Hyung, are you free this Thursday?" },
-  { id: "live-2026-09", ko: "학교 앞에 새로 생긴 국밥집 민규가 맛있대", zh: "敏奎说学校门口新开的汤饭店很好吃", en: "Mingyu says the new gukbap place by school is good" },
+  { id: "live-2026-09", ko: "학교 앞에 새로 생긴 국밥집 과 동기들이 맛있대", zh: "系里同学说学校门口新开的汤饭店很好吃", en: "My classmates say the new gukbap place by school is good" },
   { id: "live-2026-10", ko: "", zh: "", en: "", image: "img:cafe" },
   { id: "live-2026-11", ko: "아까 지나가다 찍음 형 좋아할 것 같아서", zh: "刚才路过拍的，觉得哥会喜欢", en: "Took this walking past, thought you'd like it" },
   { id: "live-2026-12", ko: "지하철 막차 놓칠 뻔ㅋㅋ 집 멀어서 진짜 귀찮아", zh: "差点没赶上末班地铁哈哈，家太远了真麻烦", en: "Almost missed the last train lol living this far is such a pain" },
