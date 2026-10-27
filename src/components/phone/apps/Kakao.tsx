@@ -6,39 +6,39 @@ import { BackBtn, EditBar, Field, ImageField, KktAvatar, TopBar, resolveImg } fr
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
 import { STORY_DATE, messageText, sortMessages } from "../chronology";
+import { confirmDelete, label, localeFor } from "../labels";
+import { completeTranslations } from "../translations";
 
 const TODAY = STORY_DATE;
 const sortMsgs = sortMessages<Msg>;
 
-const koDate = (d: string, zh: boolean) => {
+const koDate = (d: string, lang: AppProps["lang"]) => {
   const dt = new Date(d + "T00:00:00");
-  return dt.toLocaleDateString(zh ? "zh-CN" : "ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "long" });
+  return dt.toLocaleDateString(localeFor(lang), { year: "numeric", month: "long", day: "numeric", weekday: "long" });
 };
 const listTime = (m?: Msg) => (!m ? "" : m.date === TODAY ? m.time : m.date.startsWith("2026") ? m.date.slice(5).replace("-", ".") : m.date.replaceAll("-", "."));
-const fmt12 = (t: string, zh: boolean) => {
+const fmt12 = (t: string, lang: AppProps["lang"]) => {
   const [h = 0, mm = 0] = t.split(":").map(Number);
   const pm = h >= 12;
-  return `${zh ? (pm ? "下午" : "上午") : pm ? "오후" : "오전"} ${h % 12 || 12}:${String(mm).padStart(2, "0")}`;
+  return `${lang === "zh" ? (pm ? "下午" : "上午") : lang === "en" ? (pm ? "PM" : "AM") : pm ? "오후" : "오전"} ${h % 12 || 12}:${String(mm).padStart(2, "0")}`;
 };
 
 export default function Kakao({ lang, onHome }: AppProps) {
   const [contacts, setContacts] = usePersist<Contact[]>("kkt-contacts-v1", CONTACTS);
-  const [msgs, setMsgs] = usePersist<Msg[]>("kkt-msgs-v1", MESSAGES);
-  const [cl, setCl] = usePersist<"ko" | "zh">("kkt-lang", "ko");
+  const [msgs, setMsgs] = usePersist<Msg[]>("kkt-msgs-v1", MESSAGES, completeTranslations);
   const [openId, setOpenId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Msg[]>([]);
   const [draftC, setDraftC] = useState<Contact | null>(null);
   const [addingContact, setAddingContact] = useState(false);
   const [compose, setCompose] = useState("");
-  const zh = cl === "zh";
 
   const L = {
     chats: tr(lang, { en: "Chats", ko: "채팅", zh: "聊天" }),
     edit: tr(lang, { en: "Edit", ko: "편집", zh: "编辑" }),
     save: tr(lang, { en: "Save", ko: "저장", zh: "保存" }),
     cancel: tr(lang, { en: "Cancel", ko: "취소", zh: "取消" }),
-    photo: zh ? "照片" : "사진",
+    photo: label(lang, "photo"),
   };
 
   const open = contacts.find((c) => c.id === openId);
@@ -59,7 +59,7 @@ export default function Kakao({ lang, onHome }: AppProps) {
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-[15px] truncate">{c.name}</div>
                 <div className="text-[13px] text-muted-foreground truncate">
-                  {last ? (last.type === "image" ? L.photo : messageText(last, cl)) : ""}
+                  {last ? (last.type === "image" ? L.photo : messageText(last, lang)) : ""}
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1 self-start pt-1">
@@ -90,7 +90,7 @@ export default function Kakao({ lang, onHome }: AppProps) {
   const startEdit = () => { setDraft(thread.map((m) => ({ ...m }))); setDraftC({ ...open }); setEditing(true); };
   const save = () => {
     const keep = msgs.filter((m) => m.contactId !== open.id);
-    setMsgs([...keep, ...draft.map((m, i) => ({ ...m, order: i }))].map((m, i) => ({ ...m, order: m.contactId === open.id ? m.order : i + 100000 })));
+    setMsgs([...keep, ...draft.map((m, i) => ({ ...m, order: i }))]);
     if (draftC) setContacts(contacts.map((c) => (c.id === draftC.id ? draftC : c)));
     setEditing(false);
   };
@@ -107,7 +107,7 @@ export default function Kakao({ lang, onHome }: AppProps) {
   };
   const add = (type: MsgType) => {
     const last = draft.at(-1);
-    setDraft([...draft, { id: uid(), contactId: open.id, sender: "me", type, ko: type === "date" ? "" : "", zh: "", date: last?.date ?? TODAY, time: last?.time ?? "12:00", order: draft.length, image: "" }]);
+    setDraft([...draft, { id: uid(), contactId: open.id, sender: "me", type, ko: type === "date" ? "" : "", zh: "", en: "", date: last?.date ?? TODAY, time: last?.time ?? "12:00", order: draft.length, image: "" }]);
   };
 
   if (editing && draftC)
@@ -140,7 +140,7 @@ export default function Kakao({ lang, onHome }: AppProps) {
                 <div className="ml-auto flex gap-1">
                   <button className="edit-chip" onClick={() => move(i, -1)}>↑</button>
                   <button className="edit-chip" onClick={() => move(i, 1)}>↓</button>
-                  <button className="edit-chip text-destructive" onClick={() => setDraft(draft.filter((x) => x.id !== m.id))}>🗑</button>
+                  <button className="edit-chip text-destructive" onClick={() => { if (confirmDelete(lang)) setDraft(draft.filter((x) => x.id !== m.id)); }}>🗑</button>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -149,10 +149,12 @@ export default function Kakao({ lang, onHome }: AppProps) {
               </div>
               {m.type === "image" ? (
                 <ImageField label={tr(lang, { en: "Choose image", ko: "이미지 선택", zh: "选择图片" })} value={m.image} onChange={(v) => upd(m.id, { image: v })} />
-              ) : (
+              ) : null}
+              {m.type !== "date" && (
                 <>
                   <textarea className="sheet-input" rows={2} placeholder="한국어" value={m.ko} onChange={(e) => upd(m.id, { ko: e.target.value })} />
-                  <textarea className="sheet-input" rows={2} placeholder="中文翻译" value={m.zh} onChange={(e) => upd(m.id, { zh: e.target.value })} />
+                  <textarea className="sheet-input" rows={2} placeholder="简体中文" value={m.zh} onChange={(e) => upd(m.id, { zh: e.target.value })} />
+                  <textarea className="sheet-input" rows={2} placeholder="English" value={m.en ?? ""} onChange={(e) => upd(m.id, { en: e.target.value })} />
                 </>
               )}
             </div>
@@ -172,7 +174,6 @@ export default function Kakao({ lang, onHome }: AppProps) {
     <div className="app-page kkt-chat-bg">
       <TopBar className="kkt-chat-top" left={<BackBtn onClick={() => setOpenId(null)} />} title={open.name}
         right={<>
-          <button className="text-xs kkt-lang" onClick={() => setCl(zh ? "ko" : "zh")}>{zh ? "한국어" : "中文翻译"}</button>
           <button className="text-sm font-medium" onClick={startEdit}>{L.edit}</button>
         </>} />
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5" ref={(el) => { if (el && !el.dataset["s"]) { el.scrollTop = el.scrollHeight; el.dataset["s"] = "1"; } }}>
@@ -180,18 +181,18 @@ export default function Kakao({ lang, onHome }: AppProps) {
           const parts = [];
           if (m.date !== lastDate) {
             lastDate = m.date;
-            parts.push(<div key={m.id + "d"} className="kkt-date">{koDate(m.date, zh)}</div>);
+            parts.push(<div key={m.id + "d"} className="kkt-date">{koDate(m.date, lang)}</div>);
           }
-          const text = messageText(m, cl);
+          const text = messageText(m, lang);
           if (m.type === "date") { /* The date heading above already displays this divider. */ }
-          else if (m.type === "system") parts.push(<div key={m.id} className="kkt-system">{text || "暂无翻译"}</div>);
+          else if (m.type === "system") parts.push(<div key={m.id} className="kkt-system">{text}</div>);
           else {
             const mine = m.sender === "me";
             const prev = thread[i - 1];
             const head = !mine && (!prev || prev.sender !== "them" || prev.date !== m.date || prev.type === "system");
             const content = m.type === "image"
-              ? <img src={resolveImg(m.image)} alt="" className="kkt-img" loading="lazy" />
-              : <div className={mine ? "kkt-bubble-me" : "kkt-bubble-them"}>{text || <span className="opacity-50">暂无翻译</span>}</div>;
+              ? <div><img src={resolveImg(m.image)} alt="" className="kkt-img" loading="lazy" />{m[lang] && <p className="text-xs mt-1 whitespace-pre-wrap">{m[lang]}</p>}</div>
+              : <div className={mine ? "kkt-bubble-me" : "kkt-bubble-them"}>{text}</div>;
             parts.push(
               <div key={m.id} className={`flex gap-2 ${mine ? "justify-end" : ""}`}>
                 {!mine && <div className="w-9 shrink-0">{head && <KktAvatar src={open.avatar} size={36} />}</div>}
@@ -199,7 +200,7 @@ export default function Kakao({ lang, onHome }: AppProps) {
                   {head && <span className="text-[12px] mb-0.5 opacity-80">{open.name}</span>}
                   <div className={`flex items-end gap-1 ${mine ? "flex-row-reverse" : ""}`}>
                     {content}
-                    <span className="text-[10px] opacity-60 shrink-0">{fmt12(m.time, zh)}</span>
+                    <span className="text-[10px] opacity-60 shrink-0">{fmt12(m.time, lang)}</span>
                   </div>
                 </div>
               </div>,
@@ -212,11 +213,11 @@ export default function Kakao({ lang, onHome }: AppProps) {
         event.preventDefault();
         const text = compose.trim();
         if (!text) return;
-        setMsgs([...msgs, { id: uid(), contactId: open.id, sender: "me", type: "text", ko: zh ? "" : text, zh: zh ? text : "", date: TODAY, time: "20:26", order: Math.max(0, ...msgs.map((m) => m.order)) + 1 }]);
+        setMsgs([...msgs, { id: uid(), contactId: open.id, sender: "me", type: "text", ko: lang === "ko" ? text : "", zh: lang === "zh" ? text : "", en: lang === "en" ? text : "", date: TODAY, time: "20:26", order: Math.max(0, ...msgs.map((m) => m.order)) + 1 }]);
         setCompose("");
       }}>
-        <input aria-label={zh ? "输入消息" : "메시지 입력"} placeholder={zh ? "输入消息" : "메시지 입력"} className="kkt-compose" value={compose} onChange={(event) => setCompose(event.target.value)} />
-        <Button type="submit" size="icon" disabled={!compose.trim()} aria-label={zh ? "发送消息" : "메시지 보내기"} className="kkt-send"><Send size={17} /></Button>
+        <input aria-label={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} placeholder={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} className="kkt-compose" value={compose} onChange={(event) => setCompose(event.target.value)} />
+        <Button type="submit" size="icon" disabled={!compose.trim()} aria-label={tr(lang, { en: "Send message", ko: "메시지 보내기", zh: "发送消息" })} className="kkt-send"><Send size={17} /></Button>
       </form>
     </div>
   );
