@@ -466,3 +466,33 @@ button:active > .app-icon { transform: scale(.9); }
 .safari-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 5px 12px 20px; color: var(--primary); }
 .phone-screen:has(.kkt-chat-bg) .status-bar-app { background: var(--kkt-surface); color: var(--kkt-ink); }
 .phone-screen:has(.notes-native, .safari-native) .status-bar-app { background: var(--system-grouped); }
+
+:root { --kkt-surface: oklch(0.819 0.035 242); --kkt-avatar: oklch(0.77 0.045 240); --kkt-avatar-ink: oklch(1 0 0); --kkt-unread: oklch(0.69 0.2 33); --kkt-date-pill: oklch(0.2 0.01 240 / .18); }
+.kkt-list-top { padding: 8px 18px 15px; min-height: 57px; gap: 0; }
+.kkt-list-top > :first-child { display: none; }
+.kkt-list-top > .flex-1 { font-size: 22px; text-align: left; }
+.kkt-list-top > :last-child { gap: 8px; }
+.kkt-list-top button { width: 30px; height: 32px; }
+.kkt-chat-list-row { min-height: 64px; padding: 8px 18px; gap: 12px; }
+.kkt-chat-list-row .kkt-avatar { border-radius: 18px; }
+.kkt-chat-list-row > .flex-1 > div:first-child { font-size: 15.5px; }
+.kkt-chat-list-row > .flex-1 > div:last-child { font-size: 13.5px; }
+.kkt-badge { background: var(--kkt-unread); min-width: 19px; min-height: 19px; display: grid; place-items: center; font-size: 11px; padding: 0 5px; }
+.kkt-bottom-nav { background: var(--background); padding: 5px 8px 17px; }
+.kkt-bottom-nav button { min-width: 0; flex: 1; padding-inline: 2px; font-size: 10px; gap: 4px; }
+.kkt-bottom-nav button[aria-pressed="true"] svg { fill: none; }
+.kkt-chat-top { min-height: 54px; padding: 4px 10px 8px; }
+.kkt-contact-title { font-size: 16.5px; }
+.kkt-thread { padding: 0 10px 16px; }
+.kkt-message-row { margin-bottom: 5px; }
+.kkt-message-body { max-width: calc(100% - 58px); }
+.kkt-bubble-me, .kkt-bubble-them { border-radius: 15px; font-size: 15px; line-height: 1.36; padding: 8px 11px; }
+.kkt-bubble-me { border-top-right-radius: 4px; }
+.kkt-bubble-them { border-top-left-radius: 4px; }
+.kkt-message-time { font-size: 10px; }
+.kkt-date { padding: 12px 0 18px; opacity: 1; }
+.kkt-date > span { display: inline-flex; align-items: center; gap: 5px; color: var(--on-glass); background: var(--kkt-date-pill); padding: 4px 10px; border-radius: 14px; font-size: 11.5px; }
+.kkt-input { gap: 5px; padding: 7px 8px 24px; }
+.kkt-input > button { width: 30px; height: 36px; }
+.kkt-compose { min-width: 0; min-height: 38px; border-radius: 19px; }
+@media(max-width: 360px) { .kkt-list-top > :last-child { gap: 3px; } .kkt-bottom-nav button { font-size: 9px; } .safari-favorites { gap: 18px 5px; } }
