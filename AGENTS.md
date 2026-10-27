@@ -27,3 +27,4 @@
 - Call screens simulate state transitions without requesting microphone access or loading unapproved audio.
 - Keep Settings as a stable-ID app view with Phone-owned language and notification handlers; presentation changes must never reset saved home-screen customization.
 - Keep simulated device network preferences in a separate versioned system record shared by Settings and the status bar; they never affect actual browser networking.
+- Messages and Safari are independent stable-ID app views with separate versioned browser records; opening Messages never reuses or rewrites Kakao history. Notes folders are optional metadata on existing notes, so uncategorized legacy edits remain accessible.

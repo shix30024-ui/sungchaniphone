@@ -5,7 +5,7 @@ import { CONTACTS, MESSAGES, type Contact, type Msg, type MsgType } from "../sto
 import { uid, usePersist } from "../store";
 import { BackBtn, EditBar, Field, ImageField, KktAvatar, TopBar, resolveImg } from "../ui";
 import { Button } from "@/components/ui/button";
-import { Send, Phone, PhoneIncoming, Search, Menu, Plus, Smile, X, Users, MessageCircle } from "lucide-react";
+import { Send, Phone, PhoneIncoming, Search, Menu, Plus, Smile, X, Users, MessageCircle, MessageCirclePlus, Settings2, ShoppingBag, MoreHorizontal, SquarePlus, CalendarDays } from "lucide-react";
 import { fileToDataUrl } from "../store";
 import Call from "./Call";
 import { type PendingReply, QUEUE_KEY, sendChat } from "../conversation";
@@ -64,7 +64,10 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState("");
   const [emoji, setEmoji] = useState(false);
-  const [listTab, setListTab] = useState<"friends" | "chats">("chats");
+  const [listTab, setListTab] = useState<"friends" | "chats" | "openchat" | "shopping" | "more">("chats");
+  const [listMenu, setListMenu] = useState(false);
+  const [gifts, setGifts] = usePersist<{ id: string; title: string }[]>("phone-kkt-gifts-v1", []);
+  const [giftDraft, setGiftDraft] = useState<{ id: string; title: string } | null>(null);
   const [listSearch, setListSearch] = useState("");
   const [listSearching, setListSearching] = useState(false);
   const upload = useRef<HTMLInputElement>(null);
@@ -92,14 +95,15 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       .sort((a, b) => ((b.last?.date ?? "") + (b.last?.time ?? "")).localeCompare((a.last?.date ?? "") + (a.last?.time ?? "")));
     return (
       <div className="app-page bg-background">
-        <TopBar className="kkt-list-top" left={<BackBtn onClick={onHome} />} title={listTab === "chats" ? L.chats : tr(lang, { en: "Friends", ko: "친구", zh: "好友" })}
-          right={<><Button variant="ghost" size="icon" aria-label={label(lang, "search")} onClick={() => setListSearching(!listSearching)}><Search /></Button><Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Add friend", ko: "친구 추가", zh: "添加好友" })} onClick={() => setAddingContact(true)}><Plus /></Button></>} />
+        <TopBar className="kkt-list-top" title={listTab === "chats" ? L.chats : listTab === "friends" ? tr(lang, { en: "Friends", ko: "친구", zh: "好友" }) : listTab === "openchat" ? tr(lang, { en: "OpenChat", ko: "오픈채팅", zh: "开放聊天" }) : listTab === "shopping" ? tr(lang, { en: "Shopping", ko: "쇼핑", zh: "购物" }) : tr(lang, { en: "More", ko: "더보기", zh: "更多" })}
+          right={<><Button variant="ghost" size="icon" aria-label={label(lang, "search")} onClick={() => setListSearching(!listSearching)}><Search size={22} /></Button><Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Add friend", ko: "친구 추가", zh: "添加好友" })} onClick={() => setAddingContact(true)}><MessageCirclePlus size={22} /></Button><Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Chat settings", ko: "채팅 설정", zh: "聊天设置" })} onClick={() => setListMenu(!listMenu)}><Settings2 size={22} /></Button></>} />
+        {listMenu && <div className="kkt-menu-sheet"><Button variant="ghost" onClick={onHome}>{tr(lang, { en: "Home", ko: "홈", zh: "主屏幕" })}</Button><Button variant="ghost" onClick={() => { setListTab("friends"); setListMenu(false); }}>{tr(lang, { en: "Friends", ko: "친구", zh: "好友" })}</Button><Button variant="ghost" onClick={() => { setAddingContact(true); setListMenu(false); }}><Plus />{tr(lang, { en: "Add friend", ko: "친구 추가", zh: "添加好友" })}</Button></div>}
         {listSearching && <div className="kkt-search"><input className="kkt-compose" aria-label={tr(lang, { en: "Search chats", ko: "채팅 검색", zh: "搜索聊天" })} placeholder={label(lang, "search")} value={listSearch} onChange={(e) => setListSearch(e.target.value)} /></div>}
         <div className="flex-1 overflow-y-auto">
-          {rows.filter(({ c, last }) => !listSearch || `${c.name} ${last ? messageText(last, lang) : ""}`.toLowerCase().includes(listSearch.toLowerCase())).map(({ c, last }) => (
+          {(listTab === "chats" || listTab === "friends" || listTab === "openchat") && rows.filter(({ c, last }) => (listTab !== "openchat" || c.id.startsWith("group")) && (!listSearch || `${c.name} ${last ? messageText(last, lang) : ""}`.toLowerCase().includes(listSearch.toLowerCase()))).map(({ c, last }) => (
             <Button variant="ghost" key={c.id} className="kkt-chat-list-row"
               onClick={() => { setOpenId(c.id); setContacts((current) => current.map((x) => (x.id === c.id ? { ...x, unread: 0 } : x))); }}>
-              <KktAvatar src={c.avatar} />
+              <KktAvatar src={c.avatar} size={48} />
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-[15px] truncate">{c.name}</div>
                 <div className="text-[13px] text-muted-foreground truncate">
@@ -112,10 +116,15 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
               </div>}
             </Button>
           ))}
+          {listTab === "more" && <div className="p-5 space-y-4"><Button variant="outline" className="w-full justify-start" onClick={() => setListTab("friends")}><Users />{tr(lang, { en: "Friends", ko: "친구", zh: "好友" })}</Button><Button variant="outline" className="w-full justify-start" onClick={onHome}>{tr(lang, { en: "Home", ko: "홈", zh: "主屏幕" })}</Button></div>}
+          {listTab === "shopping" && <div className="p-5 space-y-3"><Button variant="outline" onClick={() => setGiftDraft({ id: uid(), title: "" })}><Plus />{tr(lang, { en: "Gift", ko: "선물", zh: "礼物" })}</Button>{gifts.map((gift) => <Button key={gift.id} variant="ghost" className="w-full justify-start" onClick={() => setGiftDraft({ ...gift })}><ShoppingBag />{gift.title}</Button>)}{giftDraft && <div className="space-y-2"><input className="sheet-input" aria-label={tr(lang, { en: "Gift name", ko: "선물 이름", zh: "礼物名称" })} value={giftDraft.title} onChange={(e) => setGiftDraft({ ...giftDraft, title: e.target.value })} /><EditBar save={L.save} cancel={L.cancel} onCancel={() => setGiftDraft(null)} onSave={() => { if (!giftDraft.title.trim()) return; setGifts((old) => old.some((g) => g.id === giftDraft.id) ? old.map((g) => g.id === giftDraft.id ? giftDraft : g) : [...old, giftDraft]); setGiftDraft(null); }} /><Button variant="ghost" className="text-destructive" onClick={() => { if (confirmDelete(lang)) { setGifts((old) => old.filter((g) => g.id !== giftDraft.id)); setGiftDraft(null); } }}>{label(lang, "delete")}</Button></div>}</div>}
         </div>
         <nav className="kkt-bottom-nav">
           <Button variant="ghost" aria-label={tr(lang, { en: "Friends", ko: "친구", zh: "好友" })} aria-pressed={listTab === "friends"} onClick={() => setListTab("friends")}><Users size={23} /><span>{tr(lang, { en: "Friends", ko: "친구", zh: "好友" })}</span></Button>
           <Button variant="ghost" aria-label={L.chats} aria-pressed={listTab === "chats"} onClick={() => setListTab("chats")}><MessageCircle size={23} /><span>{L.chats}</span></Button>
+          <Button variant="ghost" aria-pressed={listTab === "openchat"} onClick={() => setListTab("openchat")}><Smile size={23} /><span>{tr(lang, { en: "OpenChat", ko: "오픈채팅", zh: "开放聊天" })}</span></Button>
+          <Button variant="ghost" aria-pressed={listTab === "shopping"} onClick={() => setListTab("shopping")}><ShoppingBag size={23} /><span>{tr(lang, { en: "Shopping", ko: "쇼핑", zh: "购物" })}</span></Button>
+          <Button variant="ghost" aria-pressed={listTab === "more"} onClick={() => setListTab("more")}><MoreHorizontal size={23} /><span>{tr(lang, { en: "More", ko: "더보기", zh: "更多" })}</span></Button>
         </nav>
         {addingContact && (
           <div className="absolute inset-0 z-30 bg-foreground/30 flex items-end" onClick={() => setAddingContact(false)}>
@@ -233,7 +242,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
           const parts = [];
           if (m.date !== lastDate) {
             lastDate = m.date;
-            parts.push(<div key={m.id + "d"} className="kkt-date">{koDate(m.date, lang)}</div>);
+            parts.push(<div key={m.id + "d"} className="kkt-date"><span><CalendarDays size={12} />{koDate(m.date, lang)}</span></div>);
           }
           const text = messageText(m, lang);
           if (m.type === "date") { /* The date heading above already displays this divider. */ }
@@ -247,7 +256,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
               : <div className={mine ? "kkt-bubble-me" : "kkt-bubble-them"}>{text}</div>;
             parts.push(
               <div key={m.id} className={`kkt-message-row flex gap-2 ${mine ? "justify-end" : ""}`}>
-                {!mine && <div className="w-9 shrink-0">{head && <KktAvatar src={open.avatar} size={34} />}</div>}
+                {!mine && <div className="w-10 shrink-0">{head && <KktAvatar src={open.avatar} size={40} />}</div>}
                 <div className={`kkt-message-body flex flex-col ${mine ? "items-end" : "items-start"}`}>
                   {head && <span className="text-[12px] mb-0.5 opacity-80">{open.name}</span>}
                   <div className={`flex items-end gap-1 ${mine ? "flex-row-reverse" : ""}`}>
@@ -270,11 +279,11 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
         sendChat("kkt", open.id, text, lang);
         setCompose("");
       }}>
-        <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Send photo", ko: "사진 보내기", zh: "发送图片" })} onClick={() => upload.current?.click()}><Plus /></Button>
+        <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Send photo", ko: "사진 보내기", zh: "发送图片" })} onClick={() => upload.current?.click()}><SquarePlus /></Button>
         <input ref={upload} type="file" accept="image/*" className="hidden" onChange={async (e) => { const input = e.currentTarget; const file = input.files?.[0]; try { if (file) { const image = await fileToDataUrl(file); sendChat("kkt", open.id, compose.trim(), lang, Date.now(), image); setCompose(""); } } catch { alert(tr(lang, { en: "Could not send photo", ko: "사진을 보낼 수 없습니다", zh: "图片未发送，请重试" })); } finally { input.value = ""; } }} />
         <input aria-label={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} placeholder={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} className="kkt-compose" value={compose} onChange={(event) => setCompose(event.target.value)} />
         <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Emoji", ko: "이모티콘", zh: "表情" })} aria-expanded={emoji} onClick={() => setEmoji(!emoji)}><Smile size={21} /></Button>
-        <Button type="submit" size="icon" disabled={!compose.trim()} aria-label={tr(lang, { en: "Send message", ko: "메시지 보내기", zh: "发送消息" })} className="kkt-send"><Send size={17} /></Button>
+        {compose.trim() && <Button type="submit" size="icon" aria-label={tr(lang, { en: "Send message", ko: "메시지 보내기", zh: "发送消息" })} className="kkt-send"><Send size={17} /></Button>}
       </form>
     </div>
   );
