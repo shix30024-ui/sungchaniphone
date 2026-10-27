@@ -495,4 +495,7 @@ button:active > .app-icon { transform: scale(.9); }
 .kkt-input { gap: 5px; padding: 7px 8px 24px; }
 .kkt-input > button { width: 30px; height: 36px; }
 .kkt-compose { min-width: 0; min-height: 38px; border-radius: 19px; }
+.kkt-input .kkt-compose { background: var(--muted); border: 0; }
+.kkt-input { position: relative; }
+.kkt-input::after { content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 18px; background: var(--background); }
 @media(max-width: 360px) { .kkt-list-top > :last-child { gap: 3px; } .kkt-bottom-nav button { font-size: 9px; } .safari-favorites { gap: 18px 5px; } }

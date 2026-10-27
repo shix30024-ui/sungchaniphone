@@ -1,9 +1,9 @@
 # Phone story completion
 # Notes, browser, Messages and KKT adjustment
-- [ ] Compare reference KKT and Notes/browser inner screens and adjust presentation without copying story.
-- [ ] Add editable Safari favorites/history and native Messages with independent records; preserve all existing KKT/Notes content.
-- [ ] Remove TikTok once while preserving other icon customizations.
-- [ ] Verify editing, cancel/delete, reload preservation and compact layouts.
+- [x] Compare reference KKT and Notes/browser inner screens; align KKT list, five tabs, date pills, avatars, bubbles and composer while keeping this phone's story.
+- [x] Add editable Safari favorites/page content/history and independent native Messages; keep legacy KKT records isolated and Notes on their existing key. External websites open separately, not as editable third-party pages.
+- [x] Remove TikTok once while preserving other icon customizations; regression tests passed.
+- [x] Verify note save/cancel/folders/confirmed deletion, SMS creation/sending, Safari page editing, KKT edit cancellation and reload at 375×667; 38 tests passed, latest build OK, no browser errors. User preview storage was not accessed or reset.
 # Context-understanding replies
 - [x] Adjust Phone dialer/contacts/recents/favorites, Calendar month/today/search, Music library/tabs and grouped Settings using familiar native hierarchy without copying story. Settings directly compared; remaining reference inner screens were not reliably accessible.
 - [x] Make lock/status clocks follow the player's local device time while preserving saved story dates; browser checks passed.
