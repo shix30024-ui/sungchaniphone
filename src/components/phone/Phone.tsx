@@ -19,13 +19,13 @@ import { CONTACTS, type Contact, type Msg } from "./story";
 import { usePersist } from "./store";
 import { Button } from "@/components/ui/button";
 import {
-  LIVE_CONTACT, LIVE_EVENT, STORE_EVENT, type Frequency, type LiveSettings, DEFAULT_LIVE_SETTINGS,
-  deliverLiveMessage, liveContactName, loadLiveSettings, rescheduleLive, saveLiveSettings, tickLive, totalUnread, unreadLive,
+  LIVE_CONTACT, LIVE_EVENT, STORE_EVENT, type LiveSettings, DEFAULT_LIVE_SETTINGS,
+  liveContactName, loadLiveSettings, rescheduleLive, saveLiveSettings, tickLive, totalUnread, unreadLive,
 } from "./live";
 import { messageText } from "./chronology";
 import { tickReplies } from "./conversation";
 import { getActiveChat } from "./live";
-import { Wifi, ChevronUp, ChevronDown, X } from "lucide-react";
+import { Wifi, ChevronUp, ChevronDown, X, Search } from "lucide-react";
 
 const notifText = (m: Msg, lang: Lang) => (m.type === "image" ? tr(lang, { en: "Sent a photo", ko: "사진을 보냈습니다", zh: "发送了一张照片" }) : messageText(m, lang));
 
@@ -254,6 +254,7 @@ export default function Phone() {
   const [chatTarget, setChatTarget] = useState<string | null>(null);
   const [pendingChat, setPendingChat] = useState(false);
   const [contactName, setContactName] = useState("");
+  const [homeSearch, setHomeSearch] = useState<string | null>(null);
 
   useEffect(() => {
     const refresh = () => { setContactName(liveContactName()); setUnread(totalUnread()); setLockNotifs(unreadLive()); setLiveState(loadLiveSettings()); };
@@ -344,7 +345,8 @@ export default function Phone() {
           <div className="grid grid-cols-4 gap-y-6 gap-x-2 px-5 mt-5">
             {grid.map((a) => <Icon key={a.id} app={a} badge={a.id === "kkt" ? unread : 0} wiggle={editMode && a.id !== "settings"} onClick={() => tap(a)} />)}
           </div>
-          <div className="mt-auto mx-3 mb-3 dock">
+          <div className="mt-auto flex justify-center mb-5"><Button variant="ghost" size="sm" className="home-search-button" onClick={() => setHomeSearch("")}><Search size={13} />{tr(lang, { en: "Search", ko: "검색", zh: "搜索" })}</Button></div>
+          <div className="mx-3 mb-3 dock">
             {dock.map((a) => <Icon key={a.id} app={a} badge={a.id === "kkt" ? unread : 0} label={false} wiggle={editMode} onClick={() => tap(a)} />)}
           </div>
           <div className="home-bar" />
@@ -365,6 +367,10 @@ export default function Phone() {
           onSave={(a) => { update(apps.map((x) => (x.id === a.id ? a : x))); setEditing(null); }}
           onRemove={() => { update(apps.filter((x) => x.id !== editing.id)); setEditing(null); }} />
       )}
+      {!locked && homeSearch !== null && <div className="home-search-overlay">
+        <div className="home-search-field"><Search size={20} /><input autoFocus aria-label={tr(lang, { en: "Search apps", ko: "앱 검색", zh: "搜索应用" })} placeholder={tr(lang, { en: "Search", ko: "검색", zh: "搜索" })} value={homeSearch} onChange={(e) => setHomeSearch(e.target.value)} /><Button variant="ghost" size="icon" aria-label={t(lang, "cancel")} onClick={() => setHomeSearch(null)}><X /></Button></div>
+        <div className="home-search-results">{[...translatedApps, settingsApp].filter((a) => a.name.toLowerCase().includes(homeSearch.toLowerCase())).map((a) => <Button variant="ghost" key={a.id} className="home-search-result" onClick={() => { setHomeSearch(null); tap(a); }}><img src={a.icon} alt="" /><span>{a.name}</span></Button>)}</div>
+      </div>}
     </div>
   );
 }

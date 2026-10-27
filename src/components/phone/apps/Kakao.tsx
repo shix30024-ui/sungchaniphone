@@ -5,7 +5,7 @@ import { CONTACTS, MESSAGES, type Contact, type Msg, type MsgType } from "../sto
 import { uid, usePersist } from "../store";
 import { BackBtn, EditBar, Field, ImageField, KktAvatar, TopBar, resolveImg } from "../ui";
 import { Button } from "@/components/ui/button";
-import { Send, Phone, PhoneIncoming, Search, Menu, Plus, Smile, X } from "lucide-react";
+import { Send, Phone, PhoneIncoming, Search, Menu, Plus, Smile, X, Users, MessageCircle } from "lucide-react";
 import { fileToDataUrl } from "../store";
 import Call from "./Call";
 import { type PendingReply, QUEUE_KEY, sendChat } from "../conversation";
@@ -64,6 +64,9 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState("");
   const [emoji, setEmoji] = useState(false);
+  const [listTab, setListTab] = useState<"friends" | "chats">("chats");
+  const [listSearch, setListSearch] = useState("");
+  const [listSearching, setListSearching] = useState(false);
   const upload = useRef<HTMLInputElement>(null);
   const [queue] = usePersist<PendingReply[]>(QUEUE_KEY, []);
   const scroll = useRef<HTMLDivElement>(null);
@@ -89,26 +92,31 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       .sort((a, b) => ((b.last?.date ?? "") + (b.last?.time ?? "")).localeCompare((a.last?.date ?? "") + (a.last?.time ?? "")));
     return (
       <div className="app-page bg-background">
-        <TopBar left={<BackBtn onClick={onHome} />} title={L.chats}
-          right={<button className="text-sm" onClick={() => setAddingContact(true)}>＋</button>} />
+        <TopBar className="kkt-list-top" left={<BackBtn onClick={onHome} />} title={listTab === "chats" ? L.chats : tr(lang, { en: "Friends", ko: "친구", zh: "好友" })}
+          right={<><Button variant="ghost" size="icon" aria-label={label(lang, "search")} onClick={() => setListSearching(!listSearching)}><Search /></Button><Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Add friend", ko: "친구 추가", zh: "添加好友" })} onClick={() => setAddingContact(true)}><Plus /></Button></>} />
+        {listSearching && <div className="kkt-search"><input className="kkt-compose" aria-label={tr(lang, { en: "Search chats", ko: "채팅 검색", zh: "搜索聊天" })} placeholder={label(lang, "search")} value={listSearch} onChange={(e) => setListSearch(e.target.value)} /></div>}
         <div className="flex-1 overflow-y-auto">
-          {rows.map(({ c, last }) => (
-            <button key={c.id} className="w-full flex items-center gap-3 px-4 py-2.5 text-left active:bg-muted"
-              onClick={() => { setOpenId(c.id); setContacts(contacts.map((x) => (x.id === c.id ? { ...x, unread: 0 } : x))); }}>
+          {rows.filter(({ c, last }) => !listSearch || `${c.name} ${last ? messageText(last, lang) : ""}`.toLowerCase().includes(listSearch.toLowerCase())).map(({ c, last }) => (
+            <Button variant="ghost" key={c.id} className="kkt-chat-list-row"
+              onClick={() => { setOpenId(c.id); setContacts((current) => current.map((x) => (x.id === c.id ? { ...x, unread: 0 } : x))); }}>
               <KktAvatar src={c.avatar} />
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-[15px] truncate">{c.name}</div>
                 <div className="text-[13px] text-muted-foreground truncate">
-                  {last ? (last.type === "image" ? L.photo : messageText(last, lang)) : ""}
+                  {listTab === "friends" ? c.status : last ? (last.type === "image" ? L.photo : messageText(last, lang)) : ""}
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-1 self-start pt-1">
+              {listTab === "chats" && <div className="flex flex-col items-end gap-1 self-start pt-1">
                 <span className="text-[11px] text-muted-foreground">{listTime(last)}</span>
                 {c.unread > 0 && <span className="kkt-badge">{c.unread}</span>}
-              </div>
-            </button>
+              </div>}
+            </Button>
           ))}
         </div>
+        <nav className="kkt-bottom-nav">
+          <Button variant="ghost" aria-label={tr(lang, { en: "Friends", ko: "친구", zh: "好友" })} aria-pressed={listTab === "friends"} onClick={() => setListTab("friends")}><Users size={23} /><span>{tr(lang, { en: "Friends", ko: "친구", zh: "好友" })}</span></Button>
+          <Button variant="ghost" aria-label={L.chats} aria-pressed={listTab === "chats"} onClick={() => setListTab("chats")}><MessageCircle size={23} /><span>{L.chats}</span></Button>
+        </nav>
         {addingContact && (
           <div className="absolute inset-0 z-30 bg-foreground/30 flex items-end" onClick={() => setAddingContact(false)}>
             <form className="sheet space-y-3" onClick={(e) => e.stopPropagation()} onSubmit={(e) => {
