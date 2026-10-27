@@ -4,11 +4,21 @@ import { POSTS, PROFILE, type Post, type Profile } from "../story";
 import { uid, usePersist } from "../store";
 import { label, confirmDelete } from "../labels";
 import { Button } from "@/components/ui/button";
-import { ArrowUp, ArrowDown, Plus, Trash2 } from "lucide-react";
+import { ArrowUp, ArrowDown, Plus, Trash2, Home, Search, User, Heart, MessageCircle, Send, Bookmark, ArrowLeft } from "lucide-react";
 import { postImages, moveImage } from "../media";
+import { sendChat } from "../conversation";
+import { Stories, InstagramDM } from "./InstagramSocial";
+import { STORY_DATE } from "../chronology";
 import { BackBtn, EditBar, Field, ImageField, TopBar, resolveImg } from "../ui";
 
 export default function Instagram({ lang, onHome }: AppProps) {
+  const [tab, setTab] = useState<"home" | "search" | "profile">("home");
+  const [dm, setDm] = useState(false);
+  const [query, setQuery] = useState("");
+  const [comment, setComment] = useState("");
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [shareId, setShareId] = useState<string | null>(null);
+  const [commentDraft, setCommentDraft] = useState<{ id: string; text: string } | null>(null);
   const [posts, setPosts] = usePersist<Post[]>("ig-posts-v1", POSTS);
   const [prof, setProf] = usePersist<Profile>("ig-profile-v1", PROFILE);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -19,6 +29,23 @@ export default function Instagram({ lang, onHome }: AppProps) {
   const C = tr(lang, { en: "Cancel", ko: "취소", zh: "取消" });
   const sorted = [...posts].sort((a, b) => b.date.localeCompare(a.date));
   const post = posts.find((p) => p.id === openId);
+
+  const newPost = () => setDraft({ id: uid(), image: "", caption: "", date: STORY_DATE, likes: 0, comments: [] });
+  const updatePost = (id: string, update: (p: Post) => Post) => setPosts((current) => current.map((p) => p.id === id ? update(p) : p));
+  const like = (p: Post) => updatePost(p.id, (current) => ({ ...current, liked: !current.liked, likes: Math.max(0, current.likes + (current.liked ? -1 : 1)) }));
+  const nav = <nav className="ig-bottom-nav">
+    {([{ id: "home", icon: Home, title: tr(lang, { en: "Home", ko: "홈", zh: "首页" }) }, { id: "search", icon: Search, title: label(lang, "search") }] as const).map(({ id, icon: Icon, title }) => <Button key={id} variant="ghost" size="icon" aria-label={title} aria-pressed={tab === id} onClick={() => setTab(id)}><Icon /></Button>)}
+    <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "New post", ko: "새 게시물", zh: "新增帖子" })} onClick={newPost}><Plus /></Button>
+    <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Profile", ko: "프로필", zh: "个人主页" })} aria-pressed={tab === "profile"} onClick={() => setTab("profile")}><User /></Button>
+  </nav>;
+  const interactions = (p: Post) => <div className="flex items-center gap-1 py-1">
+    <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Like", ko: "좋아요", zh: "点赞" })} aria-pressed={!!p.liked} className={p.liked ? "text-destructive" : ""} onClick={() => like(p)}><Heart fill={p.liked ? "currentColor" : "none"} /></Button>
+    <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Comments", ko: "댓글", zh: "评论" })} onClick={() => { setOpenId(p.id); setImageIndex(0); setCommentsOpen(true); }}><MessageCircle /></Button>
+    <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Share", ko: "공유", zh: "分享" })} onClick={() => setShareId(p.id)}><Send /></Button>
+    <Button variant="ghost" size="icon" className="ml-auto" aria-label={tr(lang, { en: "Save post", ko: "게시물 저장", zh: "收藏帖子" })} aria-pressed={!!p.saved} onClick={() => updatePost(p.id, (current) => ({ ...current, saved: !current.saved }))}><Bookmark fill={p.saved ? "currentColor" : "none"} /></Button>
+  </div>;
+  const share = shareId && <div className="ig-share-sheet" role="dialog"><div className="sheet"><div className="flex justify-between items-center"><b>{tr(lang, { en: "Share", ko: "공유", zh: "分享" })}</b><Button variant="ghost" size="icon" aria-label={C} onClick={() => setShareId(null)}><ArrowLeft /></Button></div>{["anton", "minjae", "doyun"].map((id) => <Button key={id} variant="ghost" className="w-full justify-start" onClick={() => { const shared = posts.find((p) => p.id === shareId); if (shared) { sendChat("ig", id, `${prof.username} · ${shared.caption}`, lang); setShareId(null); setDm(true); } }}>{id === "anton" ? "Anton" : id === "minjae" ? "김민재" : "박도윤"}</Button>)}</div></div>;
+  if (dm) return <InstagramDM lang={lang} onClose={() => setDm(false)} />;
 
   if (draft) {
     const set = (p: Partial<Post>) => setDraft({ ...draft, ...p });
@@ -48,12 +75,12 @@ export default function Instagram({ lang, onHome }: AppProps) {
             </div>
           ))}
           <button className="edit-chip" onClick={() => set({ comments: [...draft.comments, { id: uid(), user: "user", text: "" }] })}>＋ {tr(lang, { en: "Comment", ko: "댓글", zh: "评论" })}</button>
-          <button className="w-full py-2.5 rounded-xl bg-muted text-destructive" onClick={() => { if (!confirmDelete(lang)) return; setPosts(posts.filter((p) => p.id !== draft.id)); setDraft(null); setOpenId(null); }}>
+          <button className="w-full py-2.5 rounded-xl bg-muted text-destructive" onClick={() => { if (!confirmDelete(lang)) return; setPosts((current) => current.filter((p) => p.id !== draft.id)); setDraft(null); setOpenId(null); }}>
             {tr(lang, { en: "Delete post", ko: "게시물 삭제", zh: "删除帖子" })}
           </button>
         </div>
         <EditBar save={S} cancel={C} onCancel={() => setDraft(null)} onSave={() => {
-          setPosts(posts.some((p) => p.id === draft.id) ? posts.map((p) => (p.id === draft.id ? draft : p)) : [draft, ...posts]);
+          setPosts((current) => current.some((p) => p.id === draft.id) ? current.map((p) => p.id === draft.id ? { ...draft, comments: [...draft.comments, ...p.comments.filter((c) => !posts.find((old) => old.id === draft.id)?.comments.some((old) => old.id === c.id))] } : p) : [draft, ...current]);
           setOpenId(draft.id); setDraft(null);
         }} />
       </div>
@@ -77,10 +104,20 @@ export default function Instagram({ lang, onHome }: AppProps) {
     );
   }
 
+  if (post && commentsOpen) return <div className="app-page bg-background">
+    <TopBar title={tr(lang, { en: "Comments", ko: "댓글", zh: "评论" })} left={<BackBtn onClick={() => { setCommentsOpen(false); setCommentDraft(null); }} />} />
+    <div className="flex-1 overflow-y-auto p-3 space-y-4">
+      <p className="border-b pb-3 text-sm"><b>{prof.username}</b> {post.caption}</p>
+      {post.comments.map((c) => <div key={c.id} className="flex gap-2 items-start"><span className="ig-comment-avatar"><User size={18} /></span><div className="flex-1 min-w-0 text-sm"><b>{c.user}</b><p className="whitespace-pre-wrap break-words">{c.text}</p>{c.date && <span className="text-xs text-muted-foreground">{c.date} {c.time}</span>}<div className="flex gap-3"><Button variant="ghost" size="sm" onClick={() => setCommentDraft({ id: c.id, text: c.text })}>{label(lang, "edit")}</Button><Button variant="ghost" size="sm" onClick={() => setComment(`@${c.user} `)}>{label(lang, "reply")}</Button><Button variant="ghost" size="icon" aria-label={label(lang, "delete")} onClick={() => { if (confirmDelete(lang)) updatePost(post.id, (p) => ({ ...p, comments: p.comments.filter((x) => x.id !== c.id) })); }}><Trash2 size={14} /></Button></div></div></div>)}
+      {commentDraft && <div className="space-y-2"><input className="sheet-input" aria-label={tr(lang, { en: "Edit comment", ko: "댓글 수정", zh: "编辑评论" })} value={commentDraft.text} onChange={(e) => setCommentDraft({ ...commentDraft, text: e.target.value })} /><Button onClick={() => { updatePost(post.id, (p) => ({ ...p, comments: p.comments.map((c) => c.id === commentDraft.id ? { ...c, text: commentDraft.text } : c) })); setCommentDraft(null); }}>{S}</Button><Button variant="ghost" onClick={() => setCommentDraft(null)}>{C}</Button></div>}
+    </div>
+    <form className="kkt-input" onSubmit={(e) => { e.preventDefault(); if (!comment.trim()) return; updatePost(post.id, (p) => ({ ...p, comments: [...p.comments, { id: uid(), user: prof.username, text: comment.trim(), date: STORY_DATE, time: "20:26" }] })); setComment(""); }}><input className="kkt-compose" aria-label={tr(lang, { en: "Add comment", ko: "댓글 입력", zh: "输入评论" })} value={comment} onChange={(e) => setComment(e.target.value)} /><Button size="icon" aria-label={tr(lang, { en: "Post comment", ko: "댓글 게시", zh: "发布评论" })} disabled={!comment.trim()}><Send /></Button></form>
+  </div>;
+
   if (post)
     return (
       <div className="app-page bg-background">
-        <TopBar left={<BackBtn onClick={() => setOpenId(null)} />} title={tr(lang, { en: "Posts", ko: "게시물", zh: "帖子" })}
+        <TopBar left={<BackBtn onClick={() => { setOpenId(null); setCommentsOpen(false); }} />} title={tr(lang, { en: "Posts", ko: "게시물", zh: "帖子" })}
           right={<button className="text-sm" onClick={() => setDraft({ ...post, comments: post.comments.map((c) => ({ ...c })) })}>{tr(lang, { en: "Edit", ko: "편집", zh: "编辑" })}</button>} />
         <div className="flex-1 overflow-y-auto">
           <div className="flex items-center gap-2 px-3 py-2">
@@ -94,20 +131,33 @@ export default function Instagram({ lang, onHome }: AppProps) {
             {postImages(post).length > 1 && <span className="absolute bottom-2 right-2 bg-background text-foreground px-2 text-xs">{imageIndex + 1}/{postImages(post).length}</span>}
           </div>
           <div className="px-3 py-2 space-y-1.5 text-sm">
-            <div className="text-xl flex gap-4">♡ <span>💬</span> <span>➤</span></div>
+            {interactions(post)}
             <b>{post.likes.toLocaleString()} {tr(lang, { en: "likes", ko: "좋아요", zh: "次赞" })}</b>
             <p><b>{prof.username}</b> {post.caption}</p>
-            {post.comments.map((c) => <p key={c.id}><b>{c.user}</b> {c.text}</p>)}
+            <Button variant="ghost" className="px-0 h-auto text-muted-foreground" onClick={() => setCommentsOpen(true)}>{tr(lang, { en: `View all ${post.comments.length} comments`, ko: `댓글 ${post.comments.length}개 모두 보기`, zh: `查看全部 ${post.comments.length} 条评论` })}</Button>
+            {post.comments.slice(0, 2).map((c) => <p key={c.id}><b>{c.user}</b> {c.text}</p>)}
             <p className="text-xs text-muted-foreground">{post.date.replaceAll("-", ".")} {post.time}</p>
           </div>
         </div>
+        {share}
       </div>
     );
+
+  if (tab !== "profile") return <div className="app-page bg-background">
+    <TopBar left={<BackBtn onClick={onHome} />} title="Instagram" right={<Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Messages", ko: "메시지", zh: "私信" })} onClick={() => setDm(true)}><Send /></Button>} />
+    <div className="flex-1 overflow-y-auto">
+      {tab === "home" ? <><Stories posts={sorted} profile={prof} lang={lang} />{sorted.map((p) => <article key={p.id} className="border-b pb-3">
+        <Button variant="ghost" className="h-auto w-full justify-start gap-2 py-2" onClick={() => setTab("profile")}><img src={resolveImg(prof.avatar)} className="w-8 h-8 rounded-full object-cover" alt="" /><b>{prof.username}</b></Button>
+        <Button variant="ghost" className="ig-feed-photo" aria-label={tr(lang, { en: "Open post", ko: "게시물 열기", zh: "打开帖子" })} onClick={() => { setOpenId(p.id); setImageIndex(0); }}>{postImages(p)[0] && <img src={resolveImg(postImages(p)[0])} alt="" loading="lazy" />}{postImages(p).length > 1 && <span className="ig-image-count">1/{postImages(p).length}</span>}</Button>
+        <div className="px-3 text-sm">{interactions(p)}<b>{p.likes.toLocaleString()} {tr(lang, { en: "likes", ko: "좋아요", zh: "次赞" })}</b><p className="whitespace-pre-wrap mt-1"><b>{prof.username}</b> {p.caption}</p><Button variant="ghost" className="px-0 h-auto text-muted-foreground mt-2" onClick={() => { setOpenId(p.id); setCommentsOpen(true); }}>{tr(lang, { en: `View all ${p.comments.length} comments`, ko: `댓글 ${p.comments.length}개 모두 보기`, zh: `查看全部 ${p.comments.length} 条评论` })}</Button><p className="text-xs text-muted-foreground mt-2">{p.date}</p></div>
+      </article>)}</> : <><div className="p-3"><input className="sheet-input" aria-label={label(lang, "search")} placeholder={label(lang, "search")} value={query} onChange={(e) => setQuery(e.target.value)} /></div><div className="grid grid-cols-3 gap-0.5">{sorted.filter((p) => `${p.caption} ${prof.username}`.toLowerCase().includes(query.toLowerCase())).map((p) => <Button variant="ghost" key={p.id} className="ig-search-photo" onClick={() => { setOpenId(p.id); setImageIndex(0); }}><img src={resolveImg(postImages(p)[0])} alt="" /></Button>)}</div></>}
+    </div>{nav}{share}
+  </div>;
 
   return (
     <div className="app-page bg-background">
       <TopBar left={<BackBtn onClick={onHome} />} title={prof.username}
-        right={<button className="text-xl" onClick={() => setDraft({ id: uid(), image: "", caption: "", date: "2026-10-26", likes: 0, comments: [] })}>⊕</button>} />
+        right={<Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Messages", ko: "메시지", zh: "私信" })} onClick={() => setDm(true)}><Send /></Button>} />
       <div className="flex-1 overflow-y-auto">
         <div className="flex items-center gap-5 px-4 pt-3">
           <img src={resolveImg(prof.avatar)} alt="" className="w-20 h-20 rounded-full object-cover ig-ring" />
@@ -128,6 +178,7 @@ export default function Instagram({ lang, onHome }: AppProps) {
         </div>
         <p className="text-[10px] text-center text-muted-foreground py-3">{label(lang, "fictional")}</p>
       </div>
+      {nav}{share}
     </div>
   );
 }
