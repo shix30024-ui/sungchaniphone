@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import wallpaper from "@/assets/wallpaper.jpeg.asset.json";
 import { type App, DEFAULT_APPS, SETTINGS_ICON, PASSCODE, loadApps, saveApps } from "./apps";
 import { LANGS, type Lang, fmtDate, fmtTime, t } from "./i18n";
@@ -10,6 +10,7 @@ import Notes from "./apps/Notes";
 import { STORY_NOW } from "./chronology";
 import Calendar from "./apps/Calendar";
 import Music from "./apps/Music";
+import Settings from "./apps/Settings";
 import { backupPhoneData } from "./store";
 import { label as appLabel } from "./labels";
 import { tr } from "./i18n";
@@ -18,13 +19,14 @@ import { CONTACTS, type Contact, type Msg } from "./story";
 import { usePersist } from "./store";
 import { Button } from "@/components/ui/button";
 import {
-  LIVE_CONTACT, LIVE_EVENT, STORE_EVENT, type Frequency, type LiveSettings, DEFAULT_LIVE_SETTINGS,
-  deliverLiveMessage, liveContactName, loadLiveSettings, rescheduleLive, saveLiveSettings, tickLive, totalUnread, unreadLive,
+  LIVE_CONTACT, LIVE_EVENT, STORE_EVENT, type LiveSettings, DEFAULT_LIVE_SETTINGS,
+  liveContactName, loadLiveSettings, rescheduleLive, saveLiveSettings, tickLive, totalUnread, unreadLive,
 } from "./live";
 import { messageText } from "./chronology";
 import { tickReplies } from "./conversation";
 import { getActiveChat } from "./live";
-import { Wifi, ChevronUp, ChevronDown, X } from "lucide-react";
+import { Wifi, ChevronUp, ChevronDown, X, Search, Plane } from "lucide-react";
+import { SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from "./system";
 
 const notifText = (m: Msg, lang: Lang) => (m.type === "image" ? tr(lang, { en: "Sent a photo", ko: "사진을 보냈습니다", zh: "发送了一张照片" }) : messageText(m, lang));
 
@@ -54,12 +56,13 @@ function useNow() {
 }
 
 function StatusBar({ now, inApp }: { now: Date | null; inApp: boolean }) {
+  const [system] = usePersist<SystemSettings>(SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS);
   return (
     <div className={`status-bar ${inApp ? "status-bar-app" : ""}`}>
       <span>{now ? fmtTime(now) : ""}</span>
       <span className="status-indicators" aria-label="Simulated signal, Wi-Fi and battery 82%">
-        <span className="cellular-signal" aria-hidden="true"><i /><i /><i /><i /></span>
-        <Wifi size={17} strokeWidth={2.5} aria-hidden="true" />
+        {system.airplane ? <Plane size={17} aria-label="Simulated airplane mode" /> : <span className="cellular-signal" aria-hidden="true"><i /><i /><i /><i /></span>}
+        {system.wifi && <Wifi size={17} strokeWidth={2.5} aria-hidden="true" />}
         <span className="battery-icon" aria-hidden="true"><span className="battery-fill" /></span>
       </span>
     </div>
@@ -101,6 +104,7 @@ function Lock({ lang, setLang, now, onUnlock, notifs, preview, onNotif }: { lang
   const [err, setErr] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [dismissed, setDismissed] = useState<string[]>([]);
+  const touchStart = useRef<number | null>(null);
   const visibleNotifs = notifs.filter((m) => !dismissed.includes(m.id));
 
   const press = (d: string) => {
@@ -118,7 +122,7 @@ function Lock({ lang, setLang, now, onUnlock, notifs, preview, onNotif }: { lang
 
   if (!pad)
     return (
-      <div className="lock-screen absolute inset-0 flex flex-col items-center pt-20 text-on-glass" onClick={() => setPad(true)}>
+      <div className="lock-screen absolute inset-0 flex flex-col items-center pt-20 text-on-glass" onClick={() => setPad(true)} onTouchStart={(e) => { touchStart.current = e.touches[0]?.clientY ?? null; }} onTouchEnd={(e) => { const end = e.changedTouches[0]?.clientY; if (touchStart.current !== null && end !== undefined && touchStart.current - end > 50) setPad(true); touchStart.current = null; }}>
         <div className="text-lg font-medium opacity-90">{now ? fmtDate(lang, now) : ""}</div>
         <div className="lock-time">{now ? fmtTime(now) : ""}</div>
         {visibleNotifs.length > 0 && (
@@ -210,65 +214,23 @@ function Editor({ lang, app, onSave, onRemove, onClose }: { lang: Lang; app: App
   );
 }
 
-function AppView({ lang, app, setLang, onClose, onLock, onReset, initialChat, live, setLive }: { lang: Lang; app: App; setLang: (l: Lang) => void; onClose: () => void; onLock: () => void; onReset: () => void; initialChat: string | null; live: LiveSettings; setLive: (s: LiveSettings) => void }) {
+function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initialChat, live, setLive }: { lang: Lang; app: App; apps: App[]; setLang: (l: Lang) => void; onClose: () => void; onLock: () => void; onEditApps: () => void; initialChat: string | null; live: LiveSettings; setLive: (s: LiveSettings) => void }) {
   const builtIn = app.id === "kkt" || app.id === "msg" ? <Kakao lang={lang} onHome={onClose} initialChat={initialChat} />
     : app.id === "ig" ? <Instagram lang={lang} onHome={onClose} />
     : app.id === "x" ? <XApp lang={lang} onHome={onClose} />
     : app.id === "photos" ? <Photos lang={lang} onHome={onClose} />
     : app.id === "notes" ? <Notes lang={lang} onHome={onClose} />
     : app.id === "calendar" ? <Calendar lang={lang} onHome={onClose} />
-    : app.id === "music" ? <Music lang={lang} onHome={onClose} /> : null;
+    : app.id === "music" ? <Music lang={lang} onHome={onClose} />
+    : app.id === "settings" ? <Settings lang={lang} setLang={setLang} live={live} setLive={setLive} apps={apps} onHome={onClose} onLock={onLock} onEditApps={onEditApps} /> : null;
   if (builtIn) return <div className="phone-app-container app-open">{builtIn}</div>;
-  const isSettings = app.id === "settings";
   return (
     <div className="absolute inset-0 z-20 bg-background text-foreground flex flex-col app-open">
       <div className="pt-12 px-4 pb-3 flex items-center gap-3 border-b">
         <button onClick={onClose} className="text-primary">‹ {t(lang, "back")}</button>
         <b className="mx-auto pr-10">{app.name}</b>
       </div>
-      {isSettings ? (
-        <div className="p-4 space-y-5 overflow-y-auto min-h-0">
-          <div>
-            <div className="text-xs text-muted-foreground mb-2">{t(lang, "language")}</div>
-            <div className="rounded-xl bg-muted divide-y">
-              {LANGS.map((l) => (
-                <button key={l.id} onClick={() => setLang(l.id)} className="w-full flex justify-between px-4 py-3">
-                  {l.label}{lang === l.id && <span className="text-primary">✓</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-2">{tr(lang, { en: "KakaoTalk live messages", ko: "카카오톡 실시간 메시지", zh: "KKT 实时消息" })}</div>
-            <div className="rounded-xl bg-muted divide-y">
-              <label className="w-full flex justify-between items-center px-4 py-3">
-                {tr(lang, { en: "Auto messages from Anton", ko: "찬영 자동 메시지", zh: "灿荣自动发消息" })}
-                <input type="checkbox" aria-label="auto-messages" checked={live.enabled} onChange={(e) => setLive({ ...live, enabled: e.target.checked })} />
-              </label>
-              <label className="w-full flex justify-between items-center px-4 py-3">
-                {tr(lang, { en: "Show message previews", ko: "미리보기 표시", zh: "显示通知预览" })}
-                <input type="checkbox" aria-label="previews" checked={live.preview} onChange={(e) => setLive({ ...live, preview: e.target.checked })} />
-              </label>
-              <div className="px-4 py-3 hidden">
-                <div className="mb-2">{tr(lang, { en: "Frequency", ko: "빈도", zh: "频率" })}</div>
-                <div className="flex gap-2">
-                  {(["low", "normal", "high"] as Frequency[]).map((f) => (
-                    <button key={f} onClick={() => setLive({ ...live, frequency: f })}
-                      className={`flex-1 py-1.5 rounded-lg text-sm ${live.frequency === f ? "bg-primary text-primary-foreground" : "bg-background"}`}>
-                      {tr(lang, f === "low" ? { en: "Less", ko: "적게", zh: "较少" } : f === "normal" ? { en: "Normal", ko: "보통", zh: "正常" } : { en: "More", ko: "자주", zh: "较频繁" })}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button onClick={() => deliverLiveMessage({ test: true })} className="hidden w-full text-left px-4 py-3 text-primary">
-                {tr(lang, { en: "Send a test message now", ko: "지금 테스트 메시지 받기", zh: "立即接收一条测试消息" })}
-              </button>
-            </div>
-          </div>
-          <button onClick={onLock} className="w-full py-3 rounded-xl bg-muted">{t(lang, "lock")}</button>
-          <button onClick={onReset} className="w-full py-3 rounded-xl bg-muted text-destructive">{t(lang, "reset")}</button>
-        </div>
-      ) : app.url ? (
+      {app.url ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6 text-center">
           <div className="app-icon scale-150" style={{ background: app.color }}><IconFace icon={app.icon} /></div>
           <a href={app.url} target="_blank" rel="noreferrer" className="mt-6 px-5 py-2.5 rounded-full bg-primary text-primary-foreground">{app.name} ↗</a>
@@ -295,6 +257,7 @@ export default function Phone() {
   const [chatTarget, setChatTarget] = useState<string | null>(null);
   const [pendingChat, setPendingChat] = useState(false);
   const [contactName, setContactName] = useState("");
+  const [homeSearch, setHomeSearch] = useState<string | null>(null);
 
   useEffect(() => {
     const refresh = () => { setContactName(liveContactName()); setUnread(totalUnread()); setLockNotifs(unreadLive()); setLiveState(loadLiveSettings()); };
@@ -385,7 +348,8 @@ export default function Phone() {
           <div className="grid grid-cols-4 gap-y-6 gap-x-2 px-5 mt-5">
             {grid.map((a) => <Icon key={a.id} app={a} badge={a.id === "kkt" ? unread : 0} wiggle={editMode && a.id !== "settings"} onClick={() => tap(a)} />)}
           </div>
-          <div className="mt-auto mx-3 mb-3 dock">
+          <div className="mt-auto flex justify-center mb-5"><Button variant="ghost" size="sm" className="home-search-button" onClick={() => setHomeSearch("")}><Search size={13} />{tr(lang, { en: "Search", ko: "검색", zh: "搜索" })}</Button></div>
+          <div className="mx-3 mb-3 dock">
             {dock.map((a) => <Icon key={a.id} app={a} badge={a.id === "kkt" ? unread : 0} label={false} wiggle={editMode} onClick={() => tap(a)} />)}
           </div>
           <div className="home-bar" />
@@ -397,15 +361,20 @@ export default function Phone() {
         </div>
       )}
       {open && (
-        <AppView initialChat={open.id === "kkt" ? chatTarget : null} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onClose={() => setOpen(null)}
+        <AppView initialChat={open.id === "kkt" ? chatTarget : null} apps={apps} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onClose={() => setOpen(null)}
           onLock={() => { setOpen(null); setLocked(true); }}
-          onReset={() => { if (confirm(appLabel(lang, "confirmDelete"))) { update(DEFAULT_APPS); setOpen(null); } }} />
+          onEditApps={() => { setOpen(null); setEditMode(true); }} />
       )}
+      {!locked && open && !editing && <Button variant="ghost" className="app-home-indicator" aria-label={t(lang, "back")} onClick={() => setOpen(null)}><span /></Button>}
       {editing && (
         <Editor key={editing.id} lang={lang} app={editing} onClose={() => setEditing(null)}
           onSave={(a) => { update(apps.map((x) => (x.id === a.id ? a : x))); setEditing(null); }}
           onRemove={() => { update(apps.filter((x) => x.id !== editing.id)); setEditing(null); }} />
       )}
+      {!locked && homeSearch !== null && <div className="home-search-overlay">
+        <div className="home-search-field"><Search size={20} /><input autoFocus aria-label={tr(lang, { en: "Search apps", ko: "앱 검색", zh: "搜索应用" })} placeholder={tr(lang, { en: "Search", ko: "검색", zh: "搜索" })} value={homeSearch} onChange={(e) => setHomeSearch(e.target.value)} /><Button variant="ghost" size="icon" aria-label={t(lang, "cancel")} onClick={() => setHomeSearch(null)}><X /></Button></div>
+        <div className="home-search-results">{[...translatedApps, settingsApp].filter((a) => a.name.toLowerCase().includes(homeSearch.toLowerCase())).map((a) => <Button variant="ghost" key={a.id} className="home-search-result" onClick={() => { setHomeSearch(null); tap(a); }}><img src={a.icon} alt="" /><span>{a.name}</span></Button>)}</div>
+      </div>}
     </div>
   );
 }

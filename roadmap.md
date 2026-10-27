@@ -1,4 +1,10 @@
 # Phone story completion
+# Wonbin reference adjustment
+- [x] Inspect reference app navigation and settings.
+- [x] Inspect unlocked reference home, Settings and Instagram using the user-provided reference passcode; keep this phone's passcode unchanged. Reference Music could not be opened.
+- [x] Adjust grouped Settings, simulated network toggles, General, home app search, KKT Friends/Chats navigation, swipe unlock and bottom Home control without changing saved content or app order.
+- [x] Verify language, navigation and preservation at desktop/mobile sizes; 29 tests and browser checks passed in isolated storage, user preview data not accessed or reset.
+
 - [x] Connect Kakao, Instagram, X, Photos and Notes to existing icons.
 - [x] Complete app styles, navigation, fixed story date and functional chat composer.
 - [x] Verify all five apps save and read back edits after refresh, chat cancellation and translation, desktop/mobile rendering, and eight rule/routing tests.

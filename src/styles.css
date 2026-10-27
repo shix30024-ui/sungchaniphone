@@ -325,3 +325,48 @@ button:active > .app-icon { transform: scale(.9); }
 .kkt-search { display: flex; gap: 6px; padding: 0 12px 8px; }
 .kkt-emoji-panel { display: flex; flex-wrap: wrap; justify-content: space-around; padding: 8px; background: var(--background); }
 @media (max-height: 700px) { .lock-notification-group { top: 49%; max-height: 27%; } .lock-screen > .lock-time { font-size: 82px; } }
+
+/* Inset system settings and reference-style list chrome. */
+:root { --system-grouped: oklch(0.958 0.004 265); --system-switch: oklch(0.72 0.19 148); }
+.settings-page { background: var(--system-grouped); }
+.phone-screen:has(.settings-page) .status-bar-app { background: var(--system-grouped); }
+.settings-navigation { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; min-height: 45px; padding: 0 8px; }
+.settings-navigation b { font-size: 16px; }
+.settings-back { justify-content: flex-start; padding: 0 4px; color: var(--primary); width: fit-content; }
+.settings-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 0 16px 28px; }
+.settings-title { font-size: 34px; line-height: 1.2; font-weight: 700; margin: 5px 0 14px; }
+.settings-search { display: flex; align-items: center; gap: 8px; padding: 9px 10px; background: var(--muted); border-radius: 10px; color: var(--muted-foreground); margin-bottom: 28px; }
+.settings-search input { width: 100%; outline: none; color: var(--foreground); background: transparent; font-size: 16px; }
+.settings-group { background: var(--background); border-radius: 10px; overflow: hidden; margin: 18px 0 28px; }
+.settings-row { width: 100%; display: flex; justify-content: flex-start; align-items: center; min-height: 48px; height: auto; gap: 10px; padding: 11px 14px; border-radius: 0; font-size: 15px; font-weight: 400; white-space: normal; text-align: left; }
+.settings-row + .settings-row { border-top: 1px solid var(--border); }
+.settings-row-icon { display: grid; place-items: center; width: 28px; height: 28px; background: var(--primary); color: var(--primary-foreground); border-radius: 6px; flex-shrink: 0; }
+.settings-row:nth-child(2) .settings-row-icon { background: var(--destructive); color: var(--destructive-foreground); }
+.settings-row:nth-child(3) .settings-row-icon { background: var(--system-switch); }
+.settings-row-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.settings-row-value { color: var(--muted-foreground); text-align: right; max-width: 48%; overflow-wrap: anywhere; font-size: 14px; }
+.settings-row > svg { color: var(--muted-foreground); }
+.settings-section-title { color: var(--muted-foreground); font-size: 12px; padding: 22px 14px 0; }
+.settings-switch { width: 44px; height: 27px; }
+.settings-switch[data-state="checked"] { background: var(--system-switch); }
+.settings-switch > span { width: 23px; height: 23px; translate: none; }
+.settings-switch > span[data-state="checked"] { transform: translateX(17px); }
+.home-search-button { background: var(--glass); color: var(--on-glass); border-radius: 99px; height: 27px; font-size: 12px; gap: 4px; backdrop-filter: blur(20px); }
+.home-search-button:hover { background: var(--glass-strong); color: var(--on-glass); }
+.home-search-overlay { position: absolute; inset: 0; z-index: 45; padding: 64px 16px 20px; backdrop-filter: blur(35px) brightness(.75); background: var(--glass); display: flex; flex-direction: column; }
+.home-search-field { display: flex; align-items: center; gap: 8px; background: var(--glass-strong); color: var(--on-glass); border-radius: 12px; padding: 5px 10px; }
+.home-search-field input { flex: 1; min-width: 0; outline: none; user-select: text; }
+.home-search-results { overflow-y: auto; margin-top: 18px; }
+.home-search-result { width: 100%; justify-content: flex-start; height: 62px; color: var(--on-glass); }
+.home-search-result img { width: 42px; height: 42px; border-radius: 10px; object-fit: cover; }
+.kkt-list-top { border-bottom: 0; padding-block: 12px; min-height: 65px; }
+.kkt-list-top > .flex-1 { text-align: left; font-size: 25px; }
+.kkt-chat-list-row { width: 100%; height: auto; min-height: 80px; padding: 13px 18px; gap: 12px; justify-content: flex-start; text-align: left; font-weight: 400; border-radius: 0; }
+.kkt-bottom-nav { display: flex; justify-content: space-around; background: var(--system-grouped); border-top: 1px solid var(--border); padding: 6px 0; }
+.kkt-bottom-nav button { flex-direction: column; gap: 3px; height: 48px; min-width: 80px; color: var(--muted-foreground); font-size: 10px; }
+.kkt-bottom-nav button[aria-pressed="true"] { color: var(--foreground); }
+.kkt-bottom-nav button[aria-pressed="true"] svg { fill: var(--kkt-outgoing); }
+.app-home-indicator { position: absolute; bottom: 0; left: calc(50% - 82px); z-index: 38; width: 164px; height: 17px; padding: 0; border-radius: 0; background: transparent; }
+.app-home-indicator:hover { background: transparent; }
+.app-home-indicator span { width: 134px; height: 5px; border-radius: 9px; background: var(--foreground); }
+.phone-screen:has(.call-screen, .photo-viewer, .ig-story-view) .app-home-indicator span { background: var(--on-glass); }
