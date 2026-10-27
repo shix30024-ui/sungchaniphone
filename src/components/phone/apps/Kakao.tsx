@@ -3,10 +3,12 @@ import { type AppProps, tr } from "../i18n";
 import { CONTACTS, MESSAGES, type Contact, type Msg, type MsgType } from "../story";
 import { uid, usePersist } from "../store";
 import { BackBtn, EditBar, Field, ImageField, KktAvatar, TopBar, resolveImg } from "../ui";
+import { Button } from "@/components/ui/button";
+import { Send } from "lucide-react";
+import { STORY_DATE, messageText, sortMessages } from "../chronology";
 
-const TODAY = "2026-10-26";
-const sortMsgs = (a: Msg[]) =>
-  [...a].sort((x, y) => x.date.localeCompare(y.date) || x.time.localeCompare(y.time) || x.order - y.order);
+const TODAY = STORY_DATE;
+const sortMsgs = sortMessages<Msg>;
 
 const koDate = (d: string, zh: boolean) => {
   const dt = new Date(d + "T00:00:00");
@@ -28,6 +30,7 @@ export default function Kakao({ lang, onHome }: AppProps) {
   const [draft, setDraft] = useState<Msg[]>([]);
   const [draftC, setDraftC] = useState<Contact | null>(null);
   const [addingContact, setAddingContact] = useState(false);
+  const [compose, setCompose] = useState("");
   const zh = cl === "zh";
 
   const L = {
@@ -56,7 +59,7 @@ export default function Kakao({ lang, onHome }: AppProps) {
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-[15px] truncate">{c.name}</div>
                 <div className="text-[13px] text-muted-foreground truncate">
-                  {last ? (last.type === "image" ? L.photo : (zh ? last.zh || last.ko : last.ko)) : ""}
+                  {last ? (last.type === "image" ? L.photo : messageText(last, cl)) : ""}
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1 self-start pt-1">
@@ -96,7 +99,8 @@ export default function Kakao({ lang, onHome }: AppProps) {
     const j = i + d;
     if (j < 0 || j >= draft.length) return;
     const a = [...draft];
-    const x = a[i]!, y = a[j]!;
+    const x = a[i], y = a[j];
+    if (!x || !y) return;
     a[i] = { ...y, date: x.date, time: x.time };
     a[j] = { ...x, date: y.date, time: y.time };
     setDraft(a);
@@ -178,8 +182,8 @@ export default function Kakao({ lang, onHome }: AppProps) {
             lastDate = m.date;
             parts.push(<div key={m.id + "d"} className="kkt-date">{koDate(m.date, zh)}</div>);
           }
-          const text = zh ? m.zh : m.ko;
-          if (m.type === "date") parts.push(<div key={m.id} className="kkt-date">{text || (zh ? "暂无翻译" : "")}</div>);
+          const text = messageText(m, cl);
+          if (m.type === "date") { /* The date heading above already displays this divider. */ }
           else if (m.type === "system") parts.push(<div key={m.id} className="kkt-system">{text || "暂无翻译"}</div>);
           else {
             const mine = m.sender === "me";
@@ -204,7 +208,16 @@ export default function Kakao({ lang, onHome }: AppProps) {
           return parts;
         })}
       </div>
-      <div className="kkt-input"><div className="flex-1 rounded-full bg-muted px-3 py-1.5 text-sm text-muted-foreground">{zh ? "输入消息" : "메시지 입력"}</div><span className="kkt-send">#</span></div>
+      <form className="kkt-input" onSubmit={(event) => {
+        event.preventDefault();
+        const text = compose.trim();
+        if (!text) return;
+        setMsgs([...msgs, { id: uid(), contactId: open.id, sender: "me", type: "text", ko: zh ? "" : text, zh: zh ? text : "", date: TODAY, time: "20:26", order: Math.max(0, ...msgs.map((m) => m.order)) + 1 }]);
+        setCompose("");
+      }}>
+        <input aria-label={zh ? "输入消息" : "메시지 입력"} placeholder={zh ? "输入消息" : "메시지 입력"} className="kkt-compose" value={compose} onChange={(event) => setCompose(event.target.value)} />
+        <Button type="submit" size="icon" disabled={!compose.trim()} aria-label={zh ? "发送消息" : "메시지 보내기"} className="kkt-send"><Send size={17} /></Button>
+      </form>
     </div>
   );
 }

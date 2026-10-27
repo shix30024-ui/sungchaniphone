@@ -2,20 +2,24 @@ import { useEffect, useState } from "react";
 import wallpaper from "@/assets/wallpaper.jpeg.asset.json";
 import { type App, DEFAULT_APPS, SETTINGS_ICON, PASSCODE, loadApps, saveApps } from "./apps";
 import { LANGS, type Lang, fmtDate, fmtTime, t } from "./i18n";
+import Kakao from "./apps/Kakao";
+import Instagram from "./apps/Instagram";
+import XApp from "./apps/XApp";
+import Photos from "./apps/Photos";
+import Notes from "./apps/Notes";
+import { STORY_NOW } from "./chronology";
 
 function useNow() {
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
-    setNow(new Date());
-    const i = setInterval(() => setNow(new Date()), 10000);
-    return () => clearInterval(i);
+    setNow(new Date(STORY_NOW));
   }, []);
   return now;
 }
 
-function StatusBar({ now }: { now: Date | null }) {
+function StatusBar({ now, inApp }: { now: Date | null; inApp: boolean }) {
   return (
-    <div className="status-bar">
+    <div className={`status-bar ${inApp ? "status-bar-app" : ""}`}>
       <span>{now ? fmtTime(now) : ""}</span>
       <span className="opacity-90">▂▄▆ ᯤ ▮</span>
     </div>
@@ -153,6 +157,12 @@ function Editor({ lang, app, onSave, onRemove, onClose }: { lang: Lang; app: App
 }
 
 function AppView({ lang, app, setLang, onClose, onLock, onReset }: { lang: Lang; app: App; setLang: (l: Lang) => void; onClose: () => void; onLock: () => void; onReset: () => void }) {
+  const builtIn = app.id === "kkt" || app.id === "msg" ? <Kakao lang={lang} onHome={onClose} />
+    : app.id === "ig" ? <Instagram lang={lang} onHome={onClose} />
+    : app.id === "x" ? <XApp lang={lang} onHome={onClose} />
+    : app.id === "photos" ? <Photos lang={lang} onHome={onClose} />
+    : app.id === "notes" ? <Notes lang={lang} onHome={onClose} /> : null;
+  if (builtIn) return <div className="phone-app-container app-open">{builtIn}</div>;
   const isSettings = app.id === "settings";
   return (
     <div className="absolute inset-0 z-20 bg-background text-foreground flex flex-col app-open">
@@ -215,7 +225,7 @@ export default function Phone() {
 
   return (
     <div className="phone-screen" style={{ backgroundImage: `url(${wallpaper.url})` }}>
-      <StatusBar now={now} />
+      <StatusBar now={now} inApp={Boolean(open || editing)} />
       {locked ? (
         <Lock lang={lang} setLang={setLang} now={now} onUnlock={() => setLocked(false)} />
       ) : (

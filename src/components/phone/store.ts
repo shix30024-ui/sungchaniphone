@@ -24,8 +24,9 @@ export const uid = () => Math.random().toString(36).slice(2, 10);
 
 /** Read an image file and shrink it so it fits in localStorage. */
 export function fileToDataUrl(file: File, max = 900): Promise<string> {
-  return new Promise((res) => {
+  return new Promise((res, reject) => {
     const r = new FileReader();
+    r.onerror = () => reject(new Error("Could not read image"));
     r.onload = () => {
       const img = new Image();
       img.onload = () => {
@@ -33,9 +34,12 @@ export function fileToDataUrl(file: File, max = 900): Promise<string> {
         const c = document.createElement("canvas");
         c.width = img.width * s;
         c.height = img.height * s;
-        c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
+        const context = c.getContext("2d");
+        if (!context) { reject(new Error("Could not resize image")); return; }
+        context.drawImage(img, 0, 0, c.width, c.height);
         res(c.toDataURL("image/jpeg", 0.82));
       };
+      img.onerror = () => reject(new Error("Invalid image"));
       img.src = String(r.result);
     };
     r.readAsDataURL(file);

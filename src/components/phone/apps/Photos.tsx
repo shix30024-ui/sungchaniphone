@@ -36,8 +36,8 @@ export default function Photos({ lang, onHome }: AppProps) {
           right={<button className="text-sm" onClick={() => setDraft({ ...photo })}>{tr(lang, { en: "Edit", ko: "편집", zh: "编辑" })}</button>} />
         <div className="flex-1 flex items-center justify-center relative">
           <img src={resolveImg(photo.image)} alt={photo.note} className="max-w-full max-h-full object-contain" />
-          {idx > 0 && <button className="viewer-nav left-2" onClick={() => setPid(photos[idx - 1]!.id)}>‹</button>}
-          {idx < photos.length - 1 && <button className="viewer-nav right-2" onClick={() => setPid(photos[idx + 1]!.id)}>›</button>}
+          {idx > 0 && <button className="viewer-nav left-2" onClick={() => setPid(photos[idx - 1]?.id ?? null)}>‹</button>}
+          {idx < photos.length - 1 && <button className="viewer-nav right-2" onClick={() => setPid(photos[idx + 1]?.id ?? null)}>›</button>}
         </div>
         <div className="p-4 text-sm text-center opacity-80">{photo.note}</div>
       </div>
@@ -79,7 +79,7 @@ export default function Photos({ lang, onHome }: AppProps) {
         {albums.map((a) => (
           <button key={a.id} className="text-left" onClick={() => setAid(a.id)}>
             <div className="aspect-square rounded-xl overflow-hidden bg-muted">
-              {a.photos[0] && <img src={resolveImg(a.photos.at(-1)!.image)} alt="" className="w-full h-full object-cover" />}
+              {a.photos[0] && <img src={resolveImg(a.photos.at(-1)?.image)} alt="" className="w-full h-full object-cover" />}
             </div>
             <div className="text-sm font-medium mt-1">{a.name}</div>
             <div className="text-xs text-muted-foreground">{a.photos.length}</div>
