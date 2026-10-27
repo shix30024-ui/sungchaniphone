@@ -8,16 +8,17 @@ import { messageText, STORY_DATE } from "../chronology";
 import { tr, type Lang } from "../i18n";
 import { confirmDelete, label } from "../labels";
 import { ImageField, KktAvatar, resolveImg, TopBar, EditBar } from "../ui";
+import { SELF_ID, type SocialAccount } from "../social";
 import { postImages } from "../media";
 
 type Story = { id: string; user: string; image: string; text: string; date: string };
 export const STORIES_KEY = "ig-stories-v1";
 const SEEN_KEY = "ig-story-seen-v1";
 
-export function Stories({ posts, profile, lang }: { posts: Post[]; profile: Profile; lang: Lang }) {
+export function Stories({ posts, profile, accounts, lang }: { posts: (Post & { authorId?: string })[]; profile: Profile; accounts: SocialAccount[]; lang: Lang }) {
   const [stored, setStored] = usePersist<Story[] | null>(STORIES_KEY, null);
   // Derive a small gallery from existing posts, never altering or copying over the posts themselves.
-  const stories = stored ?? posts.slice(0, 4).map((p) => ({ id: `story-${p.id}`, user: profile.username, image: postImages(p)[0] ?? "", text: p.caption, date: p.date }));
+  const stories = stored ?? posts.filter((p, i, all) => all.findIndex((other) => other.authorId === p.authorId) === i).slice(0, 5).map((p) => ({ id: `story-${p.id}`, user: !p.authorId || p.authorId === SELF_ID ? profile.username : accounts.find((a) => a.id === p.authorId)?.username ?? profile.username, image: postImages(p)[0] ?? "", text: p.caption, date: p.date }));
   const [seen, setSeen] = usePersist<string[]>(SEEN_KEY, []);
   const [index, setIndex] = useState<number | null>(null);
   const [draft, setDraft] = useState<Story | null>(null);
