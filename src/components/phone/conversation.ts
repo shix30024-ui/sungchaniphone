@@ -65,7 +65,7 @@ export function sendChat(channel: "kkt" | "ig", contactId: string, text: string,
   const key = channel === "kkt" ? MSGS_KEY : DM_KEY;
   const fallback = channel === "kkt" ? MESSAGES : [];
   const existing = readStored<Msg[]>(key, fallback);
-  const msg: Msg = { id: uid(), contactId, sender: "me", type: "text", ko: lang === "ko" ? text : "", zh: lang === "zh" ? text : "", en: lang === "en" ? text : "", originalText: text, date: STORY_DATE, time: nextMessageTime(existing), order: Math.max(0, ...existing.map((m) => m.order)) + 1, read: false };
+  const msg: Msg = { id: uid(), contactId, sender: "me", type: "text", ko: lang === "ko" ? text : "", zh: lang === "zh" ? text : "", en: lang === "en" ? text : "", originalText: text, date: STORY_DATE, time: nextMessageTime(existing), order: Math.max(0, ...existing.map((m) => m.order)) + 1, read: false, createdAt: new Date(now).toISOString() };
   updateStored<Msg[]>(key, fallback, (rows) => [...rows, msg]);
   if (channel === "ig" || contactId === "anton") {
     updateStored<PendingReply[]>(QUEUE_KEY, [], (q) => [...q, { channel, contactId, sourceId: msg.id, dueAt: now + 2400 + Math.min(text.length * 20, 1600) }]);

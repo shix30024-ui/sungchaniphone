@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { setActiveChat } from "../live";
 import { type AppProps, tr } from "../i18n";
 import { CONTACTS, MESSAGES, type Contact, type Msg, type MsgType } from "../story";
 import { uid, usePersist } from "../store";
 import { BackBtn, EditBar, Field, ImageField, KktAvatar, TopBar, resolveImg } from "../ui";
 import { Button } from "@/components/ui/button";
-import { Send } from "lucide-react";
+import { Send, Phone, PhoneIncoming } from "lucide-react";
+import Call from "./Call";
+import { pendingReplies, QUEUE_KEY, sendChat } from "../conversation";
 import { STORY_DATE, messageText, sortMessages } from "../chronology";
 import { confirmDelete, label, localeFor } from "../labels";
 import { completeTranslations } from "../translations";
@@ -56,6 +58,14 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const [draftC, setDraftC] = useState<Contact | null>(null);
   const [addingContact, setAddingContact] = useState(false);
   const [compose, setCompose] = useState("");
+  const [call, setCall] = useState<"outgoing" | "incoming" | null>(null);
+  const [queue, setQueue] = usePersist(QUEUE_KEY, pendingReplies());
+  const scroll = useRef<HTMLDivElement>(null);
+  const editIds = useRef(new Set<string>());
+  const typing = queue.some((q) => q.channel === "kkt" && q.contactId === openId);
+  useEffect(() => {
+    if (scroll.current) scroll.current.scrollTop = scroll.current.scrollHeight;
+  }, [msgs, openId, typing, editing]);
 
   const L = {
     chats: tr(lang, { en: "Chats", ko: "채팅", zh: "聊天" }),
@@ -111,11 +121,11 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   }
 
   const thread = sortMsgs(msgs.filter((m) => m.contactId === open.id));
-  const startEdit = () => { setDraft(thread.map((m) => ({ ...m }))); setDraftC({ ...open }); setEditing(true); };
+  if (call) return <Call contact={open} lang={lang} incoming={call === "incoming"} onClose={() => setCall(null)} />;
+  const startEdit = () => { editIds.current = new Set(thread.map((m) => m.id)); setDraft(thread.map((m) => ({ ...m }))); setDraftC({ ...open }); setEditing(true); };
   const save = () => {
-    const keep = msgs.filter((m) => m.contactId !== open.id);
-    setMsgs([...keep, ...draft.map((m, i) => ({ ...m, order: i }))]);
-    if (draftC) setContacts(contacts.map((c) => (c.id === draftC.id ? draftC : c)));
+    setMsgs((current) => [...current.filter((m) => m.contactId !== open.id || !editIds.current.has(m.id)), ...draft.map((m, i) => ({ ...m, order: i }))]);
+    if (draftC) setContacts((current) => current.map((c) => (c.id === draftC.id ? { ...draftC, unread: c.unread } : c)));
     setEditing(false);
   };
   const upd = (id: string, p: Partial<Msg>) => setDraft(draft.map((m) => (m.id === id ? { ...m, ...p } : m)));
@@ -176,6 +186,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
               ) : null}
               {m.type !== "date" && (
                 <>
+                  {m.originalText !== undefined && <Field label={tr(lang, { en: "Original message", ko: "원문", zh: "消息原文" })}><textarea className="sheet-input" rows={2} value={m.originalText} onChange={(e) => upd(m.id, { originalText: e.target.value })} /></Field>}
                   <textarea className="sheet-input" rows={2} placeholder="한국어" value={m.ko} onChange={(e) => upd(m.id, { ko: e.target.value })} />
                   <textarea className="sheet-input" rows={2} placeholder="简体中文" value={m.zh} onChange={(e) => upd(m.id, { zh: e.target.value })} />
                   <textarea className="sheet-input" rows={2} placeholder="English" value={m.en ?? ""} onChange={(e) => upd(m.id, { en: e.target.value })} />
@@ -198,9 +209,11 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
     <div className="app-page kkt-chat-bg">
       <TopBar className="kkt-chat-top" left={<BackBtn onClick={() => setOpenId(null)} />} title={open.name}
         right={<>
-          <button className="text-sm font-medium" onClick={startEdit}>{L.edit}</button>
+          <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Call", ko: "전화", zh: "拨打电话" })} onClick={() => setCall("outgoing")}><Phone size={18} /></Button>
+          <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Simulate incoming call", ko: "모의 전화 수신", zh: "模拟来电" })} onClick={() => setCall("incoming")}><PhoneIncoming size={18} /></Button>
+          <Button variant="ghost" size="sm" onClick={startEdit}>{L.edit}</Button>
         </>} />
-      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5" ref={(el) => { if (el && !el.dataset["s"]) { el.scrollTop = el.scrollHeight; el.dataset["s"] = "1"; } }}>
+      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5" ref={scroll}>
         {thread.map((m, i) => {
           const parts = [];
           if (m.date !== lastDate) {
@@ -224,7 +237,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
                   {head && <span className="text-[12px] mb-0.5 opacity-80">{open.name}</span>}
                   <div className={`flex items-end gap-1 ${mine ? "flex-row-reverse" : ""}`}>
                     {content}
-                    <span className="text-[10px] opacity-60 shrink-0">{fmt12(m.time, lang)}</span>
+                    <span className="text-[10px] opacity-60 shrink-0 text-right">{mine && m.originalText !== undefined && <span className="block">{tr(lang, m.read ? { en: "Read", ko: "읽음", zh: "已读" } : { en: "Sent", ko: "전송됨", zh: "已发送" })}</span>}{fmt12(m.time, lang)}</span>
                   </div>
                 </div>
               </div>,
@@ -232,12 +245,13 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
           }
           return parts;
         })}
+        {typing && <div className="flex gap-2 items-center py-2" role="status" aria-label={tr(lang, { en: "Typing", ko: "입력 중", zh: "正在输入" })}><KktAvatar src={open.avatar} size={28} /><span className="typing-dots"><i /><i /><i /></span></div>}
       </div>
       <form className="kkt-input" onSubmit={(event) => {
         event.preventDefault();
         const text = compose.trim();
         if (!text) return;
-        setMsgs([...msgs, { id: uid(), contactId: open.id, sender: "me", type: "text", ko: lang === "ko" ? text : "", zh: lang === "zh" ? text : "", en: lang === "en" ? text : "", date: TODAY, time: "20:26", order: Math.max(0, ...msgs.map((m) => m.order)) + 1 }]);
+        sendChat("kkt", open.id, text, lang);
         setCompose("");
       }}>
         <input aria-label={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} placeholder={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} className="kkt-compose" value={compose} onChange={(event) => setCompose(event.target.value)} />
