@@ -40,4 +40,24 @@ describe("safe contextual phone conversations", () => {
     expect(() => updateStored("ig-posts-v1", [], () => [])).toThrow();
     expect(localStorage.getItem("ig-posts-v1")).toBe("broken saved value");
   });
+  it("responds to fatigue before other topics", () => {
+    const sent = sendChat("kkt", "anton", "我今天练习好累", "zh", 1000);
+    const reply = contextualReply([sent], sent);
+    expect(reply.zh).toContain("先歇一会儿");
+    expect(reply.zh).not.toContain("周四");
+  });
+  it("continues a brief agreement without inventing another invitation", () => {
+    const previous: Msg = { id: "agreed", contactId: "anton", sender: "them", type: "text", ko: "정문에서 만나", zh: "在正门见面", en: "Meet at the main gate", date: "2026-10-26", time: "20:26", order: 0 };
+    const source = { ...previous, id: "short", sender: "me" as const, originalText: "好", time: "20:27", order: 1 };
+    expect(contextualReply([previous, source], source).zh).toContain("按刚才说的来");
+  });
+  it("does not invent image details", () => {
+    const source = sendChat("kkt", "anton", "", "zh", 1000, "data:image/png;base64,test");
+    expect(contextualReply([source], source).zh).toBe("收到照片了，跟我说说拍的是什么？");
+  });
+  it("remembers an earlier uneaten meal rather than rotating replies", () => {
+    const source = sendChat("kkt", "anton", "吃饭了吗？", "zh", 1000);
+    const prior = { ...source, id: "prior", sender: "them" as const, originalText: "还没吃", time: "20:26", order: 0 };
+    expect(contextualReply([prior, source], source).zh).toContain("像刚才说的");
+  });
 });

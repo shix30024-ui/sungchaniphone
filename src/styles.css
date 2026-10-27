@@ -184,8 +184,8 @@ button:active > .app-icon { transform: scale(.9); }
 .icon-img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 
 :root {
-  --kkt-surface: oklch(0.85 0.025 230);
-  --kkt-outgoing: oklch(0.94 0.18 99);
+  --kkt-surface: oklch(0.77 0.035 225);
+  --kkt-outgoing: oklch(0.94 0.2 104);
   --kkt-ink: oklch(0.22 0.01 70);
   --kkt-avatar: oklch(0.9 0.03 90);
   --kkt-avatar-ink: oklch(0.68 0.025 90);
@@ -288,3 +288,40 @@ button:active > .app-icon { transform: scale(.9); }
 .phone-screen:has(.kkt-chat-bg) .status-bar-app { background: var(--kkt-surface); color: var(--kkt-ink); }
 .ig-feed-photo, .ig-search-photo { background: var(--muted); }
 .phone-app-container { animation: none; }
+
+:root { --notification-panel: oklch(0.94 0.013 135 / .83); --notification-ink: oklch(0.25 0.014 150); --notification-shadow: 0 4px 16px oklch(0 0 0 / .08); }
+.lock-notification-group { position: absolute; left: 12px; right: 12px; top: 52%; max-height: 29%; display: flex; flex-direction: column; }
+.lock-notification-heading { display: flex; align-items: center; justify-content: space-between; font-size: 13px; padding: 0 5px 7px; }
+.lock-notification-action { height: 25px; font-size: 10px; padding: 0 8px; gap: 3px; border-radius: 20px; background: var(--notification-panel); color: var(--notification-ink); }
+.lock-notification-dismiss { width: 25px; height: 25px; border-radius: 50%; background: var(--notification-panel); color: var(--notification-ink); }
+.lock-notification-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; min-height: 0; }
+.notif-card { height: auto; min-height: 68px; justify-content: flex-start; white-space: normal; padding: 11px 13px; font-weight: 400; gap: 10px; border-radius: 20px; background: var(--notification-panel); color: var(--notification-ink); box-shadow: var(--notification-shadow); }
+.notif-card:hover { background: var(--notification-panel); color: var(--notification-ink); }
+.notif-avatar { position: relative; flex-shrink: 0; }
+.notif-avatar .kkt-avatar { border-radius: 50%; }
+.notif-app-badge { position: absolute; width: 15px; height: 15px; right: -2px; bottom: -2px; border-radius: 4px; }
+.notif-time { font-size: 10px; opacity: .65; flex-shrink: 0; }
+.lock-notification-more { text-align: center; font-size: 11px; padding-top: 4px; }
+.kkt-chat-top { border-bottom: 0; padding: 5px 10px 11px; min-height: 59px; }
+.kkt-chat-top > :first-child { width: 64px; }
+.kkt-chat-top > :last-child { width: 76px; gap: 0; }
+.kkt-contact-title { font-size: 17px; font-weight: 600; }
+.kkt-thread { padding: 6px 12px 16px; }
+.kkt-message-row { margin-bottom: 10px; }
+.kkt-message-body { max-width: calc(100% - 52px); min-width: 0; }
+.kkt-message-body > div { min-width: 0; max-width: 100%; }
+.kkt-bubble-me, .kkt-bubble-them { font-size: 15px; padding: 10px 12px; line-height: 1.42; border-radius: 14px; }
+.kkt-bubble-me { border-radius: 16px; }
+.kkt-message-time { font-size: 9px; align-self: flex-end; white-space: nowrap; opacity: .7; text-align: right; padding-bottom: 1px; }
+.kkt-read-count { color: var(--kkt-outgoing); font-size: 11px; display: block; opacity: 1; }
+.kkt-image-bubble { padding: 6px; background: var(--background); border-radius: 14px; overflow: hidden; }
+.kkt-image-mine { background: var(--kkt-outgoing); }
+.kkt-image-bubble p { padding: 9px 6px 5px; }
+.kkt-img { width: 220px; max-height: 300px; border-radius: 9px; }
+.kkt-chat-bg .kkt-input { gap: 2px; padding: 7px 8px; }
+.kkt-chat-bg .kkt-compose { border: 1px solid var(--border); border-radius: 18px; background: var(--background); }
+.kkt-menu-sheet { position: absolute; top: 104px; right: 10px; z-index: 25; display: flex; flex-direction: column; min-width: 180px; padding: 7px; border-radius: 8px; background: var(--background); box-shadow: var(--notification-shadow); }
+.kkt-menu-sheet > button { justify-content: flex-start; }
+.kkt-search { display: flex; gap: 6px; padding: 0 12px 8px; }
+.kkt-emoji-panel { display: flex; flex-wrap: wrap; justify-content: space-around; padding: 8px; background: var(--background); }
+@media (max-height: 700px) { .lock-notification-group { top: 49%; max-height: 27%; } .lock-screen > .lock-time { font-size: 82px; } }

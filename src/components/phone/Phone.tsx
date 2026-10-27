@@ -13,8 +13,10 @@ import Music from "./apps/Music";
 import { backupPhoneData } from "./store";
 import { label as appLabel } from "./labels";
 import { tr } from "./i18n";
-import { resolveImg } from "./ui";
-import type { Msg } from "./story";
+import { resolveImg, KktAvatar } from "./ui";
+import { CONTACTS, type Contact, type Msg } from "./story";
+import { usePersist } from "./store";
+import { Button } from "@/components/ui/button";
 import {
   LIVE_CONTACT, LIVE_EVENT, STORE_EVENT, type Frequency, type LiveSettings, DEFAULT_LIVE_SETTINGS,
   deliverLiveMessage, liveContactName, loadLiveSettings, rescheduleLive, saveLiveSettings, tickLive, totalUnread, unreadLive,
@@ -22,20 +24,22 @@ import {
 import { messageText } from "./chronology";
 import { tickReplies } from "./conversation";
 import { getActiveChat } from "./live";
-import { Wifi } from "lucide-react";
+import { Wifi, ChevronUp, ChevronDown, X } from "lucide-react";
 
 const notifText = (m: Msg, lang: Lang) => (m.type === "image" ? tr(lang, { en: "Sent a photo", ko: "사진을 보냈습니다", zh: "发送了一张照片" }) : messageText(m, lang));
 
 function NotifCard({ m, lang, preview, onClick }: { m: Msg; lang: Lang; preview: boolean; onClick: () => void }) {
+  const [contacts] = usePersist<Contact[]>("kkt-contacts-v1", CONTACTS);
+  const contact = contacts.find((c) => c.id === m.contactId);
   return (
-    <button onClick={onClick} className="notif-card w-full text-left flex items-center gap-3">
-      <img src={KKT_ICON} alt="" className="w-9 h-9 rounded-[9px] shrink-0" />
+    <Button variant="ghost" onClick={onClick} className="notif-card w-full text-left flex items-center gap-3">
+      <span className="notif-avatar"><KktAvatar src={contact?.avatar ?? ""} size={38} /><img src={KKT_ICON} alt="" className="notif-app-badge" /></span>
       <div className="min-w-0 flex-1">
-        <div className="flex justify-between text-[13px]"><b className="truncate">{KKT_NAME}</b><span className="opacity-70">{m.time}</span></div>
+        <div className="flex justify-between gap-2 text-[13px]"><b className="truncate">{contact?.name ?? KKT_NAME}</b><span className="notif-time">{m.time}</span></div>
         <div className="text-[14px] truncate">{preview ? notifText(m, lang) : tr(lang, { en: "New message", ko: "새 메시지", zh: "新消息" })}</div>
       </div>
       {preview && m.type === "image" && m.image && <img src={resolveImg(m.image)} alt="" className="w-9 h-9 rounded-md object-cover" />}
-    </button>
+    </Button>
   );
 }
 let KKT_ICON = "";
@@ -95,6 +99,9 @@ function Lock({ lang, setLang, now, onUnlock, notifs, preview, onNotif }: { lang
   const [pad, setPad] = useState(false);
   const [code, setCode] = useState("");
   const [err, setErr] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [dismissed, setDismissed] = useState<string[]>([]);
+  const visibleNotifs = notifs.filter((m) => !dismissed.includes(m.id));
 
   const press = (d: string) => {
     if (code.length >= 4) return;
@@ -111,13 +118,17 @@ function Lock({ lang, setLang, now, onUnlock, notifs, preview, onNotif }: { lang
 
   if (!pad)
     return (
-      <div className="absolute inset-0 flex flex-col items-center pt-20 text-on-glass" onClick={() => setPad(true)}>
+      <div className="lock-screen absolute inset-0 flex flex-col items-center pt-20 text-on-glass" onClick={() => setPad(true)}>
         <div className="text-lg font-medium opacity-90">{now ? fmtDate(lang, now) : ""}</div>
         <div className="lock-time">{now ? fmtTime(now) : ""}</div>
-        {notifs.length > 0 && (
-          <div className="w-full px-3 mt-6 space-y-2 max-h-[40%] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            {notifs.slice(0, 4).map((m) => <NotifCard key={m.id} m={m} lang={lang} preview={preview} onClick={() => { onNotif(); setPad(true); }} />)}
-            {notifs.length > 4 && <div className="text-center text-xs opacity-80">+{notifs.length - 4}</div>}
+        {visibleNotifs.length > 0 && (
+          <div className="lock-notification-group" onClick={(e) => e.stopPropagation()}>
+            <div className="lock-notification-heading"><span>KakaoTalk</span><div className="flex items-center gap-1">
+              <Button variant="ghost" size="sm" className="lock-notification-action" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>{expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}{tr(lang, expanded ? { en: "Show less", ko: "간략히 보기", zh: "收起" } : { en: "Show more", ko: "자세히 보기", zh: "展开" })}</Button>
+              <Button variant="ghost" size="icon" className="lock-notification-dismiss" aria-label={tr(lang, { en: "Dismiss notifications", ko: "알림 지우기", zh: "清除通知" })} onClick={() => setDismissed([...dismissed, ...visibleNotifs.map((m) => m.id)])}><X size={15} /></Button>
+            </div></div>
+            <div className="lock-notification-list">{visibleNotifs.slice(0, expanded ? visibleNotifs.length : 2).map((m) => <NotifCard key={m.id} m={m} lang={lang} preview={preview} onClick={() => { onNotif(); setPad(true); }} />)}</div>
+            {!expanded && visibleNotifs.length > 2 && <div className="lock-notification-more">+{visibleNotifs.length - 2}</div>}
           </div>
         )}
         <div className="mt-auto mb-10 flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>

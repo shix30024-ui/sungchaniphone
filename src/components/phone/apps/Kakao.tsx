@@ -5,7 +5,8 @@ import { CONTACTS, MESSAGES, type Contact, type Msg, type MsgType } from "../sto
 import { uid, usePersist } from "../store";
 import { BackBtn, EditBar, Field, ImageField, KktAvatar, TopBar, resolveImg } from "../ui";
 import { Button } from "@/components/ui/button";
-import { Send, Phone, PhoneIncoming } from "lucide-react";
+import { Send, Phone, PhoneIncoming, Search, Menu, Plus, Smile, X } from "lucide-react";
+import { fileToDataUrl } from "../store";
 import Call from "./Call";
 import { type PendingReply, QUEUE_KEY, sendChat } from "../conversation";
 import { STORY_DATE, messageText, sortMessages } from "../chronology";
@@ -59,6 +60,11 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const [addingContact, setAddingContact] = useState(false);
   const [compose, setCompose] = useState("");
   const [call, setCall] = useState<"outgoing" | "incoming" | null>(null);
+  const [menu, setMenu] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [search, setSearch] = useState("");
+  const [emoji, setEmoji] = useState(false);
+  const upload = useRef<HTMLInputElement>(null);
   const [queue] = usePersist<PendingReply[]>(QUEUE_KEY, []);
   const scroll = useRef<HTMLDivElement>(null);
   const editIds = useRef(new Set<string>());
@@ -207,14 +213,15 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   let lastDate = "";
   return (
     <div className="app-page kkt-chat-bg">
-      <TopBar className="kkt-chat-top" left={<BackBtn onClick={() => setOpenId(null)} />} title={open.name}
+      <TopBar className="kkt-chat-top" left={<BackBtn onClick={() => setOpenId(null)} />} title={<span className="kkt-contact-title">{open.name}</span>}
         right={<>
-          <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Call", ko: "전화", zh: "拨打电话" })} onClick={() => setCall("outgoing")}><Phone size={18} /></Button>
-          <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Simulate incoming call", ko: "모의 전화 수신", zh: "模拟来电" })} onClick={() => setCall("incoming")}><PhoneIncoming size={18} /></Button>
-          <Button variant="ghost" size="sm" onClick={startEdit}>{L.edit}</Button>
+          <Button variant="ghost" size="icon" aria-label={label(lang, "search")} onClick={() => setSearching(!searching)}><Search size={21} /></Button>
+          <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Chat menu", ko: "채팅 메뉴", zh: "聊天菜单" })} aria-expanded={menu} onClick={() => setMenu(!menu)}><Menu size={22} /></Button>
         </>} />
-      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5" ref={scroll}>
-        {thread.map((m, i) => {
+      {searching && <div className="kkt-search"><input className="kkt-compose" aria-label={tr(lang, { en: "Search messages", ko: "메시지 검색", zh: "搜索聊天记录" })} placeholder={label(lang, "search")} value={search} onChange={(e) => setSearch(e.target.value)} /><Button variant="ghost" size="icon" aria-label={L.cancel} onClick={() => { setSearching(false); setSearch(""); }}><X /></Button></div>}
+      {menu && <div className="kkt-menu-sheet"><Button variant="ghost" onClick={() => { setMenu(false); startEdit(); }}>{L.edit}</Button><Button variant="ghost" onClick={() => { setMenu(false); setCall("outgoing"); }}><Phone />{tr(lang, { en: "Call", ko: "전화", zh: "拨打电话" })}</Button><Button variant="ghost" onClick={() => { setMenu(false); setCall("incoming"); }}><PhoneIncoming />{tr(lang, { en: "Simulate incoming call", ko: "모의 전화 수신", zh: "模拟来电" })}</Button></div>}
+      <div className="kkt-thread flex-1 overflow-y-auto" ref={scroll}>
+        {thread.filter((m) => !searching || !search || messageText(m, lang).toLowerCase().includes(search.toLowerCase())).map((m, i) => {
           const parts = [];
           if (m.date !== lastDate) {
             lastDate = m.date;
@@ -228,16 +235,16 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
             const prev = thread[i - 1];
             const head = !mine && (!prev || prev.sender !== "them" || prev.date !== m.date || prev.type === "system");
             const content = m.type === "image"
-              ? <div><img src={resolveImg(m.image)} alt="" className="kkt-img" loading="lazy" />{m[lang] && <p className="text-xs mt-1 whitespace-pre-wrap">{m[lang]}</p>}</div>
+              ? <div className={`kkt-image-bubble ${mine ? "kkt-image-mine" : ""}`}><img src={resolveImg(m.image)} alt="" className="kkt-img" loading="lazy" />{(m.originalText || m[lang]) && <p className="text-sm whitespace-pre-wrap">{text}</p>}</div>
               : <div className={mine ? "kkt-bubble-me" : "kkt-bubble-them"}>{text}</div>;
             parts.push(
-              <div key={m.id} className={`flex gap-2 ${mine ? "justify-end" : ""}`}>
-                {!mine && <div className="w-9 shrink-0">{head && <KktAvatar src={open.avatar} size={36} />}</div>}
-                <div className={`flex flex-col max-w-[72%] ${mine ? "items-end" : "items-start"}`}>
+              <div key={m.id} className={`kkt-message-row flex gap-2 ${mine ? "justify-end" : ""}`}>
+                {!mine && <div className="w-9 shrink-0">{head && <KktAvatar src={open.avatar} size={34} />}</div>}
+                <div className={`kkt-message-body flex flex-col ${mine ? "items-end" : "items-start"}`}>
                   {head && <span className="text-[12px] mb-0.5 opacity-80">{open.name}</span>}
                   <div className={`flex items-end gap-1 ${mine ? "flex-row-reverse" : ""}`}>
                     {content}
-                    <span className="text-[10px] opacity-60 shrink-0 text-right">{mine && m.originalText !== undefined && <span className="block">{tr(lang, m.read ? { en: "Read", ko: "읽음", zh: "已读" } : { en: "Sent", ko: "전송됨", zh: "已发送" })}</span>}{fmt12(m.time, lang)}</span>
+                    <span className="kkt-message-time">{mine && m.originalText !== undefined && !m.read && <span className="kkt-read-count">1</span>}{fmt12(m.time, lang)}</span>
                   </div>
                 </div>
               </div>,
@@ -247,6 +254,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
         })}
         {typing && <div className="flex gap-2 items-center py-2" role="status" aria-label={tr(lang, { en: "Typing", ko: "입력 중", zh: "正在输入" })}><KktAvatar src={open.avatar} size={28} /><span className="typing-dots"><i /><i /><i /></span></div>}
       </div>
+      {emoji && <div className="kkt-emoji-panel">{["😊", "ㅋㅋ", "❤️", "👍", "😭", "😂"].map((face) => <Button variant="ghost" key={face} onClick={() => { setCompose((text) => text + face); setEmoji(false); }}>{face}</Button>)}</div>}
       <form className="kkt-input" onSubmit={(event) => {
         event.preventDefault();
         const text = compose.trim();
@@ -254,7 +262,10 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
         sendChat("kkt", open.id, text, lang);
         setCompose("");
       }}>
+        <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Send photo", ko: "사진 보내기", zh: "发送图片" })} onClick={() => upload.current?.click()}><Plus /></Button>
+        <input ref={upload} type="file" accept="image/*" className="hidden" onChange={async (e) => { const input = e.currentTarget; const file = input.files?.[0]; try { if (file) { const image = await fileToDataUrl(file); sendChat("kkt", open.id, compose.trim(), lang, Date.now(), image); setCompose(""); } } catch { alert(tr(lang, { en: "Could not send photo", ko: "사진을 보낼 수 없습니다", zh: "图片未发送，请重试" })); } finally { input.value = ""; } }} />
         <input aria-label={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} placeholder={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} className="kkt-compose" value={compose} onChange={(event) => setCompose(event.target.value)} />
+        <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Emoji", ko: "이모티콘", zh: "表情" })} aria-expanded={emoji} onClick={() => setEmoji(!emoji)}><Smile size={21} /></Button>
         <Button type="submit" size="icon" disabled={!compose.trim()} aria-label={tr(lang, { en: "Send message", ko: "메시지 보내기", zh: "发送消息" })} className="kkt-send"><Send size={17} /></Button>
       </form>
     </div>
