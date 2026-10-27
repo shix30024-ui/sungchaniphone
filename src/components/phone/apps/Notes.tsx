@@ -1,50 +1,30 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, Folder, FolderPlus, Search, SquarePen, Trash2 } from "lucide-react";
 import { type AppProps, tr } from "../i18n";
 import { NOTES, type Note } from "../story";
 import { uid, usePersist } from "../store";
 import { label, localeFor, confirmDelete } from "../labels";
-import { BackBtn, EditBar, TopBar } from "../ui";
+import { EditBar, TopBar } from "../ui";
+import { STORY_DATE } from "../chronology";
 
+type NoteFolder = { id: string; name: string };
+type FolderNote = Note & { folderId?: string };
 export default function Notes({ lang, onHome }: AppProps) {
-  const [notes, setNotes] = usePersist<Note[]>("notes-v1", NOTES);
-  const [draft, setDraft] = useState<Note | null>(null);
+  const [notes, setNotes] = usePersist<FolderNote[]>("notes-v1", NOTES);
+  const [folders, setFolders] = usePersist<NoteFolder[]>("phone-note-folders-v1", []);
+  const [draft, setDraft] = useState<FolderNote | null>(null);
+  const [folderView, setFolderView] = useState(false);
+  const [folderId, setFolderId] = useState<string | null>(null);
+  const [folderDraft, setFolderDraft] = useState<NoteFolder | null>(null);
   const [search, setSearch] = useState("");
-  const sorted = notes.filter((note) => (note.title + " " + note.body).toLocaleLowerCase().includes(search.toLocaleLowerCase())).sort((a, b) => b.date.localeCompare(a.date));
-
+  const L = (en: string, ko: string, zh: string) => tr(lang, { en, ko, zh });
+  const title = folders.find((f) => f.id === folderId)?.name ?? L("Notes", "메모", "备忘录");
+  const filtered = notes.filter((n) => (!folderId || n.folderId === folderId) && `${n.title} ${n.body}`.toLowerCase().includes(search.toLowerCase())).sort((a, b) => (b.updatedAt ?? b.date).localeCompare(a.updatedAt ?? a.date));
+  if (folderDraft) return <div className="app-page notes-native"><TopBar title={L("Folder", "폴더", "文件夹")} /><div className="flex-1 p-5"><input aria-label={L("Folder name", "폴더 이름", "文件夹名称")} className="sheet-input" value={folderDraft.name} onChange={(e) => setFolderDraft({ ...folderDraft, name: e.target.value })} />{folders.some((f) => f.id === folderDraft.id) && <Button variant="ghost" className="text-destructive mt-4" onClick={() => { if (confirmDelete(lang)) { setFolders((old) => old.filter((f) => f.id !== folderDraft.id)); setNotes((old) => old.map((n) => n.folderId === folderDraft.id ? { ...n, folderId: undefined } : n)); setFolderDraft(null); setFolderId(null); } }}><Trash2 />{label(lang, "delete")}</Button>}</div><EditBar save={label(lang, "save")} cancel={label(lang, "cancel")} onCancel={() => setFolderDraft(null)} onSave={() => { if (!folderDraft.name.trim()) return; setFolders((old) => old.some((f) => f.id === folderDraft.id) ? old.map((f) => f.id === folderDraft.id ? folderDraft : f) : [...old, folderDraft]); setFolderDraft(null); }} /></div>;
   if (draft) {
     const exists = notes.some((n) => n.id === draft.id);
-    return (
-      <div className="app-page notes-bg">
-        <TopBar left={<span />} title={<input type="date" className="bg-transparent text-xs text-center" value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} />}
-          right={exists ? <button className="text-destructive text-sm" onClick={() => { if (!confirmDelete(lang)) return; setNotes(notes.filter((n) => n.id !== draft.id)); setDraft(null); }}>{tr(lang, { en: "Delete", ko: "삭제", zh: "删除" })}</button> : undefined} />
-        <div className="flex-1 flex flex-col px-5 pb-3">
-          <input className="bg-transparent text-2xl font-bold outline-none py-2" value={draft.title} placeholder={tr(lang, { en: "Title", ko: "제목", zh: "标题" })} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
-          <textarea className="flex-1 bg-transparent outline-none text-[15px] leading-relaxed resize-none" value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} />
-        </div>
-        <EditBar save={tr(lang, { en: "Save", ko: "저장", zh: "保存" })} cancel={tr(lang, { en: "Cancel", ko: "취소", zh: "取消" })}
-          onCancel={() => setDraft(null)}
-          onSave={() => { const saved = { ...draft, updatedAt: new Date().toISOString() }; setNotes(exists ? notes.map((n) => n.id === draft.id ? saved : n) : [saved, ...notes]); setDraft(null); }} />
-      </div>
-    );
+    return <div className="app-page notes-native"><TopBar className="native-clean-top" left={<Button variant="ghost" className="notes-accent" onClick={() => setDraft(null)}><ChevronLeft size={20} />{label(lang, "cancel")}</Button>} title="" right={exists && <Button variant="ghost" size="icon" className="notes-accent" aria-label={label(lang, "delete")} onClick={() => { if (confirmDelete(lang)) { setNotes((old) => old.filter((n) => n.id !== draft.id)); setDraft(null); } }}><Trash2 size={21} /></Button>} /><div className="notes-document flex-1"><div className="notes-document-meta"><input type="date" aria-label={L("Date", "날짜", "日期")} value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} />{folders.length > 0 && <select aria-label={L("Folder", "폴더", "文件夹")} value={draft.folderId ?? ""} onChange={(e) => setDraft({ ...draft, folderId: e.target.value || undefined })}><option value="">{L("Notes", "메모", "备忘录")}</option>{folders.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select>}</div><input aria-label={L("Title", "제목", "标题")} className="notes-title-input" value={draft.title} placeholder={L("Title", "제목", "标题")} onChange={(e) => setDraft({ ...draft, title: e.target.value })} /><textarea aria-label={L("Note", "메모 내용", "备忘录内容")} className="notes-body-input" value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} /></div><EditBar save={label(lang, "save")} cancel={label(lang, "cancel")} onCancel={() => setDraft(null)} onSave={() => { const saved = { ...draft, updatedAt: new Date().toISOString() }; setNotes((old) => exists ? old.map((n) => n.id === draft.id ? saved : n) : [saved, ...old]); setDraft(null); }} /></div>;
   }
-
-  return (
-    <div className="app-page notes-bg">
-      <TopBar left={<BackBtn onClick={onHome} />} title={tr(lang, { en: "Notes", ko: "메모", zh: "备忘录" })}
-        right={<button className="notes-accent text-xl" onClick={() => setDraft({ id: uid(), title: "", body: "", date: "2026-10-26" })}>✎</button>} />
-      <div className="flex-1 overflow-y-auto px-4">
-        <input aria-label={label(lang, "search")} placeholder={label(lang, "search")} className="sheet-input mb-3" value={search} onChange={(e) => setSearch(e.target.value)} />
-        <div className="rounded-xl bg-background divide-y">
-          {sorted.map((n) => (
-            <button key={n.id} className="w-full text-left px-4 py-3" onClick={() => setDraft({ ...n })}>
-              <div className="font-semibold text-[15px] truncate">{n.title || "—"}</div>
-              <div className="text-[13px] text-muted-foreground truncate">{n.date.replaceAll("-", ".")} &nbsp;{n.body.split("\n")[0]}</div>
-              {n.updatedAt && <p className="text-xs text-muted-foreground">{label(lang, "modified")}: {new Date(n.updatedAt).toLocaleString(localeFor(lang))}</p>}
-            </button>
-          ))}
-        </div>
-        <p className="text-center text-xs text-muted-foreground py-3">{notes.length} {tr(lang, { en: "notes", ko: "개의 메모", zh: "个备忘录" })}</p>
-      </div>
-    </div>
-  );
+  return <div className="app-page notes-native"><TopBar className="native-clean-top" left={<Button variant="ghost" className="notes-accent" onClick={() => { if (folderView) onHome(); else setFolderView(true); }}><ChevronLeft size={20} />{folderView ? label(lang, "back") : L("Folders", "폴더", "文件夹")}</Button>} title="" right={folderId && !folderView && <Button variant="ghost" className="notes-accent" onClick={() => { const f = folders.find((item) => item.id === folderId); if (f) setFolderDraft({ ...f }); }}>{label(lang, "edit")}</Button>} /><div className="flex-1 overflow-y-auto px-4"><h1 className="native-large-title px-0">{folderView ? L("Folders", "폴더", "文件夹") : title}</h1><div className="native-search"><Search size={17} /><input aria-label={label(lang, "search")} placeholder={label(lang, "search")} value={search} onChange={(e) => setSearch(e.target.value)} /></div>{folderView ? <><p className="notes-folder-section">{L("On My iPhone", "나의 iPhone", "我的 iPhone")}</p><div className="notes-list"><Button variant="ghost" className="notes-folder-row" onClick={() => { setFolderId(null); setFolderView(false); setSearch(""); }}><Folder /><b className="flex-1 text-left">{L("All Notes", "모든 메모", "所有备忘录")}</b><small>{notes.length}</small></Button>{folders.filter((f) => f.name.toLowerCase().includes(search.toLowerCase())).map((f) => <div className="notes-folder-row" key={f.id}><Button variant="ghost" className="flex-1 justify-start" onClick={() => { setFolderId(f.id); setFolderView(false); setSearch(""); }}><Folder /><b>{f.name}</b></Button><small>{notes.filter((n) => n.folderId === f.id).length}</small><Button variant="ghost" size="icon" aria-label={`${label(lang, "edit")} ${f.name}`} onClick={() => setFolderDraft({ ...f })}><SquarePen size={15} /></Button></div>)}</div></> : <div className="notes-list">{filtered.map((n) => <Button variant="ghost" key={n.id} className="notes-list-row" onClick={() => setDraft({ ...n })}><b>{n.title || "—"}</b><span><time>{n.date.replaceAll("-", ".")}</time> {n.body.split("\n")[0]}</span>{n.updatedAt && <small>{label(lang, "modified")}: {new Date(n.updatedAt).toLocaleString(localeFor(lang))}</small>}</Button>)}</div>}</div><div className="notes-toolbar"><Button variant="ghost" size="icon" className="notes-accent" aria-label={L("New folder", "새 폴더", "新建文件夹")} onClick={() => setFolderDraft({ id: uid(), name: "" })}><FolderPlus size={22} /></Button><span>{folderView ? folders.length : filtered.length} {folderView ? L("folders", "개의 폴더", "个文件夹") : L("notes", "개의 메모", "个备忘录")}</span><Button variant="ghost" size="icon" className="notes-accent" aria-label={L("New note", "새 메모", "新建备忘录")} onClick={() => setDraft({ id: uid(), title: "", body: "", date: STORY_DATE, folderId: folderId ?? undefined })}><SquarePen size={24} /></Button></div></div>;
 }
