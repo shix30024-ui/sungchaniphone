@@ -37,12 +37,6 @@ export function tickReplies(now = Date.now(), activeKkt: string | null = null) {
     return null;
   }
   let reply = replyFromContext(rows.filter((m) => m.contactId === item.contactId), source);
-  if (item.channel === "ig" && item.contactId !== "anton") {
-    const sourceText = messageText(source, "en");
-    reply = item.contactId === "minjae"
-      ? { ko: `“${sourceText}” ㅋㅋ 알겠어. 내일 운동장 올 거야?`, zh: `“${sourceText}” 哈哈知道啦，明天来球场吗？`, en: `“${sourceText}” Haha, got it. Coming to the pitch tomorrow?` }
-      : { ko: `“${sourceText}” 확인! 과제 끝나고 다시 연락할게`, zh: `“${sourceText}” 收到！写完作业再联系你`, en: `“${sourceText}” Got it! I'll text after finishing my assignment` };
-  }
   const incoming: Msg = { ...reply, id, contactId: item.contactId, sender: "them", type: "text", date: STORY_DATE, time: nextMessageTime(rows), order: Math.max(0, ...rows.map((m) => m.order)) + 1, replyTo: source.id, replyKind: "preset", live: item.channel === "kkt", read: item.channel === "kkt" && activeKkt === item.contactId };
   updateStored<Msg[]>(key, fallback, (current) => [...current.map((m) => m.id === source.id ? { ...m, read: true } : m), incoming]);
   updateStored<PendingReply[]>(QUEUE_KEY, [], (q) => q.filter((p) => p.sourceId !== item.sourceId));

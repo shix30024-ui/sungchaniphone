@@ -33,7 +33,7 @@ function NotifCard({ m, lang, preview, onClick }: { m: Msg; lang: Lang; preview:
   const contact = contacts.find((c) => c.id === m.contactId);
   return (
     <Button variant="ghost" onClick={onClick} className="notif-card w-full text-left flex items-center gap-3">
-      <span className="notif-avatar"><KktAvatar src={contact?.avatar} size={38} /><img src={KKT_ICON} alt="" className="notif-app-badge" /></span>
+      <span className="notif-avatar"><KktAvatar src={contact?.avatar ?? ""} size={38} /><img src={KKT_ICON} alt="" className="notif-app-badge" /></span>
       <div className="min-w-0 flex-1">
         <div className="flex justify-between gap-2 text-[13px]"><b className="truncate">{contact?.name ?? KKT_NAME}</b><span className="notif-time">{m.time}</span></div>
         <div className="text-[14px] truncate">{preview ? notifText(m, lang) : tr(lang, { en: "New message", ko: "새 메시지", zh: "新消息" })}</div>
