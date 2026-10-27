@@ -1,4 +1,9 @@
 # Phone story completion
+# Wonbin reference adjustment
+- [ ] Inspect reference app navigation and settings.
+- [ ] Adjust settings and shared phone interactions without changing saved content or app order.
+- [ ] Verify language, navigation and preservation at desktop/mobile sizes.
+
 - [x] Connect Kakao, Instagram, X, Photos and Notes to existing icons.
 - [x] Complete app styles, navigation, fixed story date and functional chat composer.
 - [x] Verify all five apps save and read back edits after refresh, chat cancellation and translation, desktop/mobile rendering, and eight rule/routing tests.
