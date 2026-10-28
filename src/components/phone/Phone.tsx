@@ -36,6 +36,8 @@ import { getActiveChat } from "./live";
 import { Wifi, ChevronUp, ChevronDown, X, Search, Plane } from "lucide-react";
 import { SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from "./system";
 import { weatherAppName } from "./x-language";
+import { useSharedPhone, useSharingStatus } from "./shared";
+import { queueSharedSave } from "./shared-state";
 
 const notifText = (m: Msg, lang: Lang) => (m.type === "image" ? tr(lang, { en: "Sent a photo", ko: "사진을 보냈습니다", zh: "发送了一张照片" }) : messageText(m, lang));
 
@@ -249,6 +251,8 @@ function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initia
 }
 
 export default function Phone() {
+  useSharedPhone();
+  const sharingStatus = useSharingStatus();
   const now = useDeviceNow();
   const [lang, setLangState] = useState<Lang>("en");
   // Keep the unlocked state in sessionStorage so an unexpected remount
@@ -311,7 +315,7 @@ export default function Phone() {
     if (l && LANGS.some((language) => language.id === l)) setLangState(l);
   }, []);
   const setLang = (l: Lang) => { setLangState(l); localStorage.setItem("phone-lang", l); };
-  const update = (a: App[]) => { setApps(a); saveApps(a); };
+  const update = (a: App[]) => { setApps(a); saveApps(a); queueSharedSave("phone-apps-v2", a); };
 
   const settingsApp: App = { id: "settings", name: t(lang, "settings"), icon: SETTINGS_ICON, color: "#8e8e93", url: "", dock: false };
   const translatedApps = apps.map((a) => {

@@ -10,6 +10,7 @@ import { usePersist } from "../store";
 import { SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from "../system";
 import { lockOwner, unlockOwner, useOwner } from "../owner";
 import { exportPhoneData, importPhoneDataFile, inspectRecovery, readBackup, restoreFromBackup, undoLastImport, useImportSafety } from "../recovery";
+import { SharedControls } from "../shared";
 
 type Page = "main" | "language" | "notifications" | "about" | "general" | "owner";
 export default function Settings({ lang, setLang, live, setLive, apps, onHome, onLock, onEditApps }: {
