@@ -23,3 +23,6 @@ export function socialFeed(own: Post[], friends: SocialPost[]): SocialPost[] {
   return [...own.map((p) => ({ ...p, authorId: SELF_ID })), ...friends].sort((a, b) => `${b.date} ${b.time ?? "00:00"}`.localeCompare(`${a.date} ${a.time ?? "00:00"}`));
 }
 export const authorPosts = (posts: SocialPost[], authorId: string) => posts.filter((p) => p.authorId === authorId);
+
+/** DM identity is the same live record used for feed authors, never a KKT profile. */
+export const dmAccount = (accounts: SocialAccount[], contactId: string) => accounts.find((account) => account.id === contactId);
