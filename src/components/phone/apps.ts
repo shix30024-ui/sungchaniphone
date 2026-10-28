@@ -9,6 +9,7 @@ import i_msg from "@/assets/icons/msg.png.asset.json";
 import i_safari from "@/assets/icons/safari.png.asset.json";
 import i_music from "@/assets/icons/music.png.asset.json";
 import i_settings from "@/assets/icons/settings.png.asset.json";
+import i_weather from "@/assets/icons/weather.jpg.asset.json";
 export const SETTINGS_ICON = i_settings.url;
 export type App = {
   id: string;
@@ -29,6 +30,7 @@ export const DEFAULT_APPS: App[] = [
   { id: "cam", name: "Camera", icon: i_cam.url, color: "#8e8e93", url: "", dock: false },
   { id: "notes", name: "Notes", icon: i_notes.url, color: "#ffd60a", url: "", dock: false },
   { id: "calendar", name: "Calendar", icon: "/icons/calendar.svg", color: "var(--background)", url: "", dock: false },
+  { id: "weather", name: "Weather", icon: i_weather.url, color: "var(--primary)", url: "", dock: false },
   { id: "phone", name: "Phone", icon: i_phone.url, color: "#34c759", url: "", dock: true },
   { id: "msg", name: "Messages", icon: i_msg.url, color: "#30d158", url: "", dock: true },
   { id: "safari", name: "Safari", icon: i_safari.url, color: "#ffffff", url: "https://google.com", dock: true },
@@ -65,8 +67,16 @@ export const loadApps = (): App[] => {
         if (calendar && !saved.some((app) => app.id === "calendar")) {
           const next = [...saved, calendar];
           saveApps(next);
-          return next;
+          saved = next;
         }
+      }
+      if (!localStorage.getItem("phone-weather-added-v1")) {
+        const weather = DEFAULT_APPS.find((app) => app.id === "weather");
+        if (weather && !saved.some((app) => app.id === "weather")) {
+          saved = [...saved, weather];
+          saveApps(saved);
+        }
+        localStorage.setItem("phone-weather-added-v1", "true");
       }
       return saved;
     }
