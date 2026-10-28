@@ -1,11 +1,11 @@
-import { sortMessages } from "./chronology";
+import { STORY_DATE, sortMessages } from "./chronology";
 import type { Lang } from "./i18n";
 import type { Msg } from "./story";
 import { readStored, updateStored, uid } from "./store";
 
 export const ANTON_PROGRESS_KEY = "kkt-anton-fixed-progress-v1";
 export type FixedProgress = { answeredIds: string[] };
-export type TemporaryReply = { message: Msg; afterId?: string };
+export type TemporaryReply = { message: Msg; afterId?: string | undefined };
 export const EMPTY_PROGRESS: FixedProgress = { answeredIds: [] };
 
 export function fixedFlow(messages: Msg[], progress: FixedProgress) {
@@ -28,7 +28,7 @@ export function temporaryReply(text: string, lang: Lang, after?: Msg, image?: st
   return { afterId: after?.id, message: {
     id: `temporary-${uid()}`, contactId: "anton", sender: "me", type: image ? "image" : "text",
     ko: lang === "ko" ? text : "", zh: lang === "zh" ? text : "", en: lang === "en" ? text : "",
-    originalText: text, image, date: after?.date ?? "2026-10-26",
+    originalText: text, image, date: after?.date ?? STORY_DATE,
     time: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
     order: after?.order ?? 0, read: true,
   } };

@@ -76,7 +76,7 @@ describe("safe contextual phone conversations", () => {
     expect(contextualReply([source], source).zh).toBe("收到照片了，跟我说说拍的是什么？");
   });
   it("remembers an earlier uneaten meal rather than rotating replies", () => {
-    const source = sendChat("kkt", "anton", "吃饭了吗？", "zh", 1000);
+    const source = sendChat("ig", "anton", "吃饭了吗？", "zh", 1000);
     const prior = { ...source, id: "prior", sender: "them" as const, originalText: "还没吃", time: "20:26", order: 0 };
     expect(contextualReply([prior, source], source).zh).toContain("像刚才说的");
   });

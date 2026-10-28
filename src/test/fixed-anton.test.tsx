@@ -55,7 +55,7 @@ describe("Fixed Anton interaction", () => {
     ui.rerender(<Kakao lang="zh" onHome={() => {}} initialChat="anton" />);
     expect(screen.getByText("My private reply")).toBeInTheDocument();
     expect(screen.getByText("next 中文")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "back" }));
+    fireEvent.click(screen.getByRole("button", { name: "‹" }));
     expect(screen.queryByText("My private reply")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /찬영 Anton/ }));
     expect(screen.queryByText("My private reply")).not.toBeInTheDocument();

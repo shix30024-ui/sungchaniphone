@@ -131,7 +131,7 @@ export function tickLive(now = Date.now()): Msg | null {
   if (!settings.enabled) return null;
   // Let the current conversation finish instead of interrupting with an unrelated story node.
   const pending = readStored<{ channel: string; contactId: string; dueAt: number }[]>("phone-reply-queue-v1", []).filter((q) => !(q.channel === "kkt" && q.contactId === "anton"));
-  const recent = read<Msg[]>(MSGS_KEY, []).filter((m) => m.originalText).at(-1);
+  const recent = read<Msg[]>(MSGS_KEY, []).filter((m) => m.contactId !== "anton" && m.originalText).at(-1);
   if (pending.length || (recent?.createdAt && now - new Date(recent.createdAt).getTime() < 120000)) return null;
   const state = loadLiveState();
   if (!state.nextAt) { saveLiveState({ ...state, nextAt: now + nextDelay(settings.frequency) }); return null; }
