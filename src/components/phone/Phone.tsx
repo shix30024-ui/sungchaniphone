@@ -15,6 +15,7 @@ import { useDeviceNow } from "./clock";
 import PhoneApp from "./apps/PhoneApp";
 import Calendar from "./apps/Calendar";
 import Music from "./apps/Music";
+import Weather from "./apps/Weather";
 import Settings from "./apps/Settings";
 import { backupPhoneData } from "./store";
 import { label as appLabel } from "./labels";
@@ -222,6 +223,7 @@ function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initia
     : app.id === "notes" ? <Notes lang={lang} onHome={onClose} />
     : app.id === "calendar" ? <Calendar lang={lang} onHome={onClose} />
     : app.id === "music" ? <Music lang={lang} onHome={onClose} />
+    : app.id === "weather" ? <Weather lang={lang} onHome={onClose} />
     : app.id === "phone" ? <PhoneApp lang={lang} onHome={onClose} />
     : app.id === "settings" ? <Settings lang={lang} setLang={setLang} live={live} setLive={setLive} apps={apps} onHome={onClose} onLock={onLock} onEditApps={onEditApps} /> : null;
   if (builtIn) return <div className="phone-app-container app-open">{builtIn}</div>;
