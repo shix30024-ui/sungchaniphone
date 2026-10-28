@@ -10,7 +10,7 @@
 <!-- LOVABLE:END -->
 
 - Keep phone app views inside the existing Phone shell, dispatched by stable app ID, so icon edits cannot change app identity or replace the home screen.
-- Persist fictional phone edits through the existing browser-local store; load only after mount to keep server and browser markup consistent.
+- Keep original browser-local authored records intact; layer public shared content after mount with session-local visitor overlays, and auto-save owner changes through authenticated role-checked server functions with revision conflict checks.
 - Centralize story dates and message sorting in browser-safe data utilities so all app views use the same chronology.
 - Use one Phone-owned system language for every app; legacy chats gain translations only by exact original-text match, preserving explicit edits.
 - X uses optional per-language text through x-language; built-in translations apply only to unchanged seed IDs/text, and language switching never persists or rewrites originals. Default Weather naming is display-only, preserving customized app names.
@@ -18,7 +18,9 @@
 - Keep ordered post images, tweet replies, calendar events and music collections in browser-safe dedicated utilities; captions/comments and unrelated records remain isolated during edits.
 - Reference music additions use an optional one-time marker on the existing library and stable IDs; append only missing tracks so edited or deleted additions never reseed.
 - Simulated Anton messages live in phone/live.ts: append-only with fixed ids and one timer in Phone, so saved chats are never rewritten and each message arrives once.
-- Edit UI is owner-only: phone/owner.ts holds the localStorage-backed owner flag (Settings unlock with owner code), and every app's edit entry point is gated on useOwner(). Player interactions (send, like, favorite, comment) stay open; content editing never renders for players.
+- Edit UI requires the authenticated phone owner role plus the local editing unlock flag; server-side RLS and role validation exclusively authorize shared writes. Player interactions remain isolated from authored shared saves.
+- Shared media uses a private Storage bucket with read access restricted to references in the public authored manifest; resolve short-lived signed URLs on reads while preserving original IndexedDB image references locally.
+- Recovery bundles must whitelist fictional phone keys and exclude authentication sessions and owner flags; never export arbitrary browser storage.
 - Phone owns the single foreground scheduler; Anton KKT excludes queued AI jobs and uses fixed-conversation for full saved-thread display, ID-only gate progress and anchored player replies. Anton's AI answers are generated on send from the visible thread via temporaryIncoming. Player text and AI answers live in fixed-conversation's module-memory temporary store: they survive in-app exit/re-entry, clear only on page refresh or close, and never enter storage. Gates never hide saved records and player sends never deliver story messages, so persistence and temporary interaction stay independent. Other channels retain source-linked AI jobs and cross-tab locks, keeping their behavior isolated.
 - AI prompts and gateway credentials remain behind server functions; send only source-bounded contact history and image-presence metadata, keeping all phone records in the existing browser store.
 - Visible lock/status clocks use a mount-initialized ticking device clock, separate from immutable story chronology and saved message dates.

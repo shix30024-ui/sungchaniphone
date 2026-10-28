@@ -18,7 +18,7 @@ import Calendar from "./apps/Calendar";
 import Music from "./apps/Music";
 import Weather from "./apps/Weather";
 import Settings from "./apps/Settings";
-import { backupPhoneData } from "./store";
+import { backupPhoneData, readStored } from "./store";
 import { useOwner } from "./owner";
 import { label as appLabel } from "./labels";
 import { tr } from "./i18n";
@@ -311,8 +311,11 @@ export default function Phone() {
   useEffect(() => {
     backupPhoneData();
     setApps(loadApps());
+    const refreshApps = () => setApps(readStored<App[]>("phone-apps-v2", loadApps()));
+    window.addEventListener("phone-shared-refresh", refreshApps);
     const l = localStorage.getItem("phone-lang") as Lang | null;
     if (l && LANGS.some((language) => language.id === l)) setLangState(l);
+    return () => window.removeEventListener("phone-shared-refresh", refreshApps);
   }, []);
   const setLang = (l: Lang) => { setLangState(l); localStorage.setItem("phone-lang", l); };
   const update = (a: App[]) => { setApps(a); saveApps(a); queueSharedSave("phone-apps-v2", a); };
@@ -350,6 +353,7 @@ export default function Phone() {
   return (
     <div className="phone-screen" style={{ backgroundImage: `url(${wallpaper.url})` }}>
       <StatusBar now={now} inApp={Boolean(open || editing)} />
+      {sharingStatus && owner && <div className="absolute bottom-8 inset-x-3 z-50 bg-background text-foreground border border-border rounded-md p-2 text-xs" role="status">{sharingStatus}</div>}
       {locked ? (
         <Lock lang={lang} setLang={setLang} now={now} notifs={lockNotifs} preview={live.preview} onNotif={() => setPendingChat(true)}
           onUnlock={() => { setLocked(false); try { sessionStorage.setItem("phone-unlocked", "1"); } catch { /* ignore */ } if (pendingChat) { setPendingChat(false); openChat(); } }} />

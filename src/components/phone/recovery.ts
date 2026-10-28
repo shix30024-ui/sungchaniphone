@@ -49,7 +49,7 @@ function readAllLocal(): Record<string, string> {
   const all: Record<string, string> = {};
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
-    if (k) { const v = localStorage.getItem(k); if (v !== null) all[k] = v; }
+    if (k && /^(phone-|kkt-|ig-|x-|photos-|notes-|calendar-|music-)/.test(k) && k !== "phone-owner-v1") { const v = localStorage.getItem(k); if (v !== null) all[k] = v; }
   }
   return all;
 }
@@ -88,7 +88,7 @@ export function parsePhoneBundle(text: string): { local: Record<string, string>;
   }
   const local: Record<string, string> = {};
   for (const [k, v] of Object.entries(obj)) {
-    if (k === IMAGES_KEY || k.startsWith("__")) continue;
+    if (k === IMAGES_KEY || k.startsWith("__") || !/^(phone-|kkt-|ig-|x-|photos-|notes-|calendar-|music-)/.test(k) || k === "phone-owner-v1") continue;
     if (typeof v === "string") local[k] = v;
   }
   if (!Object.keys(local).length && !Object.keys(images).length) return null;

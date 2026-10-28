@@ -69,7 +69,20 @@ export function useSharedPhone() {
       const { data, error } = await supabase.from("phone_shared_content").select("payload,revision").eq("id", "main").maybeSingle();
       if (!live) return;
       if (error) { notify("Shared content unavailable; saved local content is unchanged. / 共享读取失败，原内容未改动", true); return; }
-      if (data && data.revision !== sharedRevision()) installShared(data.payload as Record<string, unknown>, data.revision);
+      if (data && data.revision !== sharedRevision()) {
+        const resolve = async (value: unknown): Promise<unknown> => {
+          if (Array.isArray(value)) return Promise.all(value.map(resolve));
+          if (value && typeof value === "object") return Object.fromEntries(await Promise.all(Object.entries(value).map(async ([k, v]) => [k, await resolve(v)])));
+          if (typeof value === "string" && value.startsWith("shared-media:")) {
+            const { data: url, error: mediaError } = await supabase.storage.from("phone-shared-media").createSignedUrl(value.slice(13), 86400);
+            if (mediaError) throw mediaError;
+            return url.signedUrl;
+          }
+          return value;
+        };
+        try { const payload = await resolve(data.payload); if (live) installShared(payload as Record<string, unknown>, data.revision); }
+        catch { notify("Some shared photos could not load. / 部分共享照片读取失败", true); }
+      }
       window.dispatchEvent(new Event(EVENT));
     };
     setSharedSave((key, value) => { pending[key] = authoredValue(value); void flush(); });

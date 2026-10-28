@@ -78,6 +78,7 @@ export default function Settings({ lang, setLang, live, setLive, apps, onHome, o
           <label className="settings-row"><span className="settings-row-name">{L("Show message previews", "미리보기 표시", "显示通知预览")}</span><Switch className="settings-switch" aria-label="previews" checked={live.preview} onCheckedChange={(preview) => setLive({ ...live, preview })} /></label>
         </div>
       </> : page === "owner" ? <>
+        <SharedControls lang={lang} />
         <div className="settings-section-title">{L("Editing", "편집", "编辑权限")}</div>
         <div className="settings-group">
           {owner ? <>
