@@ -1,14 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Heart, Trash2, Pencil, Music2, ListMusic } from "lucide-react";
 import { tr, type AppProps } from "../i18n";
 import { label, confirmDelete } from "../labels";
 import { EMPTY_MUSIC, type MusicData, type Song, type Playlist } from "../organizer";
-import { usePersist, uid } from "../store";
+import { usePersist, uid, readStored, updateStored } from "../store";
+import { addReferenceSongs } from "../reference-music";
 import { BackBtn, TopBar, Field, EditBar } from "../ui";
 
 export default function Music({ lang, onHome }: AppProps) {
   const [data, setData] = usePersist<MusicData>("music-library-v1", EMPTY_MUSIC);
+  useEffect(() => {
+    try {
+      const current = readStored<MusicData>("music-library-v1", EMPTY_MUSIC);
+      if (!current.referenceTracksAdded) updateStored<MusicData>("music-library-v1", EMPTY_MUSIC, addReferenceSongs);
+    } catch { /* Unreadable saved music must never be replaced. */ }
+  }, []);
   const [tab, setTab] = useState<"songs" | "playlists" | "favorites">("songs");
   const [openId, setOpenId] = useState<string | null>(null);
   const [songDraft, setSongDraft] = useState<Song | null>(null);

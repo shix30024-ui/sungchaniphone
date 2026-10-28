@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { setActiveChat } from "../live";
+import { setActiveChat, deliverLiveMessage } from "../live";
 import { type AppProps, tr } from "../i18n";
 import { CONTACTS, MESSAGES, type Contact, type Msg, type MsgType } from "../story";
 import { uid, usePersist } from "../store";
@@ -12,6 +12,7 @@ import { type PendingReply, QUEUE_KEY, sendChat } from "../conversation";
 import { STORY_DATE, messageText, sortMessages } from "../chronology";
 import { confirmDelete, label, localeFor } from "../labels";
 import { completeTranslations } from "../translations";
+import { ANTON_PROGRESS_KEY, EMPTY_PROGRESS, fixedFlow, acknowledgeFixedNode, temporaryReply, withTemporaryReplies, type FixedProgress, type TemporaryReply } from "../fixed-conversation";
 
 const TODAY = STORY_DATE;
 const sortMsgs = sortMessages<Msg>;
@@ -31,6 +32,9 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const [contacts, setContacts] = usePersist<Contact[]>("kkt-contacts-v1", CONTACTS);
   const [msgs, setMsgs] = usePersist<Msg[]>("kkt-msgs-v1", MESSAGES, completeTranslations);
   const [openId, setOpenId] = useState<string | null>(initialChat ?? null);
+  const [temporary, setTemporary] = useState<TemporaryReply[]>([]);
+  const [progress] = usePersist<FixedProgress>(ANTON_PROGRESS_KEY, EMPTY_PROGRESS);
+  useEffect(() => { setTemporary([]); setCompose(""); setEmoji(false); }, [openId]);
   useEffect(() => { setActiveChat(openId); return () => setActiveChat(null); }, [openId]);
   // Opening a chat marks it read. Works on the saved copy directly so defaults never overwrite saved edits.
   useEffect(() => {
@@ -74,10 +78,10 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const [queue] = usePersist<PendingReply[]>(QUEUE_KEY, []);
   const scroll = useRef<HTMLDivElement>(null);
   const editIds = useRef(new Set<string>());
-  const typing = queue.some((q) => !q.failed && q.channel === "kkt" && q.contactId === openId);
+  const typing = openId !== "anton" && queue.some((q) => !q.failed && q.channel === "kkt" && q.contactId === openId);
   useEffect(() => {
     if (scroll.current) scroll.current.scrollTop = scroll.current.scrollHeight;
-  }, [msgs, openId, typing, editing]);
+  }, [msgs, openId, typing, editing, temporary, progress]);
 
   const L = {
     chats: tr(lang, { en: "Chats", ko: "채팅", zh: "聊天" }),
@@ -143,9 +147,20 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
     );
   }
 
-  const thread = sortMsgs(msgs.filter((m) => m.contactId === open.id));
+  const savedThread = sortMsgs(msgs.filter((m) => m.contactId === open.id));
+  const flow = fixedFlow(savedThread, progress);
+  const fixedThread = open.id === "anton" ? flow.visible : savedThread;
+  const thread = open.id === "anton" ? withTemporaryReplies(fixedThread, temporary) : fixedThread;
+  const send = (text: string, image?: string) => {
+    if (open.id !== "anton") { sendChat("kkt", open.id, text, lang, Date.now(), image); return; }
+    setTemporary((old) => [...old, temporaryReply(text, lang, fixedThread.at(-1), image)]);
+    if (flow.waiting) {
+      const next = acknowledgeFixedNode(flow.waiting.id);
+      if (fixedFlow(savedThread, next).visible.length === fixedThread.length) deliverLiveMessage();
+    } else deliverLiveMessage();
+  };
   if (call) return <Call contact={open} lang={lang} incoming={call === "incoming"} onClose={() => setCall(null)} />;
-  const startEdit = () => { editIds.current = new Set(thread.map((m) => m.id)); setDraft(thread.map((m) => ({ ...m }))); setDraftC({ ...open }); setEditing(true); };
+  const startEdit = () => { editIds.current = new Set(savedThread.map((m) => m.id)); setDraft(savedThread.map((m) => ({ ...m }))); setDraftC({ ...open }); setEditing(true); };
   const save = () => {
     setMsgs((current) => [...current.filter((m) => m.contactId !== open.id || !editIds.current.has(m.id)), ...draft.map((m, i) => ({ ...m, order: i }))]);
     if (draftC) setContacts((current) => current.map((c) => (c.id === draftC.id ? { ...draftC, unread: c.unread } : c)));
@@ -204,6 +219,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
                 <input type="date" className="edit-select flex-1" value={m.date} onChange={(e) => upd(m.id, { date: e.target.value })} />
                 <input type="time" className="edit-select" value={m.time} onChange={(e) => upd(m.id, { time: e.target.value })} />
               </div>
+              {open.id === "anton" && m.sender === "them" && (m.type === "text" || m.type === "image") && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={m.requiresReply ?? false} onChange={(e) => upd(m.id, { requiresReply: e.target.checked })} />{tr(lang, { en: "Wait for player reply", ko: "플레이어 답장 기다리기", zh: "等待玩家回复" })}</label>}
               {m.type === "image" ? (
                 <ImageField label={tr(lang, { en: "Choose image", ko: "이미지 선택", zh: "选择图片" })} value={m.image} onChange={(v) => upd(m.id, { image: v })} />
               ) : null}
@@ -274,13 +290,13 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       {emoji && <div className="kkt-emoji-panel">{["😊", "ㅋㅋ", "❤️", "👍", "😭", "😂"].map((face) => <Button variant="ghost" key={face} onClick={() => { setCompose((text) => text + face); setEmoji(false); }}>{face}</Button>)}</div>}
       <form className="kkt-input" onSubmit={(event) => {
         event.preventDefault();
-        const text = compose.trim();
-        if (!text) return;
-        sendChat("kkt", open.id, text, lang);
+        const text = compose;
+        if (!text.trim()) return;
+        send(text);
         setCompose("");
       }}>
         <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Send photo", ko: "사진 보내기", zh: "发送图片" })} onClick={() => upload.current?.click()}><SquarePlus /></Button>
-        <input ref={upload} type="file" accept="image/*" className="hidden" onChange={async (e) => { const input = e.currentTarget; const file = input.files?.[0]; try { if (file) { const image = await fileToDataUrl(file); sendChat("kkt", open.id, compose.trim(), lang, Date.now(), image); setCompose(""); } } catch { alert(tr(lang, { en: "Could not send photo", ko: "사진을 보낼 수 없습니다", zh: "图片未发送，请重试" })); } finally { input.value = ""; } }} />
+        <input ref={upload} type="file" accept="image/*" className="hidden" onChange={async (e) => { const input = e.currentTarget; const file = input.files?.[0]; try { if (file) { const image = await fileToDataUrl(file); send(compose, image); setCompose(""); } } catch { alert(tr(lang, { en: "Could not send photo", ko: "사진을 보낼 수 없습니다", zh: "图片未发送，请重试" })); } finally { input.value = ""; } }} />
         <input aria-label={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} placeholder={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} className="kkt-compose" value={compose} onChange={(event) => setCompose(event.target.value)} />
         <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Emoji", ko: "이모티콘", zh: "表情" })} aria-expanded={emoji} onClick={() => setEmoji(!emoji)}><Smile size={21} /></Button>
         {compose.trim() && <Button type="submit" size="icon" aria-label={tr(lang, { en: "Send message", ko: "메시지 보내기", zh: "发送消息" })} className="kkt-send"><Send size={17} /></Button>}

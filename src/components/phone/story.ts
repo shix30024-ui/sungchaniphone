@@ -17,6 +17,7 @@ export type Msg = {
   ko: string; zh: string; en?: string; date: string; time: string; image?: string | undefined; order: number;
   live?: boolean; read?: boolean; notified?: boolean; createdAt?: string;
   originalText?: string; replyTo?: string; replyKind?: "preset" | "ai";
+  requiresReply?: boolean;
 };
 export type Contact = { id: string; name: string; avatar: string; status: string; unread: number };
 

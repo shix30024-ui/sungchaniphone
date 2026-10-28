@@ -15,8 +15,9 @@
 - Use one Phone-owned system language for every app; legacy chats gain translations only by exact original-text match, preserving explicit edits.
 - Extend existing versioned local-store records with optional fields; snapshot phone storage once before changes and never reseed or reset saved data.
 - Keep ordered post images, tweet replies, calendar events and music collections in browser-safe dedicated utilities; captions/comments and unrelated records remain isolated during edits.
+- Reference music additions use an optional one-time marker on the existing library and stable IDs; append only missing tracks so edited or deleted additions never reseed.
 - Simulated Anton messages live in phone/live.ts: append-only with fixed ids and one timer in Phone, so saved chats are never rewritten and each message arrives once.
-- Phone owns the single foreground conversation scheduler; persisted source-linked reply jobs use genuine server-side AI, cross-tab locks and completion-time rereads to append deduplicated replies without rewriting saved edits. Failed jobs stay stopped, never become character templates.
+- Phone owns the single foreground scheduler; Anton KKT excludes AI jobs and uses fixed-conversation for author-set gates, ID-only progress and React-only anchored player replies. Other channels retain source-linked AI jobs and cross-tab locks, keeping their behavior isolated.
 - AI prompts and gateway credentials remain behind server functions; send only source-bounded contact history and image-presence metadata, keeping all phone records in the existing browser store.
 - Visible lock/status clocks use a mount-initialized ticking device clock, separate from immutable story chronology and saved message dates.
 - Phone dialer favorites and simulated recent calls use separate versioned browser records; reuse existing contact identities and simulated Call view without microphone/audio access.

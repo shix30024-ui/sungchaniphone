@@ -6,6 +6,7 @@
 import { CONTACTS, MESSAGES, type Contact, type Msg } from "./story";
 import { STORY_DATE } from "./chronology";
 import { backupPhoneData, readStored } from "./store";
+import { fixedFlow, readFixedProgress } from "./fixed-conversation";
 
 export const MSGS_KEY = "kkt-msgs-v1";
 export const CONTACTS_KEY = "kkt-contacts-v1";
@@ -97,18 +98,15 @@ export function nextLine(msgs: Msg[], delivered: string[]): LiveLine | undefined
  */
 export function deliverLiveMessage(opts: { test?: boolean } = {}): Msg | null {
   backupPhoneData();
-  const msgs = read<Msg[]>(MSGS_KEY, MESSAGES);
-  const contacts = read<Contact[]>(CONTACTS_KEY, CONTACTS);
+  const msgs = readStored<Msg[]>(MSGS_KEY, MESSAGES);
+  const contacts = readStored<Contact[]>(CONTACTS_KEY, CONTACTS);
+  if (fixedFlow(msgs, readFixedProgress()).waiting) return null;
   const state = loadLiveState();
   let line = nextLine(msgs, state.delivered);
-  if (!line && opts.test) {
-    const id = `live-test-${Date.now().toString(36)}`;
-    line = { id, ko: "형 뭐해? (테스트 메시지)", zh: "哥在干嘛？（测试消息）", en: "Hyung, what are you up to? (test message)" };
-  }
   if (!line || msgs.some((m) => m.id === line.id)) return null;
 
   const today = msgs.filter((m) => m.date === STORY_DATE).map((m) => m.time).sort().at(-1) ?? "20:26";
-  const time = addMinutes(today < "20:26" ? "20:26" : today, 1 + Math.floor(Math.random() * 3));
+  const time = addMinutes(today < "20:26" ? "20:26" : today, 1);
   const viewing = activeChat === LIVE_CONTACT;
   const msg: Msg = {
     id: line.id, contactId: LIVE_CONTACT, sender: "them", type: line.image ? "image" : "text",
@@ -132,7 +130,7 @@ export function tickLive(now = Date.now()): Msg | null {
   const settings = loadLiveSettings();
   if (!settings.enabled) return null;
   // Let the current conversation finish instead of interrupting with an unrelated story node.
-  const pending = readStored<{ dueAt: number }[]>("phone-reply-queue-v1", []);
+  const pending = readStored<{ channel: string; contactId: string; dueAt: number }[]>("phone-reply-queue-v1", []).filter((q) => !(q.channel === "kkt" && q.contactId === "anton"));
   const recent = read<Msg[]>(MSGS_KEY, []).filter((m) => m.originalText).at(-1);
   if (pending.length || (recent?.createdAt && now - new Date(recent.createdAt).getTime() < 120000)) return null;
   const state = loadLiveState();
