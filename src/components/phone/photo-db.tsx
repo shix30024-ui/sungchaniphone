@@ -50,7 +50,7 @@ export function usePhotoSrc(s?: string) {
   return src;
 }
 
-export function PhotoImg({ src, ...rest }: Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src"> & { src?: string }) {
+export function PhotoImg({ src, ...rest }: Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src"> & { src?: string | undefined }) {
   const url = usePhotoSrc(src);
   return url ? <img src={url} {...rest} /> : <span className={`block bg-muted ${rest.className ?? ""}`} />;
 }

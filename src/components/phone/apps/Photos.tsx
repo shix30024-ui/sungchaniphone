@@ -43,7 +43,7 @@ export default function Photos({ lang, onHome }: AppProps) {
         </div>
       );
     const [y, m, d] = photo.date.split("-").map(Number);
-    const dt = new Date(y, (m || 1) - 1, d || 1);
+    const dt = new Date(y ?? 2026, (m || 1) - 1, d || 1);
     const loc = lang === "ko" ? "ko-KR" : lang === "zh" ? "zh-CN" : "en-US";
     return (
       <div className="app-page photo-viewer">
@@ -52,7 +52,7 @@ export default function Photos({ lang, onHome }: AppProps) {
           <div className="pv-title"><b>{dt.toLocaleDateString(loc, { year: "numeric", month: "long", day: "numeric" })}</b><small>{album.name}</small></div>
           {owner ? <button className="pv-edit" onClick={() => { setDraft({ ...photo }); setTargetAlbum(album.id); }}>{tr(lang, { en: "Edit", ko: "편집", zh: "编辑" })}</button> : <span className="pv-edit" />}
         </div>
-        <div className="pv-stage" onTouchStart={(e) => { (e.currentTarget as HTMLElement).dataset.x = String(e.touches[0].clientX); }} onTouchEnd={(e) => { const x0 = Number((e.currentTarget as HTMLElement).dataset.x); const dx = e.changedTouches[0].clientX - x0; if (dx > 50 && idx > 0) setPid(photos[idx - 1].id); if (dx < -50 && idx < photos.length - 1) setPid(photos[idx + 1].id); }}>
+        <div className="pv-stage" onTouchStart={(e) => { (e.currentTarget as HTMLElement).dataset["x"] = String(e.touches[0]?.clientX ?? 0); }} onTouchEnd={(e) => { const x0 = Number((e.currentTarget as HTMLElement).dataset["x"]); const dx = (e.changedTouches[0]?.clientX ?? x0) - x0; const prev = photos[idx - 1], next = photos[idx + 1]; if (dx > 50 && prev) setPid(prev.id); if (dx < -50 && next) setPid(next.id); }}>
           <PhotoImg src={photo.image} alt={photo.note} />
           {idx > 0 && <button className="viewer-nav left-2" aria-label="Previous" onClick={() => setPid(photos[idx - 1]?.id ?? null)}>‹</button>}
           {idx < photos.length - 1 && <button className="viewer-nav right-2" aria-label="Next" onClick={() => setPid(photos[idx + 1]?.id ?? null)}>›</button>}
