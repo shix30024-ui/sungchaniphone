@@ -348,7 +348,7 @@ export default function Phone() {
       <StatusBar now={now} inApp={Boolean(open || editing)} />
       {locked ? (
         <Lock lang={lang} setLang={setLang} now={now} notifs={lockNotifs} preview={live.preview} onNotif={() => setPendingChat(true)}
-          onUnlock={() => { setLocked(false); if (pendingChat) { setPendingChat(false); openChat(); } }} />
+          onUnlock={() => { setLocked(false); try { sessionStorage.setItem("phone-unlocked", "1"); } catch { /* ignore */ } if (pendingChat) { setPendingChat(false); openChat(); } }} />
       ) : (
         <div className="absolute inset-0 flex flex-col pt-14 home-in" aria-hidden={Boolean(open)} inert={Boolean(open)}>
           {owner && <div className="flex justify-end px-5 gap-2">
