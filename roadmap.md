@@ -1,8 +1,8 @@
 # Phone story completion
 # Private-message identity and native reference correction
-- [ ] Match IG private-message avatars to the corresponding editable feed/profile accounts without changing messages.
-- [ ] Compare and align Phone and Messages reference screens while retaining all editing controls and stored content.
-- [ ] Verify avatar changes, contact/call/message editing, cancellation, persistence, language and narrow-screen layout.
+- [x] Match IG private-message avatars and names to the editable feed/profile account IDs; preserve independent messages, add functional search and message editing.
+- [x] Align Phone and Messages to previously captured unlocked reference screens: Phone edit/filter/title/list/five tabs/keypad; Messages edit/filter/list/bottom search and centered contact chat. Retain contact, call and message editing; reference character data is not copied.
+- [x] 55 tests passed; isolated browser verified shared avatar, DM editing, contact/call saves and reload, SMS send/readback/cancel, three languages and 375×667 keypad. Latest build OK, no runtime errors; user preview storage untouched. Fresh reference browsing was unavailable, so comparison used existing reference screenshots.
 # Sungsho reference and Weather
 - [x] Inspect unlocked reference Phone, Messages and Music; align call rows, bottom Messages search/composer and Music Songs/Library category views without copying reference records or disabled playback features.
 - [x] Add Weather with official icon, live Open-Meteo readings, search/refresh/error states and city-only preferences; retain other icons and language.
