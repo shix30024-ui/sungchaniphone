@@ -22,6 +22,11 @@ export function useSharingStatus() { return useSyncExternalStore(subscribe, () =
 async function publishMedia(value: unknown, images: Record<string, string>): Promise<unknown> {
   if (Array.isArray(value)) return Promise.all(value.map((v) => publishMedia(v, images)));
   if (value && typeof value === "object") return Object.fromEntries(await Promise.all(Object.entries(value).map(async ([k, v]) => [k, await publishMedia(v, images)])));
+  if (typeof value === "string" && value.startsWith("https://")) {
+    const url = new URL(value);
+    const marker = "/storage/v1/object/sign/phone-shared-media/";
+    if (url.pathname.includes(marker)) return `shared-media:${decodeURIComponent(url.pathname.split(marker)[1] ?? "")}`;
+  }
   if (typeof value !== "string" || (!value.startsWith("idb:") && !value.startsWith("data:image/"))) return value;
   const data = value.startsWith("idb:") ? images[value.slice(4)] : value;
   if (!data) throw new Error("A referenced photo could not be read. Existing shared content is unchanged.");

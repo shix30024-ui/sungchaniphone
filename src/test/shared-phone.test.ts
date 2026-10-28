@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { authoredValue, validateSharedPatch } from "@/components/phone/shared-policy";
-import { installShared, setSharedOwner, sharedRead, sharedWrite, setSharedSave, queueSharedSave } from "@/components/phone/shared-state";
+import { installShared, setSharedOwner, sharedRead, sharedWrite, setSharedSave, queueSharedSave, withLocalInteraction } from "@/components/phone/shared-state";
 import { readOwner, unlockOwner } from "@/components/phone/owner";
 
 describe("Shared fictional phone content", () => {
@@ -29,6 +29,13 @@ describe("Shared fictional phone content", () => {
   it("cannot enable editing with the public 0321 code alone", () => {
     unlockOwner("0321"); expect(readOwner()).toBe(false);
     setSharedOwner(true); expect(readOwner()).toBe(true);
+  });
+  it("never shares explicitly local owner interactions", () => {
+    const save = vi.fn(); setSharedSave(save); setSharedOwner(true);
+    withLocalInteraction(() => queueSharedSave("ig-posts-v1", []));
+    expect(save).not.toHaveBeenCalled();
+    queueSharedSave("ig-posts-v1", [{ id: "authored" }]);
+    expect(save).toHaveBeenCalledWith("ig-posts-v1", [{ id: "authored" }]);
   });
   it("excludes Anton progress, owner flags, AI jobs and auth data from public saves", () => {
     for (const key of ["kkt-anton-fixed-progress-v1", "phone-owner-v1", "phone-reply-queue-v1", "sb-auth-token"]) expect(() => validateSharedPatch({ [key]: {} })).toThrow();
