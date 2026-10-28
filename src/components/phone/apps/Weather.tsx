@@ -36,7 +36,7 @@ export default function Weather({ lang, onHome }: AppProps) {
     return () => { active = false; clearTimeout(timer); controller.abort(); };
   }, [city.latitude, city.longitude, reload]);
   const name = city.name === "Seoul" ? L("Seoul", "서울", "首尔") : city.name;
-  const hours = forecast?.hourly.time.map((time, i) => ({ time, i })).filter(({ time }) => time >= new Date().toLocaleString("sv-SE", { timeZone: "Asia/Seoul" }).slice(0,13).replace(" ", "T")).slice(0,12) ?? [];
+  const hours = forecast?.hourly.time.map((time, i) => ({ time, i })).filter(({ time }) => time >= forecast.current.time.slice(0,13)).slice(0,12) ?? [];
   return <div className="app-page weather-native">
     <header className="weather-toolbar"><Button variant="ghost" size="icon" aria-label={L("Back", "뒤로", "返回")} onClick={onHome}><ChevronLeft /></Button><span>{L("Weather", "날씨", "天气")}</span><Button variant="ghost" size="icon" aria-label={L("Search city", "도시 검색", "搜索城市")} onClick={() => setSearching(!searching)}><Search /></Button><Button variant="ghost" size="icon" aria-label={L("Refresh", "새로고침", "刷新")} onClick={() => setReload((n) => n + 1)}><RefreshCw /></Button></header>
     {searching && <section className="weather-search"><form onSubmit={async (e) => {

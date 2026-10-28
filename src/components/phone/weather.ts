@@ -3,7 +3,7 @@ export const WEATHER_CITY_KEY = "phone-weather-city-v1";
 export type WeatherCity = { name: string; latitude: number; longitude: number };
 export const SEOUL: WeatherCity = { name: "Seoul", latitude: 37.5665, longitude: 126.978 };
 export type Forecast = {
-  current: { temperature_2m: number; apparent_temperature: number; weather_code: number; relative_humidity_2m: number; wind_speed_10m: number };
+  current: { time: string; temperature_2m: number; apparent_temperature: number; weather_code: number; relative_humidity_2m: number; wind_speed_10m: number };
   hourly: { time: string[]; temperature_2m: number[]; weather_code: number[]; precipitation_probability: number[] };
   daily: { time: string[]; temperature_2m_max: number[]; temperature_2m_min: number[]; weather_code: number[] };
 };
