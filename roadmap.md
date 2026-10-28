@@ -1,4 +1,7 @@
 # Phone story completion
+# Shared authored phone content
+- [ ] Allow everyone to read owner-saved fictional phone content while preserving existing local edits and isolating player interactions.
+- [ ] Secure shared writes to the owner's authenticated account; verify owner save and independent visitor readback.
 # Preview-to-phone transfer guidance
 - [x] Explain existing export/import steps and ways to send the JSON file to the phone; latest request is transfer only, with no app or storage changes.
 - [ ] Actual transfer awaits the user downloading their preview data, sending the file to their phone, and importing it on the public link.
