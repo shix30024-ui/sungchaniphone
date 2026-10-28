@@ -72,7 +72,8 @@ export async function getKv(id: string): Promise<string | null> {
 }
 
 async function getPhotoImage(id: string): Promise<string> {
-  if (cache.has(id)) return cache.get(id)!;
+  const cached = cache.get(id);
+  if (cached !== undefined) return cached;
   const db = await open();
   return new Promise((res) => {
     const r = db.transaction(STORE).objectStore(STORE).get(id);
@@ -84,7 +85,7 @@ async function getPhotoImage(id: string): Promise<string> {
 /** Resolves img:, idb: and data URLs to a displayable src. */
 export function usePhotoSrc(s?: string) {
   const isDb = !!s?.startsWith("idb:");
-  const [src, setSrc] = useState(() => (isDb ? cache.get(s!.slice(4)) ?? "" : resolveImg(s)));
+  const [src, setSrc] = useState(() => (isDb && s ? cache.get(s.slice(4)) ?? "" : resolveImg(s)));
   useEffect(() => {
     if (!s?.startsWith("idb:")) { setSrc(resolveImg(s)); return; }
     let live = true;

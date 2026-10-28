@@ -1,5 +1,13 @@
 {
   "version": "7",
   "dialect": "postgresql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1793192777652,
+      "tag": "0000_shared_phone_content",
+      "breakpoints": true
+    }
+  ]
 }

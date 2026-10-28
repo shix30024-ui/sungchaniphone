@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { readStored } from "./store";
+import { isSharedOwner } from "./shared-state";
 
 /**
  * Owner mode: only the story owner may edit phone content. Players browsing the
@@ -13,7 +14,7 @@ export const OWNER_CODE = "0321";
 type OwnerRecord = { unlocked: boolean };
 
 export function readOwner(): boolean {
-  return readStored<OwnerRecord>(OWNER_KEY, { unlocked: false }).unlocked;
+  return isSharedOwner() && readStored<OwnerRecord>(OWNER_KEY, { unlocked: false }).unlocked;
 }
 
 export function unlockOwner(code: string): boolean {

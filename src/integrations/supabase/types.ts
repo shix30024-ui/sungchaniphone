@@ -14,13 +14,52 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      phone_owner_roles: {
+        Row: {
+          role: string
+          user_id: string
+        }
+        Insert: {
+          role?: string
+          user_id: string
+        }
+        Update: {
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      phone_shared_content: {
+        Row: {
+          id: string
+          payload: Json
+          revision: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          payload?: Json
+          revision?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          payload?: Json
+          revision?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_phone_owner: { Args: never; Returns: boolean }
+      save_phone_content: {
+        Args: { p_patch: Json; p_revision: number }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never

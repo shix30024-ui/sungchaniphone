@@ -18,7 +18,7 @@ import Calendar from "./apps/Calendar";
 import Music from "./apps/Music";
 import Weather from "./apps/Weather";
 import Settings from "./apps/Settings";
-import { backupPhoneData } from "./store";
+import { backupPhoneData, readStored } from "./store";
 import { useOwner } from "./owner";
 import { label as appLabel } from "./labels";
 import { tr } from "./i18n";
@@ -36,6 +36,8 @@ import { getActiveChat } from "./live";
 import { Wifi, ChevronUp, ChevronDown, X, Search, Plane } from "lucide-react";
 import { SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from "./system";
 import { weatherAppName } from "./x-language";
+import { useSharedPhone, useSharingStatus } from "./shared";
+import { queueSharedSave } from "./shared-state";
 
 const notifText = (m: Msg, lang: Lang) => (m.type === "image" ? tr(lang, { en: "Sent a photo", ko: "사진을 보냈습니다", zh: "发送了一张照片" }) : messageText(m, lang));
 
@@ -249,6 +251,8 @@ function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initia
 }
 
 export default function Phone() {
+  useSharedPhone();
+  const sharingStatus = useSharingStatus();
   const now = useDeviceNow();
   const [lang, setLangState] = useState<Lang>("en");
   // Keep the unlocked state in sessionStorage so an unexpected remount
@@ -307,11 +311,14 @@ export default function Phone() {
   useEffect(() => {
     backupPhoneData();
     setApps(loadApps());
+    const refreshApps = () => setApps(readStored<App[]>("phone-apps-v2", loadApps()));
+    window.addEventListener("phone-shared-refresh", refreshApps);
     const l = localStorage.getItem("phone-lang") as Lang | null;
     if (l && LANGS.some((language) => language.id === l)) setLangState(l);
+    return () => window.removeEventListener("phone-shared-refresh", refreshApps);
   }, []);
   const setLang = (l: Lang) => { setLangState(l); localStorage.setItem("phone-lang", l); };
-  const update = (a: App[]) => { setApps(a); saveApps(a); };
+  const update = (a: App[]) => { setApps(a); saveApps(a); queueSharedSave("phone-apps-v2", a); };
 
   const settingsApp: App = { id: "settings", name: t(lang, "settings"), icon: SETTINGS_ICON, color: "#8e8e93", url: "", dock: false };
   const translatedApps = apps.map((a) => {
@@ -346,6 +353,7 @@ export default function Phone() {
   return (
     <div className="phone-screen" style={{ backgroundImage: `url(${wallpaper.url})` }}>
       <StatusBar now={now} inApp={Boolean(open || editing)} />
+      {sharingStatus && owner && <div className="absolute bottom-8 inset-x-3 z-50 bg-background text-foreground border border-border rounded-md p-2 text-xs" role="status">{sharingStatus}</div>}
       {locked ? (
         <Lock lang={lang} setLang={setLang} now={now} notifs={lockNotifs} preview={live.preview} onNotif={() => setPendingChat(true)}
           onUnlock={() => { setLocked(false); try { sessionStorage.setItem("phone-unlocked", "1"); } catch { /* ignore */ } if (pendingChat) { setPendingChat(false); openChat(); } }} />

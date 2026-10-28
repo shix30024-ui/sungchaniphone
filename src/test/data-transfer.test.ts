@@ -33,11 +33,15 @@ describe("Moving phone data between devices", () => {
   });
 
   it("exports saved text together with saved photos", async () => {
+    localStorage.setItem("sb-example-auth-token", "SECRET");
+    localStorage.setItem("phone-owner-v1", '{"unlocked":true}');
     localStorage.setItem("kkt-msgs-v1", "[{\"id\":\"a\"}]");
     store.images.set("img1", "data:image/png;base64,AAA");
     const p = parsePhoneBundle(await buildPhoneBundle());
     expect(p?.local["kkt-msgs-v1"]).toBe('[{"id":"a"}]');
     expect(p?.images["img1"]).toBe("data:image/png;base64,AAA");
+    expect(p?.local["sb-example-auth-token"]).toBeUndefined();
+    expect(p?.local["phone-owner-v1"]).toBeUndefined();
   });
 
   it("copies current data aside before writing an imported file", async () => {

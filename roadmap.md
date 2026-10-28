@@ -1,10 +1,11 @@
 # Phone story completion
 # Shared authored phone content
-- [ ] Allow everyone to read owner-saved fictional phone content while preserving existing local edits and isolating player interactions.
-- [ ] Secure shared writes to the owner's authenticated account; verify owner save and independent visitor readback. Blocked on identifying the owner's sign-in email; no existing app accounts were found.
+- [x] Add public shared authored reads, authenticated owner saves, referenced media, original local-data preservation and isolated visitor interactions; tests pass and login UI verified without runtime errors.
+- [ ] Verify authenticated owner save and independent visitor readback with real edited content. Blocked on the owner's first verified sign-in and initial share; no owner account or shared content exists yet.
+- [ ] Publish shared-save application changes after an explicit publish request; public link still uses its previous app snapshot.
 # Preview-to-phone transfer guidance
 - [x] Explain existing export/import steps and ways to send the JSON file to the phone; latest request is transfer only, with no app or storage changes.
-- [ ] Actual transfer awaits the user downloading their preview data, sending the file to their phone, and importing it on the public link.
+- [x] Manual transfer was superseded by the user's shared-content request; visitors should not need file imports.
 # X and Weather language correction
 - [x] Localize X preset posts and author display with exact-match translations; posts/replies have independent editable language versions. Unknown edited originals remain verbatim without invented translations.
 - [x] Default Weather name follows system language on home/search/dock while custom names and raw editor records stay intact. All 68 tests passed; isolated browser verified three languages, Chinese post edit/save/reload and byte-identical tweets during language switching, app-name editor save preservation, screenshot inspected, latest build OK and no runtime errors.

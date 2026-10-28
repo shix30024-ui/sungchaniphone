@@ -225,7 +225,7 @@ if (firstMessage) {
 }
 
 /* ---------- Instagram ---------- */
-export type Comment = { id: string; user: string; text: string; date?: string; time?: string };
+export type Comment = { id: string; user: string; text: string; date?: string; time?: string; source?: "player" };
 export type Post = { id: string; image: string; images?: string[]; caption: string; date: string; time?: string; likes: number; comments: Comment[]; liked?: boolean; saved?: boolean };
 export type Profile = { username: string; name: string; bio: string; avatar: string; followers: string; following: string };
 

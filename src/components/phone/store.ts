@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { sharedRead, sharedWrite, queueSharedSave } from "./shared-state";
+import { authoredValue } from "./shared-policy";
 
 /** Persisted state in localStorage. Loads after mount so SSR markup matches. */
 export function backupPhoneData() {
@@ -17,6 +19,8 @@ export function backupPhoneData() {
 }
 
 export function readStored<T>(key: string, fallback: T): T {
+  const composed = sharedRead(key);
+  if (composed.found) return composed.value as T;
   const raw = localStorage.getItem(key);
   return raw === null ? fallback : JSON.parse(raw) as T;
 }
@@ -24,6 +28,7 @@ export function readStored<T>(key: string, fallback: T): T {
 export function updateStored<T>(key: string, fallback: T, update: (current: T) => T): T {
   backupPhoneData();
   const next = update(readStored(key, fallback));
+  if (sharedWrite(key, next)) return next;
   localStorage.setItem(key, JSON.stringify(next));
   window.dispatchEvent(new CustomEvent("phone-store", { detail: key }));
   return next;
@@ -33,8 +38,10 @@ export function usePersist<T>(key: string, def: T, normalize?: (value: T) => T):
   const [val, setVal] = useState<T>(def);
   useEffect(() => {
     try {
+      const composed = sharedRead(key);
       const s = localStorage.getItem(key);
-      if (s) {
+      if (composed.found) setVal(normalize ? normalize(composed.value as T) : composed.value as T);
+      else if (s) {
         backupPhoneData();
         const loaded = JSON.parse(s) as T;
         setVal(normalize ? normalize(loaded) : loaded);
@@ -43,20 +50,23 @@ export function usePersist<T>(key: string, def: T, normalize?: (value: T) => T):
     // Pick up changes written elsewhere (live messages, other tabs) without resetting anything.
     const reload = () => {
       try {
-        const s = localStorage.getItem(key);
-        if (s) { const loaded = JSON.parse(s) as T; setVal(normalize ? normalize(loaded) : loaded); }
+        const loaded = readStored(key, def);
+        setVal(normalize ? normalize(loaded) : loaded);
       } catch {}
     };
     const onStore = (e: Event) => { if ((e as CustomEvent<string>).detail === key) reload(); };
     const onStorage = (e: StorageEvent) => { if (e.key === key) reload(); };
     window.addEventListener("phone-store", onStore);
     window.addEventListener("storage", onStorage);
-    return () => { window.removeEventListener("phone-store", onStore); window.removeEventListener("storage", onStorage); };
+    window.addEventListener("phone-shared-refresh", reload);
+    return () => { window.removeEventListener("phone-store", onStore); window.removeEventListener("storage", onStorage); window.removeEventListener("phone-shared-refresh", reload); };
   }, [key]);
   const set = (v: T | ((current: T) => T)) => {
     try {
+      const before = JSON.stringify(authoredValue(readStored(key, def)));
       const next = updateStored(key, def, (current) => typeof v === "function" ? (v as (current: T) => T)(current) : v);
       setVal(next);
+      if (before !== JSON.stringify(authoredValue(next))) queueSharedSave(key, next);
       return true;
     } catch {
       alert("Storage full — try a smaller image. / 저장 공간이 부족합니다 / 存储空间不足");
