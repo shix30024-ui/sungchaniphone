@@ -46,6 +46,22 @@ export function temporaryIncoming(reply: { ko: string; zh: string; en: string },
   } };
 }
 
+// Module-memory temporary replies: they survive leaving and re-entering the
+// chat inside the app, and disappear naturally when the page refreshes or
+// closes. They are never written to localStorage or any persistent storage.
+const temporaryStore = new Map<string, TemporaryReply[]>();
+
+export function readTemporaryReplies(contactId: string): TemporaryReply[] {
+  return temporaryStore.get(contactId) ?? [];
+}
+
+export function writeTemporaryReplies(contactId: string, replies: TemporaryReply[]) {
+  temporaryStore.set(contactId, replies);
+}
+
+/** Test helper: simulates a page refresh by clearing module memory. */
+export function resetTemporaryReplies() { temporaryStore.clear(); }
+
 export function withTemporaryReplies(fixed: Msg[], temporary: TemporaryReply[]): Msg[] {
   const result = temporary.filter((r) => !r.afterId).map((r) => r.message);
   const pending = temporary.filter((r) => r.afterId);

@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import Kakao from "@/components/phone/apps/Kakao";
 import { CONTACTS, type Msg } from "@/components/phone/story";
 import { sendChat, tickReplies, QUEUE_KEY } from "@/components/phone/conversation";
-import { ANTON_PROGRESS_KEY, fixedFlow, EMPTY_PROGRESS } from "@/components/phone/fixed-conversation";
+import { ANTON_PROGRESS_KEY, fixedFlow, EMPTY_PROGRESS, resetTemporaryReplies } from "@/components/phone/fixed-conversation";
 import { deliverLiveMessage, LIVE_LINES, LIVE_STATE_KEY, saveLiveSettings, setActiveChat, tickLive } from "@/components/phone/live";
 import { addReferenceSongs, REFERENCE_SONGS } from "@/components/phone/reference-music";
 
@@ -17,7 +17,7 @@ const allStorage = () => JSON.stringify(Object.fromEntries(Object.keys(localStor
 
 describe("Fixed Anton interaction", () => {
   beforeEach(() => {
-    cleanup(); localStorage.clear(); setActiveChat(null);
+    cleanup(); localStorage.clear(); setActiveChat(null); resetTemporaryReplies();
     localStorage.setItem("kkt-msgs-v1", JSON.stringify(saved));
     localStorage.setItem("kkt-contacts-v1", JSON.stringify(CONTACTS.map((c) => ({ ...c, unread: 0 }))));
     localStorage.setItem(LIVE_STATE_KEY, JSON.stringify({ delivered: LIVE_LINES.map((l) => l.id), nextAt: 9000 }));
@@ -44,7 +44,7 @@ describe("Fixed Anton interaction", () => {
     expect((await tickReplies(10000, "anton", generator))?.contactId).toBe("minjae");
     expect(generator).toHaveBeenCalledTimes(1);
   });
-  it("keeps replies temporary across language changes, exit and remount; saves only gate IDs", async () => {
+  it("keeps replies across in-app exit and remount, clears them only on refresh; saves only gate IDs", async () => {
     localStorage.setItem("notes-v1", '[{"id":"manual","body":"keep"}]');
     const messagesBefore = localStorage.getItem("kkt-msgs-v1");
     const ui = render(<Kakao lang="en" onHome={() => {}} initialChat="anton" />);
@@ -63,9 +63,16 @@ describe("Fixed Anton interaction", () => {
     fireEvent.click(screen.getByRole("button", { name: "‹" }));
     expect(screen.queryByText("My private reply")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /찬영 Anton/ }));
-    expect(screen.queryByText("My private reply")).not.toBeInTheDocument();
+    // In-app exit and re-entry keeps the temporary reply visible.
+    expect(screen.getByText("My private reply")).toBeInTheDocument();
     expect(screen.getByText("next 中文")).toBeInTheDocument();
     ui.unmount();
+    render(<Kakao lang="en" onHome={() => {}} initialChat="anton" />);
+    await screen.findByText("next");
+    expect(screen.getByText("My private reply")).toBeInTheDocument();
+    // A page refresh (module memory reset) clears it; fixed messages stay.
+    resetTemporaryReplies();
+    cleanup();
     render(<Kakao lang="en" onHome={() => {}} initialChat="anton" />);
     await screen.findByText("next");
     expect(screen.queryByText("My private reply")).not.toBeInTheDocument();
@@ -113,9 +120,14 @@ describe("Fixed Anton interaction", () => {
     expect(localStorage.getItem("kkt-msgs-v1")).toBe(before);
     fireEvent.click(screen.getByRole("button", { name: "‹" }));
     fireEvent.click(screen.getByRole("button", { name: /찬영 Anton/ }));
-    expect(screen.queryByText("AI reply")).not.toBeInTheDocument();
+    // In-app navigation keeps the AI answer; only refresh clears it.
+    expect(screen.getByText("AI reply")).toBeInTheDocument();
     expect(screen.getByText("next")).toBeInTheDocument();
+    resetTemporaryReplies();
     ui.unmount();
+    render(<Kakao lang="en" onHome={() => {}} initialChat="anton" />);
+    await screen.findByText("next");
+    expect(screen.queryByText("AI reply")).not.toBeInTheDocument();
   });
   it("old Anton AI jobs cannot stop the existing fixed live progress", () => {
     localStorage.setItem("kkt-msgs-v1", "[]");
