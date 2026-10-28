@@ -3,6 +3,7 @@ import { CONTACTS, MESSAGES, type Msg } from "./story";
 import { LIVE_EVENT, CONTACTS_KEY, MSGS_KEY, notifyStore, getActiveChat } from "./live";
 import { readStored, updateStored, uid } from "./store";
 import type { Lang } from "./i18n";
+import { temporaryReply } from "./fixed-conversation";
 
 export const DM_KEY = "ig-dm-messages-v1";
 export const QUEUE_KEY = "phone-reply-queue-v1";
@@ -17,6 +18,8 @@ let busy = false;
 
 export function pendingReplies(): PendingReply[] { return readStored<PendingReply[]>(QUEUE_KEY, []); }
 export function sendChat(channel: "kkt" | "ig", contactId: string, text: string, lang: Lang, now = Date.now(), image?: string) {
+  // Defensive boundary: Anton player text must never reach storage or the AI queue.
+  if (channel === "kkt" && contactId === "anton") return temporaryReply(text, lang, undefined, image).message;
   const key = channel === "kkt" ? MSGS_KEY : DM_KEY;
   const fallback = channel === "kkt" ? MESSAGES : [];
   const existing = readStored<Msg[]>(key, fallback);
@@ -39,7 +42,7 @@ export async function tickReplies(now = Date.now(), activeKkt: string | null = n
 
 async function processReply(now: number, activeKkt: string | null, generate: Generator) {
   const queue = pendingReplies();
-  const item = queue.find((q) => !q.failed && q.dueAt <= now && !queue.some((prior) => prior !== q && prior.channel === q.channel && prior.contactId === q.contactId && prior.dueAt < q.dueAt && !prior.failed));
+  const item = queue.find((q) => !(q.channel === "kkt" && q.contactId === "anton") && !q.failed && q.dueAt <= now && !queue.some((prior) => prior !== q && prior.channel === q.channel && prior.contactId === q.contactId && prior.dueAt < q.dueAt && !prior.failed));
   if (!item) return null;
   const key = item.channel === "kkt" ? MSGS_KEY : DM_KEY;
   const fallback = item.channel === "kkt" ? MESSAGES : [];
@@ -60,6 +63,7 @@ async function processReply(now: number, activeKkt: string | null, generate: Gen
     return null;
   }
   const fresh = readStored<Msg[]>(key, fallback);
+  if (item.channel === "kkt" && item.contactId === "anton") return null;
   const currentSource = fresh.find((m) => m.id === source.id);
   if (!currentSource || fresh.some((m) => m.id === id) || !pendingReplies().some((p) => p.sourceId === source.id)) return null;
   if (JSON.stringify(buildReplyContext(fresh, currentSource)) !== JSON.stringify(context)) {
