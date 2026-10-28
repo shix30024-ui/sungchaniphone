@@ -1,4 +1,8 @@
 # Phone story completion
+# Sungsho reference and Weather
+- [ ] Inspect reference Phone, Messages and Music; adjust only their presentation without replacing saved content.
+- [ ] Add Weather as a stable-ID desktop icon and app, preserving home customizations and system language.
+- [ ] Verify navigation, Weather states, existing records and regression tests.
 # Fixed Anton interaction and reference songs
 - [x] Preserve Anton records/progress; separate session-only player replies and optional author-set reply gates; block Anton KKT AI jobs without deleting old jobs or lines. Tone screenshots retained as future-authoring guidance, not used to rewrite saved lines.
 - [x] Add the twelve screenshot tracks once without overwriting existing music or supplying unlicensed audio.
