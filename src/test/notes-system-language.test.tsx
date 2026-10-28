@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import Notes from "@/components/phone/apps/Notes";
 import { unlockOwner } from "@/components/phone/owner";
+import { setSharedOwner } from "@/components/phone/shared-state";
 
 const note = {
   id: "custom-language-note", title: "Original", body: "Original body", date: "2026-10-26",
@@ -16,6 +17,7 @@ describe("Notes system language", () => {
   beforeEach(() => {
     cleanup();
     localStorage.clear();
+    setSharedOwner(false);
     localStorage.setItem("notes-v1", JSON.stringify([note]));
   });
 
@@ -31,6 +33,7 @@ describe("Notes system language", () => {
   });
 
   it("edits only the current system-language version and preserves other versions", async () => {
+    setSharedOwner(true);
     unlockOwner("0321");
     const ui = render(<Notes lang="en" onHome={() => {}} />);
     fireEvent.click(await screen.findByRole("button", { name: /English note/ }));

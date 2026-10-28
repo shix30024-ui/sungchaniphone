@@ -9,6 +9,8 @@ const overlays = new Map<string, unknown>();
 let onSave: ((key: string, value: unknown) => void) | undefined;
 export const isSharedOwner = () => owner;
 export const sharedRevision = () => revision;
+export function advanceSharedRevision(value: number) { revision = value; }
+export function clearSharedRevision() { revision = 0; overlays.clear(); }
 export function setSharedOwner(value: boolean) { owner = value; }
 export function setSharedSave(handler: typeof onSave) { onSave = handler; }
 export function installShared(payload: Record<string, unknown>, version: number) {

@@ -4,7 +4,7 @@ import { lovable } from "@/integrations/lovable";
 import { saveSharedPhone } from "@/lib/phone-sharing.functions";
 import { Button } from "@/components/ui/button";
 import { SHARED_KEYS, authoredValue } from "./shared-policy";
-import { installShared, isSharedOwner, setSharedOwner, setSharedSave, sharedRevision } from "./shared-state";
+import { installShared, isSharedOwner, setSharedOwner, setSharedSave, sharedRevision, advanceSharedRevision, clearSharedRevision } from "./shared-state";
 import { listPhotoImages, putKv } from "./photo-db";
 import { type Lang, tr } from "./i18n";
 
@@ -40,7 +40,7 @@ async function flush() {
     const published = await publishMedia(patch, await listPhotoImages());
     const version = await saveSharedPhone({ data: { patch: published, revision: sharedRevision() } });
     // The owner's original local records stay untouched, including their idb references.
-    installShared({}, version);
+    advanceSharedRevision(version);
     notify("Saved for everyone / 모두에게 저장됨 / 已保存，所有人可见");
   } catch (e) {
     pending = { ...patch, ...pending };
@@ -64,6 +64,7 @@ export function useSharedPhone() {
     const refresh = async () => {
       const { data: role } = await supabase.rpc("is_phone_owner");
       if (!live) return;
+      if (isSharedOwner() !== (role === true)) clearSharedRevision();
       setSharedOwner(role === true);
       window.dispatchEvent(new CustomEvent("phone-store", { detail: "phone-owner-v1" }));
       const { data, error } = await supabase.from("phone_shared_content").select("payload,revision").eq("id", "main").maybeSingle();
@@ -86,9 +87,10 @@ export function useSharedPhone() {
       window.dispatchEvent(new Event(EVENT));
     };
     setSharedSave((key, value) => { pending[key] = authoredValue(value); void flush(); });
-    void refresh();
-    const { data: auth } = supabase.auth.onAuthStateChange((event) => { if (["SIGNED_IN", "SIGNED_OUT", "USER_UPDATED"].includes(event)) setTimeout(() => { void refresh(); }, 0); });
-    const timer = setInterval(() => { if (!sending && document.visibilityState === "visible") void refresh(); }, 10000);
+    void refresh().catch(() => notify("Shared content could not load. Original data is unchanged. / 共享读取失败，原内容未改动", true));
+    const reload = () => { void refresh().catch(() => notify("Shared content could not load. / 共享读取失败", true)); };
+    const { data: auth } = supabase.auth.onAuthStateChange((event) => { if (["SIGNED_IN", "SIGNED_OUT", "USER_UPDATED"].includes(event)) setTimeout(reload, 0); });
+    const timer = setInterval(() => { if (!sending && document.visibilityState === "visible") reload(); }, 10000);
     return () => { live = false; auth.subscription.unsubscribe(); clearInterval(timer); setSharedSave(undefined); };
   }, []);
 }
@@ -105,6 +107,10 @@ export function SharedControls({ lang }: { lang: Lang }) {
     const result = register ? await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } }) : await supabase.auth.signInWithPassword({ email, password });
     if (result.error) throw result.error;
     if (register && !result.data.session) setMessage(L("Check your email to confirm your account", "이메일에서 계정을 확인하세요", "请到邮箱点击确认链接，然后登录"));
+    else {
+      const { data: role } = await supabase.rpc("is_phone_owner");
+      if (!role) setMessage(L("This account is not the phone owner", "이 계정은 폰 주인이 아닙니다", "此账号不是主人账号，不能编辑共享内容"));
+    }
   };
   return <div className="settings-group">
     {isSharedOwner() ? <>
