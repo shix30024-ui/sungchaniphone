@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import wallpaper from "@/assets/wallpaper.jpeg.asset.json";
+import wallpaper from "@/assets/wallpaper.jpg.asset.json";
 import { type App, DEFAULT_APPS, SETTINGS_ICON, PASSCODE, loadApps, saveApps } from "./apps";
 import { LANGS, type Lang, fmtDate, fmtTime, t } from "./i18n";
 import Kakao from "./apps/Kakao";
