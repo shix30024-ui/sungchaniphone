@@ -7,6 +7,10 @@ import { ANTON_PROGRESS_KEY, fixedFlow, EMPTY_PROGRESS } from "@/components/phon
 import { deliverLiveMessage, LIVE_LINES, LIVE_STATE_KEY, saveLiveSettings, setActiveChat, tickLive } from "@/components/phone/live";
 import { addReferenceSongs, REFERENCE_SONGS } from "@/components/phone/reference-music";
 
+vi.mock("@/lib/phone-reply.functions", () => ({
+  generatePhoneReply: vi.fn(async () => ({ ok: true as const, reply: { ko: "AI 답장", zh: "AI 回复", en: "AI reply" } })),
+}));
+
 const line = (id: string, time: string, order: number, requiresReply = false): Msg => ({ id, contactId: "anton", sender: "them", type: "text", ko: `${id} 한국어`, zh: `${id} 中文`, en: id, date: "2026-10-26", time, order, requiresReply });
 const saved = [line("next", "20:28", 3), line("gate", "20:27", 2, true), line("first", "20:26", 1)];
 const allStorage = () => JSON.stringify(Object.fromEntries(Object.keys(localStorage).map((key) => [key, localStorage.getItem(key)])));
@@ -95,6 +99,23 @@ describe("Fixed Anton interaction", () => {
     localStorage.setItem(ANTON_PROGRESS_KEY, '{"answeredIds":["gate"]}');
     expect(deliverLiveMessage({ test: true })).toBeNull();
     expect(JSON.parse(localStorage.getItem("kkt-msgs-v1") ?? "[]")).toEqual(saved);
+  });
+  it("shows Anton's contextual AI answer as a temporary message that never reaches storage", async () => {
+    const before = localStorage.getItem("kkt-msgs-v1");
+    const ui = render(<Kakao lang="en" onHome={() => {}} initialChat="anton" />);
+    await screen.findByText("first");
+    fireEvent.change(screen.getByRole("textbox", { name: "Message" }), { target: { value: "what are you doing?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+    expect(await screen.findByText("AI reply")).toBeInTheDocument();
+    expect(screen.getByText("what are you doing?")).toBeInTheDocument();
+    expect(allStorage()).not.toContain("AI reply");
+    expect(allStorage()).not.toContain("what are you doing?");
+    expect(localStorage.getItem("kkt-msgs-v1")).toBe(before);
+    fireEvent.click(screen.getByRole("button", { name: "‹" }));
+    fireEvent.click(screen.getByRole("button", { name: /찬영 Anton/ }));
+    expect(screen.queryByText("AI reply")).not.toBeInTheDocument();
+    expect(screen.getByText("next")).toBeInTheDocument();
+    ui.unmount();
   });
   it("old Anton AI jobs cannot stop the existing fixed live progress", () => {
     localStorage.setItem("kkt-msgs-v1", "[]");

@@ -35,10 +35,37 @@ export function temporaryReply(text: string, lang: Lang, after?: Msg, image?: st
   } };
 }
 
+/** Anton's contextual answer to the player. Also React-state only: it never enters storage. */
+export function temporaryIncoming(reply: { ko: string; zh: string; en: string }, after?: Msg): TemporaryReply {
+  const now = new Date();
+  return { afterId: after?.id, message: {
+    id: `temporary-${uid()}`, contactId: "anton", sender: "them", type: "text",
+    ko: reply.ko, zh: reply.zh, en: reply.en, date: after?.date ?? STORY_DATE,
+    time: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
+    order: after?.order ?? 0, read: true, ...(after ? { replyTo: after.id } : {}), replyKind: "ai",
+  } };
+}
+
 export function withTemporaryReplies(fixed: Msg[], temporary: TemporaryReply[]): Msg[] {
   const result = temporary.filter((r) => !r.afterId).map((r) => r.message);
+  const pending = temporary.filter((r) => r.afterId);
   for (const message of fixed) {
-    result.push(message, ...temporary.filter((r) => r.afterId === message.id).map((r) => r.message));
+    result.push(message);
+    // Drain replies whose anchor is already visible, including chains anchored
+    // on another temporary message (player reply → Anton's AI answer).
+    let inserted = true;
+    while (inserted) {
+      inserted = false;
+      for (let i = pending.length - 1; i >= 0; i--) {
+        const r = pending[i]!;
+        const at = result.findIndex((m) => m.id === r.afterId);
+        if (at >= 0) { result.splice(at + 1, 0, r.message); pending.splice(i, 1); inserted = true; }
+      }
+    }
+  }
+  for (const r of pending) {
+    const at = result.findIndex((m) => m.id === r.afterId);
+    if (at >= 0) result.splice(at + 1, 0, r.message);
   }
   return result;
 }
