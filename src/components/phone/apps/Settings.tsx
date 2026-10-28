@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Check, Globe, Bell, LayoutGrid, LockKeyhole, Info, Search, Plane, Wifi, Bluetooth, Settings as Gear } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -9,7 +9,7 @@ import { STORY_DATE } from "../chronology";
 import { usePersist } from "../store";
 import { SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from "../system";
 import { lockOwner, unlockOwner, useOwner } from "../owner";
-import { exportPhoneData, inspectRecovery, readBackup, restoreFromBackup } from "../recovery";
+import { exportPhoneData, importPhoneDataFile, inspectRecovery, readBackup, restoreFromBackup, undoLastImport, useImportSafety } from "../recovery";
 
 type Page = "main" | "language" | "notifications" | "about" | "general" | "owner";
 export default function Settings({ lang, setLang, live, setLive, apps, onHome, onLock, onEditApps }: {
@@ -22,6 +22,21 @@ export default function Settings({ lang, setLang, live, setLive, apps, onHome, o
   const owner = useOwner();
   const [code, setCode] = useState("");
   const [codeError, setCodeError] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [importMsg, setImportMsg] = useState("");
+  const hasSafety = useImportSafety();
+  const onImport = async (f: File) => {
+    const r = await importPhoneDataFile(f);
+    setImportMsg(r
+      ? L(`${r.keys} records and ${r.images} photos imported`, `기록 ${r.keys}개 · 사진 ${r.images}개 가져옴`, `已导入 ${r.keys} 条记录和 ${r.images} 张照片`)
+      : L("Could not read that file", "파일을 읽을 수 없습니다", "无法读取该文件"));
+  };
+  const onUndo = async () => {
+    const ok = await undoLastImport();
+    setImportMsg(ok
+      ? L("Back to the data before the last import", "마지막 가져오기 이전 데이터로 되돌림", "已回到上次导入之前的数据")
+      : L("Nothing to undo", "되돌릴 항목 없음", "没有可撤销的内容"));
+  };
   const L = (en: string, ko: string, zh: string) => tr(lang, { en, ko, zh });
   const title = page === "language" ? L("Language & Region", "언어 및 지역", "语言与地区") : page === "notifications" ? L("Notifications", "알림", "通知") : page === "about" ? L("About", "정보", "关于本机") : page === "general" ? L("General", "일반", "通用") : t(lang, "settings");
   const row = (name: string, icon: ReactNode, action: () => void, value?: string) => (
@@ -79,7 +94,11 @@ export default function Settings({ lang, setLang, live, setLive, apps, onHome, o
           <div className="settings-group">
             {inspectRecovery().map((r) => <div key={r.key} className="settings-row"><span className="settings-row-name">{r.key}</span><span className="settings-row-value">{L("now", "현재", "当前")} {r.current} · {L("backup", "백업", "备份")} {r.backup}{r.differs ? " ⚠" : ""}</span></div>)}
             {!readBackup() && <div className="settings-row"><span className="settings-row-name">{L("No backup on this device", "이 기기에 백업 없음", "此设备没有备份")}</span></div>}
-            <Button variant="ghost" className="settings-row" onClick={exportPhoneData}><span className="settings-row-name text-primary">{L("Download all data", "모든 데이터 다운로드", "下载全部数据")}</span></Button>
+            <Button variant="ghost" className="settings-row" onClick={() => { void exportPhoneData(); }}><span className="settings-row-name text-primary">{L("Download all data", "모든 데이터 다운로드", "下载全部数据")}</span></Button>
+            <Button variant="ghost" className="settings-row" onClick={() => fileRef.current?.click()}><span className="settings-row-name text-primary">{L("Upload data file", "데이터 파일 올리기", "上传数据文件")}</span></Button>
+            <input ref={fileRef} type="file" accept="application/json,.json" className="hidden" aria-label={L("Upload data file", "데이터 파일 올리기", "上传数据文件")} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void onImport(f); }} />
+            {importMsg && <div className="settings-row" role="status"><span className="settings-row-name">{importMsg}</span></div>}
+            {hasSafety && <Button variant="ghost" className="settings-row" onClick={() => { if (window.confirm(L("Undo the last import and go back to the data before it?", "마지막 가져오기 이전 데이터로 되돌릴까요?", "撤销上次导入，回到导入之前的数据？"))) void onUndo(); }}><span className="settings-row-name text-primary">{L("Undo last import", "마지막 가져오기 되돌리기", "撤销上次导入")}</span></Button>}
             {readBackup() && <Button variant="ghost" className="settings-row" onClick={() => { if (window.confirm(L("Restore KKT/IG from backup? Current data is copied aside first.", "백업에서 KKT/IG를 복원할까요? 현재 데이터는 먼저 따로 보관됩니다.", "从备份恢复 KKT/IG？当前数据会先另存一份。"))) { restoreFromBackup(); window.location.reload(); } }}><span className="settings-row-name text-primary">{L("Restore KKT/IG from backup", "백업에서 KKT/IG 복원", "从备份恢复 KKT/IG")}</span></Button>}
           </div>
         </>}
