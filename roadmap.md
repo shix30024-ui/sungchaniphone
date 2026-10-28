@@ -1,5 +1,6 @@
 # Phone story completion
 # Shared authored phone content
+- [x] Screenshot confirmed saving-in-progress, not success; added bounded/deduplicated photo uploads, progress and revision readback. Eleven tests pass and build OK; actual edited-content sharing remains blocked on execution in the user's original browser (independent public read still empty).
 - [x] Add public shared authored reads, authenticated owner saves, referenced media, original local-data preservation and isolated visitor interactions; tests pass and login UI verified without runtime errors.
 - [ ] Verify authenticated owner save and independent visitor readback with real edited content. Owner now signed in; original preview records are only available in the user's browser, not the isolated verification browser.
 - [x] Add automatic initial sharing from authenticated owner's saved records with a safety snapshot; eight sharing tests pass and latest build OK. Publishing requested for the shared-save update.
