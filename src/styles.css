@@ -412,6 +412,21 @@ button:active > .app-icon { transform: scale(.9); }
 .phone-dialer .phone-contact-row > button:first-child > svg { color: var(--muted-foreground); width: 16px; }
 .phone-dialer .phone-contact-row small { font-size: 11px; font-weight: 400; }
 .phone-dialer .phone-contact-row > button:last-child { color: var(--primary); }
+.phone-reference-toolbar { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 4px 12px; flex-shrink: 0; }
+.phone-reference-toolbar button { color: var(--sms-outgoing); }
+.phone-edit-button { padding-inline: 4px; }
+.phone-call-filter { display: flex; background: var(--muted); border-radius: 8px; padding: 2px; }
+.phone-call-filter button { color: var(--foreground); height: 30px; padding-inline: 12px; font-size: 12px; border-radius: 6px; }
+.phone-call-filter button[aria-pressed="true"] { background: var(--background); }
+.phone-dialer .native-large-title { padding: 4px 16px 18px; font-size: 30px; }
+.phone-dialer .phone-contact-row { min-height: 61px; }
+.phone-dialer .phone-contact-row > button:first-child { gap: 8px; }
+.phone-dialer .phone-contact-row b { font-size: 14px; font-weight: 600; }
+.phone-dialer .phone-contact-row > button:first-child > small { font-size: 9px; color: var(--muted-foreground); white-space: nowrap; }
+.phone-dialer .system-app-tabs { padding-bottom: 19px; }
+.phone-dialer .system-app-tabs button { min-width: 0; flex: 1; padding-inline: 2px; gap: 3px; font-size: 9px; }
+.phone-dialer .system-app-tabs svg { width: 21px; height: 21px; }
+.phone-dialer .system-app-tabs button[aria-pressed="true"] { color: var(--sms-outgoing); }
 .music-library-menu { padding: 0 20px; }
 .music-library-menu > button { display: flex; justify-content: space-between; width: 100%; height: 56px; border-radius: 0; border-bottom: 1px solid var(--border); color: var(--destructive); font-size: 19px; font-weight: 400; padding-inline: 0; }
 .music-song-list { padding-top: 0; }
@@ -431,13 +446,13 @@ button:active > .app-icon { transform: scale(.9); }
 .system-app-tabs button[aria-pressed="true"] { color: var(--primary); }
 .dialer-keypad { display: flex; flex-direction: column; align-items: center; padding-top: 20px; }
 .dialer-number { min-height: 62px; width: 100%; text-align: center; font-size: 28px; overflow-wrap: anywhere; }
-.dialer-grid { display: grid; grid-template-columns: repeat(3, 72px); gap: 12px 23px; }
-.dialer-digit { width: 72px; height: 72px; border-radius: 50%; flex-direction: column; gap: 0; }
-.dialer-digit span { font-size: 29px; line-height: 1.1; }
+.dialer-grid { display: grid; grid-template-columns: repeat(3, 60px); gap: 14px 42px; }
+.dialer-digit { width: 60px; height: 60px; border-radius: 50%; flex-direction: column; gap: 0; }
+.dialer-digit span { font-size: 27px; line-height: 1.1; }
 .dialer-digit small { font-size: 9px; min-height: 12px; }
 .dialer-actions { display: grid; grid-template-columns: repeat(3, 72px); gap: 23px; align-items: center; justify-items: center; margin-top: 15px; }
-.dialer-call { width: 64px; height: 64px; border-radius: 50%; background: var(--system-switch); color: var(--on-glass); }
-@media(max-height: 700px) { .dialer-keypad { padding-top: 5px; } .dialer-number { min-height: 45px; } .dialer-grid { grid-template-columns: repeat(3, 63px); gap: 8px 23px; } .dialer-digit { width: 63px; height: 63px; } }
+.dialer-call { width: 60px; height: 60px; border-radius: 50%; background: var(--system-switch); color: var(--on-glass); }
+@media(max-height: 700px) { .dialer-keypad { padding-top: 0; } .dialer-number { min-height: 34px; } .dialer-grid { grid-template-columns: repeat(3, 56px); gap: 10px 36px; } .dialer-digit { width: 56px; height: 56px; } }
 .calendar-month { font-size: 23px; color: var(--destructive); }
 .calendar-day { border-radius: 50%; }
 .calendar-day[aria-pressed="true"] { background: var(--destructive); color: var(--destructive-foreground); }
@@ -473,12 +488,18 @@ button:active > .app-icon { transform: scale(.9); }
 .notes-body-input { flex: 1; width: 100%; min-height: 0; background: transparent; outline: none; resize: none; font-size: 17px; line-height: 1.65; }
 .messages-native { background: var(--background); }
 .messages-native .native-search { margin-inline: 20px; }
-.sms-list-row { display: flex; align-items: center; gap: 12px; width: 100%; height: auto; min-height: 87px; padding: 12px 20px; border-radius: 0; border-bottom: 1px solid var(--border); font-weight: 400; }
+.sms-reference-toolbar { display: flex; align-items: center; justify-content: space-between; min-height: 60px; padding: 4px 14px; flex-shrink: 0; }
+.sms-reference-menu { position: absolute; z-index: 3; top: 103px; right: 16px; background: var(--background); border: 1px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; align-items: stretch; }
+.sms-reference-menu button { justify-content: flex-start; }
+.messages-native .native-large-title { font-size: 30px; padding: 6px 16px 22px; }
+.sms-list-row { display: flex; align-items: center; gap: 10px; width: 100%; height: auto; min-height: 92px; padding: 14px 22px; border-radius: 0; border-bottom: 0; font-weight: 400; }
 .sms-avatar { display: grid; place-items: center; width: 46px; height: 46px; flex-shrink: 0; border-radius: 50%; overflow: hidden; color: var(--background); background: var(--muted-foreground); }
 .sms-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .sms-preview { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 14px; line-height: 1.5; color: var(--muted-foreground); margin-top: 4px; white-space: normal; }
 .sms-list-row small { font-size: 11px; }
-.sms-chat-header { min-height: 92px; background: var(--system-grouped); padding-bottom: 12px; }
+.sms-chat-header { min-height: 100px; background: var(--background); border-bottom: 0; padding-bottom: 12px; align-items: flex-start; }
+.sms-chat-header > :nth-child(2) { overflow: visible; }
+.sms-heading-edit { height: auto; font-size: 12px; padding: 0; gap: 2px; }
 .sms-chat-header > :first-child, .sms-chat-header > :last-child { width: 40px; }
 .sms-contact-heading { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; font-weight: 400; }
 .sms-contact-heading .sms-avatar { width: 42px; height: 42px; }
@@ -489,7 +510,7 @@ button:active > .app-icon { transform: scale(.9); }
 .sms-theirs { background: var(--sms-incoming); color: var(--foreground); border-bottom-left-radius: 5px; }
 .sms-image { max-width: 100%; max-height: 230px; border-radius: 10px; object-fit: cover; }
 .sms-composer { display: flex; align-items: center; gap: 10px; padding: 9px 15px 24px; }
-.sms-plus { border-radius: 50%; width: 34px; height: 34px; flex-shrink: 0; }
+.sms-plus { border-radius: 50%; width: 30px; height: 34px; flex-shrink: 0; background: transparent; }
 .sms-input-wrap { display: flex; align-items: center; gap: 5px; padding: 3px 4px 3px 13px; border: 1px solid var(--border); border-radius: 24px; flex: 1; min-width: 0; }
 .sms-input-wrap input { flex: 1; width: 100%; outline: none; font-size: 16px; }
 .sms-send { width: 28px; height: 28px; border-radius: 50%; background: var(--sms-outgoing); color: var(--on-glass); flex-shrink: 0; }
@@ -610,6 +631,12 @@ button:active > .app-icon { transform: scale(.9); }
 .ig-dm-compose input { flex: 1; min-width: 0; background: transparent; outline: none; font-size: 15px; }
 .ig-dm-cam { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--x-blue); color: var(--primary-foreground); }
 .ig-dm-send { color: var(--x-blue); font-weight: 600; }
+.ig-dm .ig-header > .kkt-avatar { border-radius: 50%; }
+.ig-dm-search input { min-width: 0; flex: 1; outline: none; background: transparent; }
+.ig-dm-message-row { display: flex; align-items: flex-end; gap: 6px; max-width: 100%; }
+.ig-dm-message-avatar { flex-shrink: 0; }
+.ig-dm-message-avatar .kkt-avatar { border-radius: 50%; }
+.ig-dm-bubble { height: auto; text-align: left; font-weight: 400; white-space: pre-wrap; max-width: 100%; }
 /* X (iOS app style) */
 .x-header { position: relative; display: flex; align-items: center; justify-content: center; min-height: 46px; flex-shrink: 0; }
 .x-back { position: absolute; left: 6px; display: flex; align-items: center; }
