@@ -18,10 +18,14 @@ export default function Photos({ lang, onHome }: AppProps) {
   const [targetAlbum, setTargetAlbum] = useState<string>("");
   const [draft, setDraft] = useState<Photo | null>(null);
   const [info, setInfo] = useState(false);
+  const [chrome, setChrome] = useState(true);
+  const [lib, setLib] = useState(false);
+  const [tab, setTab] = useState<"library" | "albums">("library");
+  const all = albums.flatMap((a) => a.photos.map((p) => ({ p, a }))).sort((x, y) => y.p.date.localeCompare(x.p.date));
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const pick = async (f?: File) => (f ? putPhotoImage(await fileToDataUrl(f, 1600)) : "");
   const album = albums.find((a) => a.id === aid);
-  const photos = album ? [...album.photos].sort((a, b) => a.date.localeCompare(b.date)) : [];
+  const photos = lib ? all.map((x) => x.p) : album ? [...album.photos].sort((a, b) => a.date.localeCompare(b.date)) : [];
   const photo = photos.find((p) => p.id === pid);
   const saveAlbum = (a: Album) => setAlbums(albums.map((x) => (x.id === a.id ? a : x)));
 
@@ -47,23 +51,22 @@ export default function Photos({ lang, onHome }: AppProps) {
     const loc = lang === "ko" ? "ko-KR" : lang === "zh" ? "zh-CN" : "en-US";
     return (
       <div className="app-page photo-viewer">
-        <div className="pv-top">
-          <BackBtn onClick={() => { setPid(null); setInfo(false); }} />
-          <div className="pv-title"><b>{dt.toLocaleDateString(loc, { year: "numeric", month: "long", day: "numeric" })}</b><small>{album.name}</small></div>
+        <div className={`pv-top ${chrome ? "" : "pv-hidden"}`}>
+          <BackBtn onClick={() => { setPid(null); setInfo(false); setChrome(true); if (lib) { setLib(false); setAid(null); } }} />
+          <div className="pv-title"><b>{dt.toLocaleDateString(loc, { year: "numeric", month: "long" })}</b><small>{tr(lang, { en: "Photo", ko: "사진", zh: "照片" })}</small></div>
           {owner ? <button className="pv-edit" onClick={() => { setDraft({ ...photo }); setTargetAlbum(album.id); }}>{tr(lang, { en: "Edit", ko: "편집", zh: "编辑" })}</button> : <span className="pv-edit" />}
         </div>
-        <div className="pv-stage" onTouchStart={(e) => { (e.currentTarget as HTMLElement).dataset["x"] = String(e.touches[0]?.clientX ?? 0); }} onTouchEnd={(e) => { const x0 = Number((e.currentTarget as HTMLElement).dataset["x"]); const dx = (e.changedTouches[0]?.clientX ?? x0) - x0; const prev = photos[idx - 1], next = photos[idx + 1]; if (dx > 50 && prev) setPid(prev.id); if (dx < -50 && next) setPid(next.id); }}>
+        <div className="pv-stage" onClick={(e) => { if ((e.target as HTMLElement).tagName === "IMG") setChrome(!chrome); }} onTouchStart={(e) => { (e.currentTarget as HTMLElement).dataset["x"] = String(e.touches[0]?.clientX ?? 0); }} onTouchEnd={(e) => { const x0 = Number((e.currentTarget as HTMLElement).dataset["x"]); const dx = (e.changedTouches[0]?.clientX ?? x0) - x0; const prev = photos[idx - 1], next = photos[idx + 1]; const go = (q?: Photo) => { if (!q) return; setPid(q.id); if (lib) setAid(all.find((x) => x.p.id === q.id)?.a.id ?? aid); }; if (dx > 50) go(prev); if (dx < -50) go(next); }}>
           <PhotoImg src={photo.image} alt={photo.note} />
-          {idx > 0 && <button className="viewer-nav left-2" aria-label="Previous" onClick={() => setPid(photos[idx - 1]?.id ?? null)}>‹</button>}
-          {idx < photos.length - 1 && <button className="viewer-nav right-2" aria-label="Next" onClick={() => setPid(photos[idx + 1]?.id ?? null)}>›</button>}
+          {chrome && idx > 0 && <button className="viewer-nav left-2" aria-label="Previous" onClick={() => { const q = photos[idx - 1]; if (q) { setPid(q.id); if (lib) setAid(all.find((x) => x.p.id === q.id)?.a.id ?? aid); } }}>‹</button>}
+          {chrome && idx < photos.length - 1 && <button className="viewer-nav right-2" aria-label="Next" onClick={() => { const q = photos[idx + 1]; if (q) { setPid(q.id); if (lib) setAid(all.find((x) => x.p.id === q.id)?.a.id ?? aid); } }}>›</button>}
         </div>
-        {info && <div className="pv-info"><b>{dt.toLocaleDateString(loc, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</b>{photo.note && <p>{photo.note}</p>}<small>{album.name} · {idx + 1} / {photos.length}</small></div>}
-        <div className="pv-strip">{photos.map((p) => <button key={p.id} className={p.id === photo.id ? "on" : ""} onClick={() => setPid(p.id)}><PhotoImg src={p.image} alt="" loading="lazy" /></button>)}</div>
-        <div className="pv-bar">
+        {chrome && info && <div className="pv-info"><b>{dt.toLocaleDateString(loc, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</b>{photo.note && <p>{photo.note}</p>}<small>{album.name} · {idx + 1} / {photos.length}</small></div>}
+        <div className={`pv-bar ${chrome ? "" : "pv-hidden"}`}>
           <button aria-label="Share"><Share size={22} /></button>
           <button aria-label="Favorite" onClick={() => setLiked({ ...liked, [photo.id]: !liked[photo.id] })}><Heart size={22} fill={liked[photo.id] ? "currentColor" : "none"} /></button>
           <button aria-label="Info" aria-pressed={info} onClick={() => setInfo(!info)}><Info size={22} /></button>
-          {owner ? <button aria-label="Delete" onClick={() => { if (!confirmDelete(lang)) return; saveAlbum({ ...album, photos: album.photos.filter((p) => p.id !== photo.id) }); setPid(null); }}><Trash2 size={22} /></button> : <span />}
+          {owner ? <button aria-label="Delete" onClick={() => { if (!confirmDelete(lang)) return; saveAlbum({ ...album, photos: album.photos.filter((p) => p.id !== photo.id) }); setPid(null); if (lib) { setLib(false); setAid(null); } }}><Trash2 size={22} /></button> : <span />}
         </div>
       </div>
     );
@@ -96,8 +99,29 @@ export default function Photos({ lang, onHome }: AppProps) {
       </div>
     );
 
+  const loc2 = lang === "ko" ? "ko-KR" : lang === "zh" ? "zh-CN" : "en-US";
+  const groups: { key: string; items: typeof all }[] = [];
+  for (const x of all) { const k = x.p.date.slice(0, 7); const g = groups.at(-1); if (g && g.key === k) g.items.push(x); else groups.push({ key: k, items: [x] }); }
+  const switcher = <div className="ph-switch"><button className={tab === "library" ? "on" : ""} onClick={() => setTab("library")}>{tr(lang, { en: "All Photos", ko: "모든 사진", zh: "所有照片" })}</button><button className={tab === "albums" ? "on" : ""} onClick={() => setTab("albums")}>{tr(lang, { en: "Albums", ko: "앨범", zh: "相簿" })}</button></div>;
+  if (tab === "library")
+    return (
+      <div className="app-page bg-background relative">
+        <TopBar left={<BackBtn onClick={onHome} />} title="" />
+        <div className="flex-1 overflow-y-auto pb-24">
+          <h1 className="ph-lib-title">{tr(lang, { en: "Library", ko: "보관함", zh: "图库" })}</h1>
+          <p className="ph-lib-count">{all.length} {tr(lang, { en: "Photos", ko: "장의 사진", zh: "张照片" })}</p>
+          {groups.map((g) => { const [gy, gm] = g.key.split("-").map(Number); return (
+            <section key={g.key}>
+              <h2 className="ph-month">{new Date(gy ?? 2026, (gm || 1) - 1, 1).toLocaleDateString(loc2, { year: "numeric", month: "long" })}</h2>
+              <div className="grid grid-cols-3 gap-0.5">{g.items.map((x) => <button key={x.p.id} className="aspect-square" onClick={() => { setLib(true); setAid(x.a.id); setPid(x.p.id); }}><PhotoImg src={x.p.image} alt="" className="w-full h-full object-cover" loading="lazy" /></button>)}</div>
+            </section>); })}
+        </div>
+        {switcher}
+      </div>
+    );
+
   return (
-    <div className="app-page bg-background">
+    <div className="app-page bg-background relative">
       <TopBar left={<BackBtn onClick={onHome} />} title={tr(lang, { en: "Albums", ko: "앨범", zh: "相簿" })}
         right={owner && <button className="text-xl" onClick={() => {
           const name = prompt(tr(lang, { en: "Album name", ko: "앨범 이름", zh: "相簿名称" }));
@@ -114,6 +138,7 @@ export default function Photos({ lang, onHome }: AppProps) {
           </button>
         ))}
       </div>
+      {switcher}
     </div>
   );
 }
