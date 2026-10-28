@@ -16,6 +16,7 @@ import { STORY_DATE, messageText, sortMessages } from "../chronology";
 import { confirmDelete, label, localeFor } from "../labels";
 import { completeTranslations } from "../translations";
 import { ANTON_PROGRESS_KEY, EMPTY_PROGRESS, fixedFlow, acknowledgeFixedNode, temporaryReply, temporaryIncoming, withTemporaryReplies, readTemporaryReplies, writeTemporaryReplies, type FixedProgress, type TemporaryReply } from "../fixed-conversation";
+import { withLockNotices } from "../lock-notifications";
 import { buildReplyContext } from "../ai-context";
 import { generatePhoneReply } from "@/lib/phone-reply.functions";
 
@@ -172,7 +173,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
 
   const savedThread = sortMsgs(msgs.filter((m) => m.contactId === open.id));
   const flow = fixedFlow(savedThread, progress);
-  const fixedThread = open.id === "anton" ? flow.visible : savedThread;
+  const fixedThread = open.id === "anton" ? withLockNotices(flow.visible) : savedThread;
   const thread = open.id === "anton" ? withTemporaryReplies(fixedThread, temporary) : fixedThread;
   const send = (text: string, image?: string) => {
     if (open.id !== "anton") { sendChat("kkt", open.id, text, lang, Date.now(), image); return; }
