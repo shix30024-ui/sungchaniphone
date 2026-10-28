@@ -3,6 +3,7 @@ import wallpaper from "@/assets/wallpaper.jpg.asset.json";
 import { type App, DEFAULT_APPS, SETTINGS_ICON, PASSCODE, loadApps, saveApps } from "./apps";
 import { LANGS, type Lang, fmtDate, fmtTime, t } from "./i18n";
 import Kakao from "./apps/Kakao";
+import { PhotoImg } from "./photo-db";
 import Instagram from "./apps/Instagram";
 import XApp from "./apps/XApp";
 import Photos from "./apps/Photos";
@@ -21,7 +22,7 @@ import { backupPhoneData } from "./store";
 import { useOwner } from "./owner";
 import { label as appLabel } from "./labels";
 import { tr } from "./i18n";
-import { resolveImg, KktAvatar } from "./ui";
+import { KktAvatar } from "./ui";
 import { CONTACTS, type Contact, type Msg } from "./story";
 import { usePersist } from "./store";
 import { Button } from "@/components/ui/button";
@@ -48,7 +49,7 @@ function NotifCard({ m, lang, preview, onClick }: { m: Msg; lang: Lang; preview:
         <div className="flex justify-between gap-2 text-[13px]"><b className="truncate">{contact?.name ?? KKT_NAME}</b><span className="notif-time">{m.time}</span></div>
         <div className="text-[14px] truncate">{preview ? notifText(m, lang) : tr(lang, { en: "New message", ko: "새 메시지", zh: "新消息" })}</div>
       </div>
-      {preview && m.type === "image" && m.image && <img src={resolveImg(m.image)} alt="" className="w-9 h-9 rounded-md object-cover" />}
+      {preview && m.type === "image" && m.image && <PhotoImg src={m.image} alt="" className="w-9 h-9 rounded-md object-cover" />}
     </Button>
   );
 }
