@@ -1,4 +1,7 @@
 # Phone story completion
+# Preview-to-phone transfer guidance
+- [x] Explain existing export/import steps and ways to send the JSON file to the phone; latest request is transfer only, with no app or storage changes.
+- [ ] Actual transfer awaits the user downloading their preview data, sending the file to their phone, and importing it on the public link.
 # X and Weather language correction
 - [x] Localize X preset posts and author display with exact-match translations; posts/replies have independent editable language versions. Unknown edited originals remain verbatim without invented translations.
 - [x] Default Weather name follows system language on home/search/dock while custom names and raw editor records stay intact. All 68 tests passed; isolated browser verified three languages, Chinese post edit/save/reload and byte-identical tweets during language switching, app-name editor save preservation, screenshot inspected, latest build OK and no runtime errors.
