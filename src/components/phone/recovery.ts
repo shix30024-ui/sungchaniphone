@@ -6,6 +6,8 @@ const BACKUP_KEY = "phone-backup-before-completion-v1";
 const SCOPE = /^(kkt-|ig-)/;
 const IMAGES_KEY = "__phone-images-v1";
 const SAFETY_INDEX = "phone-last-import-safety";
+const SAFETY_EVENT = "phone-import-safety";
+const notifySafety = () => window.dispatchEvent(new Event(SAFETY_EVENT));
 
 export type RecoveryRow = { key: string; current: number; backup: number; differs: boolean };
 
@@ -147,7 +149,9 @@ export async function importPhoneDataFile(file: File): Promise<ImportResult | nu
   try { text = await readFileText(file); } catch { return null; }
   const parsed = parsePhoneBundle(text);
   if (!parsed) return null;
-  return writeBundle(parsed, liveDeps(), true);
+  const r = await writeBundle(parsed, liveDeps(), true);
+  notifySafety();
+  return r;
 }
 
 export async function undoLastImport(): Promise<boolean> {
@@ -155,12 +159,19 @@ export async function undoLastImport(): Promise<boolean> {
   const parsed = payload ? parsePhoneBundle(payload) : null;
   if (!parsed) return false;
   await writeBundle(parsed, liveDeps(), false);
+  notifySafety();
   return true;
 }
 
 /** True when this device holds a copy of the state before the last import. */
 export function useImportSafety(): boolean {
   const [has, setHas] = useState(false);
-  useEffect(() => { let live = true; void getKv(SAFETY_INDEX).then((v) => { if (live) setHas(!!v); }); return () => { live = false; }; }, []);
+  useEffect(() => {
+    let live = true;
+    const check = () => { void getKv(SAFETY_INDEX).then((v) => { if (live) setHas(!!v); }); };
+    check();
+    window.addEventListener(SAFETY_EVENT, check);
+    return () => { live = false; window.removeEventListener(SAFETY_EVENT, check); };
+  }, []);
   return has;
 }
