@@ -14,6 +14,7 @@ let busy = false;
 let pending: Record<string, unknown> = {};
 let sending = false;
 let lastError = false;
+let conflicted = false;
 const notify = (message: string, error = false) => { status = message; lastError = error; window.dispatchEvent(new Event(EVENT)); };
 function subscribe(fn: () => void) { window.addEventListener(EVENT, fn); return () => window.removeEventListener(EVENT, fn); }
 export function useSharingStatus() { return useSyncExternalStore(subscribe, () => status, () => ""); }
@@ -34,6 +35,7 @@ async function publishMedia(value: unknown, images: Record<string, string>): Pro
 
 async function flush() {
   if (sending || !isSharedOwner() || !Object.keys(pending).length) return;
+  if (conflicted) { notify("Another device changed the shared content. Your edits remain on this device; download a backup before resolving the conflict. / 其他设备已更改内容，你的修改仍保留在此设备，请先下载备份", true); return; }
   sending = true; busy = true; notify("Saving for everyone… / 모두에게 저장 중… / 正在保存给所有人…");
   const patch = pending; pending = {};
   try {
@@ -44,6 +46,7 @@ async function flush() {
     notify("Saved for everyone / 모두에게 저장됨 / 已保存，所有人可见");
   } catch (e) {
     pending = { ...patch, ...pending };
+    conflicted = e instanceof Error && /changed on another device/i.test(e.message);
     notify(`Not shared yet — ${e instanceof Error ? e.message : "Save failed"} / 尚未共享，请重试`, true);
   } finally { sending = false; busy = false; if (!lastError && Object.keys(pending).length) void flush(); }
 }
@@ -61,7 +64,11 @@ export async function shareExistingContent() {
 export function useSharedPhone() {
   useEffect(() => {
     let live = true;
+    let refreshing = false;
     const refresh = async () => {
+      if (refreshing || sending || (isSharedOwner() && Object.keys(pending).length)) return;
+      refreshing = true;
+      try {
       const { data: role } = await supabase.rpc("is_phone_owner");
       if (!live) return;
       if (isSharedOwner() !== (role === true)) clearSharedRevision();
@@ -85,6 +92,7 @@ export function useSharedPhone() {
         catch { notify("Some shared photos could not load. / 部分共享照片读取失败", true); }
       }
       window.dispatchEvent(new Event(EVENT));
+      } finally { refreshing = false; }
     };
     setSharedSave((key, value) => { pending[key] = authoredValue(value); void flush(); });
     void refresh().catch(() => notify("Shared content could not load. Original data is unchanged. / 共享读取失败，原内容未改动", true));
@@ -117,7 +125,7 @@ export function SharedControls({ lang }: { lang: Lang }) {
       <div className="settings-row"><span className="settings-row-name">{L("Owner signed in", "주인 로그인됨", "主人已登录")}</span></div>
       <Button variant="ghost" className="settings-row" disabled={waiting || busy} onClick={() => { if (window.confirm(L("Share the saved chats, posts and photos from this browser with everyone? Original data is kept.", "이 브라우저의 저장된 콘텐츠를 모두에게 공유할까요? 원본은 유지됩니다.", "把此预览中保存的聊天、帖子和照片共享给所有人？原数据会保留。"))) void action(shareExistingContent); }}><span className="settings-row-name text-primary">{L("Share my saved content", "저장한 콘텐츠 공유", "将我已改好的内容共享给所有人")}</span></Button>
       <Button variant="ghost" className="settings-row" onClick={() => { void action(flush); }}><span className="settings-row-name">{L("Retry sharing", "다시 저장", "重试共享保存")}</span></Button>
-      <Button variant="ghost" className="settings-row" onClick={() => { void action(async () => { pending = {}; await supabase.auth.signOut(); }); }}><span className="settings-row-name">{L("Sign out", "로그아웃", "退出主人账号")}</span></Button>
+      <Button variant="ghost" className="settings-row" onClick={() => { void action(async () => { if (sending || Object.keys(pending).length) throw new Error(L("Unsynced edits remain. Save or download a backup before signing out.", "저장되지 않은 편집이 있습니다", "还有未共享的修改，请先保存或下载备份再退出")); await supabase.auth.signOut(); }); }}><span className="settings-row-name">{L("Sign out", "로그아웃", "退出主人账号")}</span></Button>
     </> : <>
       <label className="settings-row"><span className="settings-row-name">{L("Owner email", "주인 이메일", "主人邮箱")}</span><input className="sheet-input w-1/2" aria-label="Owner email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></label>
       <label className="settings-row"><span className="settings-row-name">{L("Password", "비밀번호", "账号密码")}</span><input className="sheet-input w-1/2" aria-label="Account password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} /></label>
