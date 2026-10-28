@@ -8,7 +8,7 @@ import { readStored } from "./store";
  * browser-local versioned store as every other phone record.
  */
 export const OWNER_KEY = "phone-owner-v1";
-export const OWNER_CODE = "1026";
+export const OWNER_CODE = "0321";
 
 type OwnerRecord = { unlocked: boolean };
 
