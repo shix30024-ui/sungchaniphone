@@ -48,8 +48,24 @@ export function temporaryIncoming(reply: { ko: string; zh: string; en: string },
 
 export function withTemporaryReplies(fixed: Msg[], temporary: TemporaryReply[]): Msg[] {
   const result = temporary.filter((r) => !r.afterId).map((r) => r.message);
+  const pending = temporary.filter((r) => r.afterId);
   for (const message of fixed) {
-    result.push(message, ...temporary.filter((r) => r.afterId === message.id).map((r) => r.message));
+    result.push(message);
+    // Drain replies whose anchor is already visible, including chains anchored
+    // on another temporary message (player reply → Anton's AI answer).
+    let inserted = true;
+    while (inserted) {
+      inserted = false;
+      for (let i = pending.length - 1; i >= 0; i--) {
+        const r = pending[i]!;
+        const at = result.findIndex((m) => m.id === r.afterId);
+        if (at >= 0) { result.splice(at + 1, 0, r.message); pending.splice(i, 1); inserted = true; }
+      }
+    }
+  }
+  for (const r of pending) {
+    const at = result.findIndex((m) => m.id === r.afterId);
+    if (at >= 0) result.splice(at + 1, 0, r.message);
   }
   return result;
 }

@@ -7,6 +7,10 @@ import { ANTON_PROGRESS_KEY, fixedFlow, EMPTY_PROGRESS } from "@/components/phon
 import { deliverLiveMessage, LIVE_LINES, LIVE_STATE_KEY, saveLiveSettings, setActiveChat, tickLive } from "@/components/phone/live";
 import { addReferenceSongs, REFERENCE_SONGS } from "@/components/phone/reference-music";
 
+vi.mock("@/lib/phone-reply.functions", () => ({
+  generatePhoneReply: vi.fn(async () => ({ ok: true as const, reply: { ko: "AI 답장", zh: "AI 回复", en: "AI reply" } })),
+}));
+
 const line = (id: string, time: string, order: number, requiresReply = false): Msg => ({ id, contactId: "anton", sender: "them", type: "text", ko: `${id} 한국어`, zh: `${id} 中文`, en: id, date: "2026-10-26", time, order, requiresReply });
 const saved = [line("next", "20:28", 3), line("gate", "20:27", 2, true), line("first", "20:26", 1)];
 const allStorage = () => JSON.stringify(Object.fromEntries(Object.keys(localStorage).map((key) => [key, localStorage.getItem(key)])));
