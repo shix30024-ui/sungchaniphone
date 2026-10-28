@@ -316,7 +316,7 @@ export default function Phone() {
     return { ...a, name };
   });
   const grid = [...translatedApps.filter((a) => !a.dock), settingsApp];
-  const dock = apps.filter((a) => a.dock).slice(0, 4);
+  const dock = translatedApps.filter((a) => a.dock).slice(0, 4);
 
   const kktApp = apps.find((a) => a.id === "kkt") ?? DEFAULT_APPS.find((a) => a.id === "kkt");
   KKT_ICON = kktApp?.icon ?? "";
@@ -331,7 +331,7 @@ export default function Phone() {
 
   const tap = (a: App) => {
     setChatTarget(null);
-    if (editMode && a.id !== "settings") setEditing(a);
+    if (editMode && a.id !== "settings") setEditing(apps.find((original) => original.id === a.id) ?? a);
     else if (!editMode) setOpen(a);
   };
 
