@@ -11,7 +11,8 @@ export const EMPTY_PROGRESS: FixedProgress = { answeredIds: [] };
 export function fixedFlow(messages: Msg[], progress: FixedProgress) {
   const ordered = sortMessages(messages.filter((m) => m.contactId === "anton"));
   const index = ordered.findIndex((m) => m.sender === "them" && m.requiresReply && !progress.answeredIds.includes(m.id));
-  return { visible: index < 0 ? ordered : ordered.slice(0, index + 1), waiting: index < 0 ? undefined : ordered[index] };
+  // Gates track existing progress only; they never hide already-authored records.
+  return { visible: ordered, waiting: index < 0 ? undefined : ordered[index] };
 }
 
 /** Only a fixed node ID is persisted. Player text never enters this function. */

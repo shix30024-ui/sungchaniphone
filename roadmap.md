@@ -1,4 +1,7 @@
 # Phone story completion
+# Anton permanent-message repair
+- [ ] Show every saved Anton fixed message independently of reply gates, preserve list access and existing records, and keep player sends temporary without creating story messages.
+- [ ] Verify complete content/order/times, send/return/reopen/reload/new browser session, unchanged storage and other-contact/language behavior.
 # Private-message identity and native reference correction
 - [x] Match IG private-message avatars and names to the editable feed/profile account IDs; preserve independent messages, add functional search and message editing.
 - [x] Align Phone and Messages to previously captured unlocked reference screens: Phone edit/filter/title/list/five tabs/keypad; Messages edit/filter/list/bottom search and centered contact chat. Retain contact, call and message editing; reference character data is not copied.

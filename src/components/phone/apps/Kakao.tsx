@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { setActiveChat, deliverLiveMessage } from "../live";
+import { setActiveChat } from "../live";
 import { type AppProps, tr } from "../i18n";
 import { CONTACTS, MESSAGES, type Contact, type Msg, type MsgType } from "../story";
 import { uid, usePersist } from "../store";
@@ -91,10 +91,14 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
     photo: label(lang, "photo"),
   };
 
-  const open = contacts.find((c) => c.id === openId);
+  // Keep Anton reachable even if a legacy saved contact list omitted him.
+  // This is a read-only view fallback, never a reseed of edited contact data.
+  const defaultAnton = CONTACTS.find((c) => c.id === "anton");
+  const displayContacts = contacts.some((c) => c.id === "anton") || !defaultAnton ? contacts : [...contacts, defaultAnton];
+  const open = displayContacts.find((c) => c.id === openId);
 
   if (!open) {
-    const rows = contacts
+    const rows = displayContacts
       .map((c) => ({ c, last: sortMsgs(msgs.filter((m) => m.contactId === c.id && m.type !== "date")).at(-1) }))
       .sort((a, b) => ((b.last?.date ?? "") + (b.last?.time ?? "")).localeCompare((a.last?.date ?? "") + (a.last?.time ?? "")));
     return (
@@ -154,10 +158,9 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const send = (text: string, image?: string) => {
     if (open.id !== "anton") { sendChat("kkt", open.id, text, lang, Date.now(), image); return; }
     setTemporary((old) => [...old, temporaryReply(text, lang, fixedThread.at(-1), image)]);
-    if (flow.waiting) {
-      const next = acknowledgeFixedNode(flow.waiting.id);
-      if (fixedFlow(savedThread, next).visible.length === fixedThread.length) deliverLiveMessage();
-    } else deliverLiveMessage();
+    // Player content stays in React state; only an existing gate ID may advance.
+    // Sending never creates or delivers an Anton story message.
+    if (flow.waiting) acknowledgeFixedNode(flow.waiting.id);
   };
   if (call) return <Call contact={open} lang={lang} incoming={call === "incoming"} onClose={() => setCall(null)} />;
   const startEdit = () => { editIds.current = new Set(savedThread.map((m) => m.id)); setDraft(savedThread.map((m) => ({ ...m }))); setDraftC({ ...open }); setEditing(true); };
