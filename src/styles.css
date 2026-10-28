@@ -405,6 +405,27 @@ button:active > .app-icon { transform: scale(.9); }
 .system-app-title { font-size: 32px; font-weight: 700; line-height: 1.2; padding: 14px 0 20px; }
 .phone-dialer { background: var(--background); }
 .phone-contact-row { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 60px; height: auto; border-bottom: 1px solid var(--border); padding: 8px 0; }
+.phone-dialer .app-topbar { border-bottom: 0; }
+.phone-dialer .system-app-title { padding: 5px 0 16px; }
+.phone-dialer .phone-contact-row { min-height: 64px; padding: 4px 0; gap: 4px; }
+.phone-dialer .phone-contact-row > button:first-child { padding-inline: 0; }
+.phone-dialer .phone-contact-row > button:first-child > svg { color: var(--muted-foreground); width: 16px; }
+.phone-dialer .phone-contact-row small { font-size: 11px; font-weight: 400; }
+.phone-dialer .phone-contact-row > button:last-child { color: var(--primary); }
+.music-library-menu { padding: 0 20px; }
+.music-library-menu > button { display: flex; justify-content: space-between; width: 100%; height: 56px; border-radius: 0; border-bottom: 1px solid var(--border); color: var(--destructive); font-size: 19px; font-weight: 400; padding-inline: 0; }
+.music-song-list { padding-top: 0; }
+.music-song-list > div { min-height: 64px; padding-block: 5px; }
+.music-song-list > div > div > button:first-child { padding-left: 0; font-weight: 400; }
+.music-song-list > div > div > button:first-child::before { content: "♫"; width: 40px; height: 40px; display: grid; place-items: center; flex-shrink: 0; margin-right: 4px; background: var(--muted); color: var(--muted-foreground); border-radius: 6px; font-size: 23px; }
+.music-song-list b { font-size: 14px; font-weight: 500; }
+.music-song-list .text-xs { font-size: 11px; }
+.sms-list-row { position: relative; min-height: 80px; border-bottom: 0; }
+.sms-list-row::after { content: ""; position: absolute; bottom: 0; left: 78px; right: 20px; height: 1px; background: var(--border); }
+.sms-list-toolbar { display: flex; align-items: center; gap: 4px; padding: 6px 14px 10px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.messages-native .sms-list-toolbar .native-search { flex: 1; min-width: 0; margin: 0; padding: 7px 10px; border-radius: 20px; }
+.sms-chat-header { background: var(--background); border-bottom: 0; }
+.sms-thread { padding-inline: 12px; }
 .system-app-tabs { display: flex; justify-content: space-around; border-top: 1px solid var(--border); background: var(--background); padding: 5px 0; flex-shrink: 0; }
 .system-app-tabs button { display: flex; flex-direction: column; height: 48px; gap: 4px; font-size: 10px; color: var(--muted-foreground); padding: 4px 6px; }
 .system-app-tabs button[aria-pressed="true"] { color: var(--primary); }
