@@ -9,6 +9,7 @@ import { STORY_DATE } from "../chronology";
 import { usePersist } from "../store";
 import { SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from "../system";
 import { lockOwner, unlockOwner, useOwner } from "../owner";
+import { exportPhoneData, inspectRecovery, readBackup, restoreFromBackup } from "../recovery";
 
 type Page = "main" | "language" | "notifications" | "about" | "general" | "owner";
 export default function Settings({ lang, setLang, live, setLive, apps, onHome, onLock, onEditApps }: {
@@ -66,6 +67,11 @@ export default function Settings({ lang, setLang, live, setLive, apps, onHome, o
           {owner ? <>
             <div className="settings-row"><span className="settings-row-name">{L("Editing is unlocked on this device", "이 기기에서 편집이 허용됨", "此设备已解锁编辑")}</span></div>
             <Button variant="ghost" className="settings-row text-destructive" onClick={() => { lockOwner(); setPage("main"); }}><span className="settings-row-name">{L("Lock editing", "편집 잠금", "锁定编辑")}</span></Button>
+          </> : <>
+            <div className="settings-row"><span className="settings-row-name">{L("Only the owner can edit this phone. Enter the owner code to unlock editing on this device.", "주인만 이 폰을 편집할 수 있습니다. 이 기기에서 편집하려면 주인 코드를 입력하세요.", "只有机主可以编辑这台手机。输入机主密码后，此设备才能编辑。")}</span></div>
+            <label className="settings-row"><span className="settings-row-name">{L("Owner code", "주인 코드", "机主密码")}</span><input className="sheet-input" style={{ maxWidth: 140 }} type="password" inputMode="numeric" aria-label={L("Owner code", "주인 코드", "机主密码")} value={code} onChange={(e) => { setCode(e.target.value); setCodeError(false); }} /></label>
+            {codeError && <div className="settings-row" role="alert"><span className="settings-row-name text-destructive">{L("Wrong code", "코드가 틀렸습니다", "密码错误")}</span></div>}
+            <Button variant="ghost" className="settings-row" onClick={() => { if (unlockOwner(code)) setPage("main"); else setCodeError(true); }}><span className="settings-row-name text-primary">{L("Unlock editing", "편집 잠금 해제", "解锁编辑")}</span></Button>
           </>}
         </div>
         {owner && <>
@@ -77,17 +83,6 @@ export default function Settings({ lang, setLang, live, setLive, apps, onHome, o
             {readBackup() && <Button variant="ghost" className="settings-row" onClick={() => { if (window.confirm(L("Restore KKT/IG from backup? Current data is copied aside first.", "백업에서 KKT/IG를 복원할까요? 현재 데이터는 먼저 따로 보관됩니다.", "从备份恢复 KKT/IG？当前数据会先另存一份。"))) { restoreFromBackup(); window.location.reload(); } }}><span className="settings-row-name text-primary">{L("Restore KKT/IG from backup", "백업에서 KKT/IG 복원", "从备份恢复 KKT/IG")}</span></Button>}
           </div>
         </>}
-        <div className="settings-group" hidden>
-          {false && <></>}
-          {false ? <></> : <></>}
-          {owner ? <></> : <></>
-          </> : <>
-            <div className="settings-row"><span className="settings-row-name">{L("Only the owner can edit this phone. Enter the owner code to unlock editing on this device.", "주인만 이 폰을 편집할 수 있습니다. 이 기기에서 편집하려면 주인 코드를 입력하세요.", "只有机主可以编辑这台手机。输入机主密码后，此设备才能编辑。")}</span></div>
-            <label className="settings-row"><span className="settings-row-name">{L("Owner code", "주인 코드", "机主密码")}</span><input className="sheet-input" style={{ maxWidth: 140 }} type="password" inputMode="numeric" aria-label={L("Owner code", "주인 코드", "机主密码")} value={code} onChange={(e) => { setCode(e.target.value); setCodeError(false); }} /></label>
-            {codeError && <div className="settings-row" role="alert"><span className="settings-row-name text-destructive">{L("Wrong code", "코드가 틀렸습니다", "密码错误")}</span></div>}
-            <Button variant="ghost" className="settings-row" onClick={() => { if (unlockOwner(code)) setPage("main"); else setCodeError(true); }}><span className="settings-row-name text-primary">{L("Unlock editing", "편집 잠금 해제", "解锁编辑")}</span></Button>
-          </>}
-        </div>
       </> : <>
         <div className="settings-group">
           {[ [L("Name", "이름", "名称"), "Sungchan’s iPhone"], [L("Date", "날짜", "日期"), STORY_DATE], [L("Apps", "앱", "应用"), String(apps.length)], [L("Passcode", "암호", "密码"), PASSCODE] ].map(([name, value]) => <div key={name} className="settings-row"><span className="settings-row-name">{name}</span><span className="settings-row-value">{value}</span></div>)}
