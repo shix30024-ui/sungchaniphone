@@ -12,6 +12,7 @@ import { SELF_ID, FRIEND_ACCOUNTS, FRIEND_POSTS, ACCOUNTS_KEY, FRIEND_POSTS_KEY,
 import { STORY_DATE } from "../chronology";
 import { BackBtn, EditBar, Field, ImageField, TopBar, resolveImg } from "../ui";
 import { useOwner } from "../owner";
+import { withLocalInteraction } from "../shared-state";
 
 export default function Instagram({ lang, onHome }: AppProps) {
   const owner = useOwner();
@@ -46,7 +47,7 @@ export default function Instagram({ lang, onHome }: AppProps) {
     if (posts.some((p) => p.id === id)) setPosts((current) => current.map((p) => p.id === id ? update(p) : p));
     else setFriendPosts((current) => current.map((p) => p.id === id ? { ...update(p), authorId: p.authorId } : p));
   };
-  const like = (p: Post) => updatePost(p.id, (current) => ({ ...current, liked: !current.liked, likes: Math.max(0, current.likes + (current.liked ? -1 : 1)) }));
+  const like = (p: Post) => withLocalInteraction(() => updatePost(p.id, (current) => ({ ...current, liked: !current.liked, likes: Math.max(0, current.likes + (current.liked ? -1 : 1)) })));
   const nav = <nav className="ig-bottom-nav">
     {([{ id: "home", icon: Home, title: tr(lang, { en: "Home", ko: "홈", zh: "首页" }) }, { id: "search", icon: Search, title: label(lang, "search") }] as const).map(({ id, icon: Icon, title }) => <Button key={id} variant="ghost" size="icon" aria-label={title} aria-pressed={tab === id} onClick={() => setTab(id)}><Icon strokeWidth={tab === id ? 2.6 : 1.8} /></Button>)}
     {owner && <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "New post", ko: "새 게시물", zh: "新增帖子" })} onClick={newPost}><Plus strokeWidth={1.8} className="ig-plus-box" /></Button>}
@@ -129,7 +130,7 @@ export default function Instagram({ lang, onHome }: AppProps) {
       {post.comments.map((c) => <div key={c.id} className="flex gap-2 items-start"><span className="ig-comment-avatar"><User size={18} /></span><div className="flex-1 min-w-0 text-sm"><b>{c.user}</b><p className="whitespace-pre-wrap break-words">{c.text}</p>{c.date && <span className="text-xs text-muted-foreground">{c.date} {c.time}</span>}<div className="flex gap-3">{owner && <Button variant="ghost" size="sm" onClick={() => setCommentDraft({ id: c.id, text: c.text })}>{label(lang, "edit")}</Button>}<Button variant="ghost" size="sm" onClick={() => setComment(`@${c.user} `)}>{label(lang, "reply")}</Button>{owner && <Button variant="ghost" size="icon" aria-label={label(lang, "delete")} onClick={() => { if (confirmDelete(lang)) updatePost(post.id, (p) => ({ ...p, comments: p.comments.filter((x) => x.id !== c.id) })); }}><Trash2 size={14} /></Button>}</div></div></div>)}
       {commentDraft && <div className="space-y-2"><input className="sheet-input" aria-label={tr(lang, { en: "Edit comment", ko: "댓글 수정", zh: "编辑评论" })} value={commentDraft.text} onChange={(e) => setCommentDraft({ ...commentDraft, text: e.target.value })} /><Button onClick={() => { updatePost(post.id, (p) => ({ ...p, comments: p.comments.map((c) => c.id === commentDraft.id ? { ...c, text: commentDraft.text } : c) })); setCommentDraft(null); }}>{S}</Button><Button variant="ghost" onClick={() => setCommentDraft(null)}>{C}</Button></div>}
     </div>
-    <form className="kkt-input" onSubmit={(e) => { e.preventDefault(); if (!comment.trim()) return; updatePost(post.id, (p) => ({ ...p, comments: [...p.comments, { id: uid(), user: prof.username, text: comment.trim(), date: STORY_DATE, time: "20:26" }] })); setComment(""); }}><input className="kkt-compose" aria-label={tr(lang, { en: "Add comment", ko: "댓글 입력", zh: "输入评论" })} value={comment} onChange={(e) => setComment(e.target.value)} /><Button size="icon" aria-label={tr(lang, { en: "Post comment", ko: "댓글 게시", zh: "发布评论" })} disabled={!comment.trim()}><Send /></Button></form>
+    <form className="kkt-input" onSubmit={(e) => { e.preventDefault(); if (!comment.trim()) return; withLocalInteraction(() => updatePost(post.id, (p) => ({ ...p, comments: [...p.comments, { id: uid(), user: prof.username, text: comment.trim(), date: STORY_DATE, time: "20:26", source: "player" }] }))); setComment(""); }}><input className="kkt-compose" aria-label={tr(lang, { en: "Add comment", ko: "댓글 입력", zh: "输入评论" })} value={comment} onChange={(e) => setComment(e.target.value)} /><Button size="icon" aria-label={tr(lang, { en: "Post comment", ko: "댓글 게시", zh: "发布评论" })} disabled={!comment.trim()}><Send /></Button></form>
   </div>;
 
   if (post)
