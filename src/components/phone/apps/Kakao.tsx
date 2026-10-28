@@ -90,8 +90,12 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const editIds = useRef(new Set<string>());
   const [antonTyping, setAntonTyping] = useState(false);
   const typing = antonTyping || (openId !== "anton" && queue.some((q) => !q.failed && q.channel === "kkt" && q.contactId === openId));
+  // Auto-scroll only when opening a chat or when the player is already near
+  // the bottom, so scrolling up to read history is never yanked back down.
+  const stickBottom = useRef(true);
+  useEffect(() => { stickBottom.current = true; }, [openId]);
   useEffect(() => {
-    if (scroll.current) scroll.current.scrollTop = scroll.current.scrollHeight;
+    if (scroll.current && stickBottom.current) scroll.current.scrollTop = scroll.current.scrollHeight;
   }, [msgs, openId, typing, editing, temporary, progress]);
 
   const L = {
@@ -279,7 +283,8 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
         </>} />
       {searching && <div className="kkt-search"><input className="kkt-compose" aria-label={tr(lang, { en: "Search messages", ko: "메시지 검색", zh: "搜索聊天记录" })} placeholder={label(lang, "search")} value={search} onChange={(e) => setSearch(e.target.value)} /><Button variant="ghost" size="icon" aria-label={L.cancel} onClick={() => { setSearching(false); setSearch(""); }}><X /></Button></div>}
       {menu && <div className="kkt-menu-sheet">{owner && <Button variant="ghost" onClick={() => { setMenu(false); startEdit(); }}>{L.edit}</Button>}<Button variant="ghost" onClick={() => { setMenu(false); setCall("outgoing"); }}><Phone />{tr(lang, { en: "Call", ko: "전화", zh: "拨打电话" })}</Button><Button variant="ghost" onClick={() => { setMenu(false); setCall("incoming"); }}><PhoneIncoming />{tr(lang, { en: "Simulate incoming call", ko: "모의 전화 수신", zh: "模拟来电" })}</Button></div>}
-      <div className="kkt-thread flex-1 overflow-y-auto" ref={scroll}>
+      <div className="kkt-thread flex-1 overflow-y-auto" ref={scroll}
+        onScroll={(e) => { const el = e.currentTarget; stickBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }}>
         {thread.filter((m) => !searching || !search || messageText(m, lang).toLowerCase().includes(search.toLowerCase())).map((m, i) => {
           const parts = [];
           if (m.date !== lastDate) {
