@@ -29,7 +29,8 @@ async function publishMedia(value: unknown, images: Record<string, string>): Pro
   }
   if (typeof value !== "string" || (!value.startsWith("idb:") && !value.startsWith("data:image/"))) return value;
   const data = value.startsWith("idb:") ? images[value.slice(4)] : value;
-  if (!data) throw new Error("A referenced photo could not be read. Existing shared content is unchanged.");
+  // A missing local photo must not block every other chat, post and photo from being shared.
+  if (!data) return value;
   const blob = await (await fetch(data)).blob();
   const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await blob.arrayBuffer()))).map((v) => v.toString(16).padStart(2, "0")).join("");
   const path = `${hash}.${blob.type === "image/png" ? "png" : "jpg"}`;
@@ -59,9 +60,13 @@ async function flush() {
 export async function shareExistingContent() {
   if (!isSharedOwner() || busy) return;
   const records: Record<string, unknown> = {};
-  for (const key of SHARED_KEYS) { const raw = localStorage.getItem(key); if (raw !== null) records[key] = JSON.parse(raw); }
-  if (!Object.keys(records).length) throw new Error("No saved content in this browser");
-  await putKv(`phone-before-sharing-${Date.now()}`, JSON.stringify(records));
+  for (const key of SHARED_KEYS) {
+    const raw = localStorage.getItem(key);
+    if (raw === null) continue;
+    try { records[key] = JSON.parse(raw); } catch { /* unreadable record stays local and untouched */ }
+  }
+  if (!Object.keys(records).length) throw new Error("No saved content in this browser / 此浏览器里没有找到已保存的内容");
+  try { await putKv(`phone-before-sharing-${Date.now()}`, JSON.stringify(records)); } catch { /* snapshot is best-effort; originals are never modified */ }
   pending = { ...pending, ...Object.fromEntries(Object.entries(records).map(([k, v]) => [k, authoredValue(v)])) };
   await flush();
 }
@@ -70,7 +75,6 @@ export function useSharedPhone() {
   useEffect(() => {
     let live = true;
     let refreshing = false;
-    let attemptedInitialShare = false;
     const refresh = async () => {
       if (refreshing || sending || (isSharedOwner() && Object.keys(pending).length)) return;
       refreshing = true;
@@ -83,9 +87,11 @@ export function useSharedPhone() {
       const { data, error } = await supabase.from("phone_shared_content").select("payload,revision").eq("id", "main").maybeSingle();
       if (!live) return;
       if (error) { notify("Shared content unavailable; saved local content is unchanged. / 共享读取失败，原内容未改动", true); return; }
-      if (!attemptedInitialShare && shouldShareExistingContent(role === true, !!data, Object.keys(localStorage))) {
-        attemptedInitialShare = true;
-        await shareExistingContent();
+      // Retry on every poll until the first shared copy exists, so a transient failure never leaves visitors empty.
+      if (shouldShareExistingContent(role === true, !!data, Object.keys(localStorage))) {
+        try { await shareExistingContent(); }
+        catch (e) { notify(`Not shared yet — ${e instanceof Error ? e.message : "Save failed"} / 尚未共享，将自动重试`, true); }
+        return;
       }
       if (data && data.revision !== sharedRevision()) {
         const resolve = async (value: unknown): Promise<unknown> => {

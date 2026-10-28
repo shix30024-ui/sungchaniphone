@@ -353,7 +353,7 @@ export default function Phone() {
   return (
     <div className="phone-screen" style={{ backgroundImage: `url(${wallpaper.url})` }}>
       <StatusBar now={now} inApp={Boolean(open || editing)} />
-      {sharingStatus && owner && <div className="absolute bottom-8 inset-x-3 z-50 bg-background text-foreground border border-border rounded-md p-2 text-xs" role="status">{sharingStatus}</div>}
+      {sharingStatus && isSharedOwner() && <div className="absolute bottom-8 inset-x-3 z-50 bg-background text-foreground border border-border rounded-md p-2 text-xs" role="status">{sharingStatus}</div>}
       {locked ? (
         <Lock lang={lang} setLang={setLang} now={now} notifs={lockNotifs} preview={live.preview} onNotif={() => setPendingChat(true)}
           onUnlock={() => { setLocked(false); try { sessionStorage.setItem("phone-unlocked", "1"); } catch { /* ignore */ } if (pendingChat) { setPendingChat(false); openChat(); } }} />
