@@ -76,7 +76,8 @@ export function useSharedPhone() {
     let live = true;
     let refreshing = false;
     const refresh = async () => {
-      if (refreshing || sending || (isSharedOwner() && Object.keys(pending).length)) return;
+      if (refreshing || sending) return;
+      if (isSharedOwner() && Object.keys(pending).length) { if (!conflicted) await flush(); return; }
       refreshing = true;
       try {
       const { data: role } = await supabase.rpc("is_phone_owner");
@@ -93,6 +94,7 @@ export function useSharedPhone() {
         catch (e) { notify(`Not shared yet — ${e instanceof Error ? e.message : "Save failed"} / 尚未共享，将自动重试`, true); }
         return;
       }
+      if (role === true && !data) notify("No saved chats, posts or photos were found in this browser. Open the browser where you made your edits. / 此浏览器没有找到你改过的内容，请在你修改时用的浏览器里打开", true);
       if (data && data.revision !== sharedRevision()) {
         const resolve = async (value: unknown): Promise<unknown> => {
           if (Array.isArray(value)) return Promise.all(value.map(resolve));
