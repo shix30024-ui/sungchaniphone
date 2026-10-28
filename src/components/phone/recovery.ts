@@ -130,10 +130,21 @@ const liveDeps = (): ImportDeps => ({
   notify: (k) => window.dispatchEvent(new CustomEvent("phone-store", { detail: k })),
 });
 
+/** Read a picked file as text; some environments lack File.text(). */
+function readFileText(file: File): Promise<string> {
+  if (typeof file.text === "function") return file.text();
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result ?? ""));
+    r.onerror = () => rej(r.error);
+    r.readAsText(file);
+  });
+}
+
 /** Write an exported bundle into this browser. Current data is copied aside first. */
 export async function importPhoneDataFile(file: File): Promise<ImportResult | null> {
   let text: string;
-  try { text = await file.text(); } catch { return null; }
+  try { text = await readFileText(file); } catch { return null; }
   const parsed = parsePhoneBundle(text);
   if (!parsed) return null;
   return writeBundle(parsed, liveDeps(), true);
