@@ -650,3 +650,16 @@ button:active > .app-icon { transform: scale(.9); }
 .x-reply-avatar { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; background: var(--muted); font-weight: 700; }
 .x-fab { background: var(--x-blue) !important; color: var(--primary-foreground) !important; display: grid; place-items: center; bottom: 70px !important; box-shadow: 0 4px 12px oklch(0 0 0 / 0.25); }
 .x-nav { display: flex; justify-content: space-around; align-items: center; min-height: 50px; border-top: 0.5px solid var(--border); flex-shrink: 0; }
+.pv-top { display: grid; grid-template-columns: 64px 1fr 64px; align-items: center; padding: 6px 8px; }
+.pv-title { display: flex; flex-direction: column; align-items: center; line-height: 1.2; }
+.pv-title b { font-size: 15px; } .pv-title small { font-size: 11px; opacity: .65; }
+.pv-edit { justify-self: end; font-size: 15px; color: var(--primary); }
+.pv-stage { flex: 1; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.pv-stage img { width: 100%; height: 100%; object-fit: contain; }
+.pv-info { padding: 12px 18px; font-size: 13px; display: grid; gap: 4px; border-top: 1px solid var(--glass); }
+.pv-info small { opacity: .6; }
+.pv-strip { display: flex; gap: 2px; justify-content: center; overflow-x: auto; padding: 6px 8px; scrollbar-width: none; }
+.pv-strip button { flex: 0 0 auto; width: 26px; height: 40px; opacity: .7; transition: width .2s; }
+.pv-strip button.on { width: 40px; opacity: 1; }
+.pv-strip img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+.pv-bar { display: flex; justify-content: space-around; padding: 8px 12px 14px; color: var(--primary); }
