@@ -66,6 +66,21 @@ export default function Settings({ lang, setLang, live, setLive, apps, onHome, o
           {owner ? <>
             <div className="settings-row"><span className="settings-row-name">{L("Editing is unlocked on this device", "이 기기에서 편집이 허용됨", "此设备已解锁编辑")}</span></div>
             <Button variant="ghost" className="settings-row text-destructive" onClick={() => { lockOwner(); setPage("main"); }}><span className="settings-row-name">{L("Lock editing", "편집 잠금", "锁定编辑")}</span></Button>
+          </>}
+        </div>
+        {owner && <>
+          <div className="settings-section-title">{L("KKT / IG data check", "KKT / IG 데이터 확인", "KKT / IG 数据检查")}</div>
+          <div className="settings-group">
+            {inspectRecovery().map((r) => <div key={r.key} className="settings-row"><span className="settings-row-name">{r.key}</span><span className="settings-row-value">{L("now", "현재", "当前")} {r.current} · {L("backup", "백업", "备份")} {r.backup}{r.differs ? " ⚠" : ""}</span></div>)}
+            {!readBackup() && <div className="settings-row"><span className="settings-row-name">{L("No backup on this device", "이 기기에 백업 없음", "此设备没有备份")}</span></div>}
+            <Button variant="ghost" className="settings-row" onClick={exportPhoneData}><span className="settings-row-name text-primary">{L("Download all data", "모든 데이터 다운로드", "下载全部数据")}</span></Button>
+            {readBackup() && <Button variant="ghost" className="settings-row" onClick={() => { if (window.confirm(L("Restore KKT/IG from backup? Current data is copied aside first.", "백업에서 KKT/IG를 복원할까요? 현재 데이터는 먼저 따로 보관됩니다.", "从备份恢复 KKT/IG？当前数据会先另存一份。"))) { restoreFromBackup(); window.location.reload(); } }}><span className="settings-row-name text-primary">{L("Restore KKT/IG from backup", "백업에서 KKT/IG 복원", "从备份恢复 KKT/IG")}</span></Button>}
+          </div>
+        </>}
+        <div className="settings-group" hidden>
+          {false && <></>}
+          {false ? <></> : <></>}
+          {owner ? <></> : <></>
           </> : <>
             <div className="settings-row"><span className="settings-row-name">{L("Only the owner can edit this phone. Enter the owner code to unlock editing on this device.", "주인만 이 폰을 편집할 수 있습니다. 이 기기에서 편집하려면 주인 코드를 입력하세요.", "只有机主可以编辑这台手机。输入机主密码后，此设备才能编辑。")}</span></div>
             <label className="settings-row"><span className="settings-row-name">{L("Owner code", "주인 코드", "机主密码")}</span><input className="sheet-input" style={{ maxWidth: 140 }} type="password" inputMode="numeric" aria-label={L("Owner code", "주인 코드", "机主密码")} value={code} onChange={(e) => { setCode(e.target.value); setCodeError(false); }} /></label>
