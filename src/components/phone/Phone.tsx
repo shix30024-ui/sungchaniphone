@@ -18,6 +18,7 @@ import Music from "./apps/Music";
 import Weather from "./apps/Weather";
 import Settings from "./apps/Settings";
 import { backupPhoneData } from "./store";
+import { useOwner } from "./owner";
 import { label as appLabel } from "./labels";
 import { tr } from "./i18n";
 import { resolveImg, KktAvatar } from "./ui";
