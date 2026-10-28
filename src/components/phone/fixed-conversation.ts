@@ -35,6 +35,17 @@ export function temporaryReply(text: string, lang: Lang, after?: Msg, image?: st
   } };
 }
 
+/** Anton's contextual answer to the player. Also React-state only: it never enters storage. */
+export function temporaryIncoming(reply: { ko: string; zh: string; en: string }, after?: Msg): TemporaryReply {
+  const now = new Date();
+  return { afterId: after?.id, message: {
+    id: `temporary-${uid()}`, contactId: "anton", sender: "them", type: "text",
+    ko: reply.ko, zh: reply.zh, en: reply.en, date: after?.date ?? STORY_DATE,
+    time: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
+    order: after?.order ?? 0, read: true, replyTo: after?.id, replyKind: "ai",
+  } };
+}
+
 export function withTemporaryReplies(fixed: Msg[], temporary: TemporaryReply[]): Msg[] {
   const result = temporary.filter((r) => !r.afterId).map((r) => r.message);
   for (const message of fixed) {
