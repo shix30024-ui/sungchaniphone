@@ -7,8 +7,10 @@ import { movePhoto } from "../media";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
 import { BackBtn, EditBar, Field, ImageField, TopBar, resolveImg } from "../ui";
+import { useOwner } from "../owner";
 
 export default function Photos({ lang, onHome }: AppProps) {
+  const owner = useOwner();
   const [albums, setAlbums] = usePersist<Album[]>("photos-v1", ALBUMS);
   const [aid, setAid] = useState<string | null>(null);
   const [pid, setPid] = useState<string | null>(null);
@@ -39,7 +41,7 @@ export default function Photos({ lang, onHome }: AppProps) {
     return (
       <div className="app-page photo-viewer">
         <TopBar className="photo-viewer-top" left={<BackBtn onClick={() => setPid(null)} />} title={<span className="text-sm">{photo.date.replaceAll("-", ".")}</span>}
-          right={<button className="text-sm" onClick={() => { setDraft({ ...photo }); setTargetAlbum(album.id); }}>{tr(lang, { en: "Edit", ko: "편집", zh: "编辑" })}</button>} />
+          right={owner && <button className="text-sm" onClick={() => { setDraft({ ...photo }); setTargetAlbum(album.id); }}>{tr(lang, { en: "Edit", ko: "편집", zh: "编辑" })}</button>} />
         <div className="flex-1 flex items-center justify-center relative">
           <img src={resolveImg(photo.image)} alt={photo.note} className="max-w-full max-h-full object-contain" />
           {idx > 0 && <button className="viewer-nav left-2" onClick={() => setPid(photos[idx - 1]?.id ?? null)}>‹</button>}
@@ -53,8 +55,8 @@ export default function Photos({ lang, onHome }: AppProps) {
   if (album)
     return (
       <div className="app-page bg-background">
-        <TopBar left={<BackBtn onClick={() => setAid(null)} />} title={<span className="flex items-center justify-center gap-1 truncate">{album.name}<Button size="icon" variant="ghost" aria-label={label(lang, "rename")} onClick={() => { const name = prompt(label(lang, "rename"), album.name); if (name?.trim()) saveAlbum({ ...album, name }); }}><Pencil /></Button></span>}
-          right={<label className="text-xl cursor-pointer">＋<input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+        <TopBar left={<BackBtn onClick={() => setAid(null)} />} title={<span className="flex items-center justify-center gap-1 truncate">{album.name}{owner && <Button size="icon" variant="ghost" aria-label={label(lang, "rename")} onClick={() => { const name = prompt(label(lang, "rename"), album.name); if (name?.trim()) saveAlbum({ ...album, name }); }}><Pencil /></Button>}</span>}
+          right={owner && <label className="text-xl cursor-pointer">＋<input type="file" accept="image/*" className="hidden" onChange={async (e) => {
             const input = e.currentTarget;
             const f = input.files?.[0];
             try { if (f) { const image = await fileToDataUrl(f); setAlbums((current) => current.map((a) => a.id === album.id ? { ...a, photos: [...a.photos, { id: uid(), image, date: "2026-10-26", note: "" }] } : a)); } }
@@ -70,9 +72,9 @@ export default function Photos({ lang, onHome }: AppProps) {
             ))}
           </div>
           <p className="text-center text-xs text-muted-foreground py-4">{photos.length} {tr(lang, { en: "photos", ko: "장", zh: "张照片" })}</p>
-          <button className="mx-auto block text-sm text-destructive pb-6" onClick={() => {
+          {owner && <button className="mx-auto block text-sm text-destructive pb-6" onClick={() => {
             if (confirm(tr(lang, { en: "Delete this album?", ko: "앨범을 삭제할까요?", zh: "删除这个相簿？" }))) { setAlbums(albums.filter((a) => a.id !== album.id)); setAid(null); }
-          }}>{tr(lang, { en: "Delete album", ko: "앨범 삭제", zh: "删除相簿" })}</button>
+          }}>{tr(lang, { en: "Delete album", ko: "앨범 삭제", zh: "删除相簿" })}</button>}
         </div>
       </div>
     );
@@ -80,7 +82,7 @@ export default function Photos({ lang, onHome }: AppProps) {
   return (
     <div className="app-page bg-background">
       <TopBar left={<BackBtn onClick={onHome} />} title={tr(lang, { en: "Albums", ko: "앨범", zh: "相簿" })}
-        right={<button className="text-xl" onClick={() => {
+        right={owner && <button className="text-xl" onClick={() => {
           const name = prompt(tr(lang, { en: "Album name", ko: "앨범 이름", zh: "相簿名称" }));
           if (name) setAlbums([...albums, { id: uid(), name, photos: [] }]);
         }}>＋</button>} />

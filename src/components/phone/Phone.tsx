@@ -18,6 +18,7 @@ import Music from "./apps/Music";
 import Weather from "./apps/Weather";
 import Settings from "./apps/Settings";
 import { backupPhoneData } from "./store";
+import { useOwner } from "./owner";
 import { label as appLabel } from "./labels";
 import { tr } from "./i18n";
 import { resolveImg, KktAvatar } from "./ui";
@@ -258,6 +259,7 @@ export default function Phone() {
   const [unread, setUnread] = useState(0);
   const [lockNotifs, setLockNotifs] = useState<Msg[]>([]);
   const [banner, setBanner] = useState<Msg | null>(null);
+  const owner = useOwner();
   const [chatTarget, setChatTarget] = useState<string | null>(null);
   const [pendingChat, setPendingChat] = useState(false);
   const [contactName, setContactName] = useState("");
@@ -343,7 +345,7 @@ export default function Phone() {
           onUnlock={() => { setLocked(false); if (pendingChat) { setPendingChat(false); openChat(); } }} />
       ) : (
         <div className="absolute inset-0 flex flex-col pt-14 home-in" aria-hidden={Boolean(open)} inert={Boolean(open)}>
-          <div className="flex justify-end px-5 gap-2">
+          {owner && <div className="flex justify-end px-5 gap-2">
             {editMode && (
               <button className="glass-pill px-3 py-1 text-sm text-on-glass" onClick={() => {
                 const n: App = { id: crypto.randomUUID(), name: t(lang, "newApp"), icon: "✦", color: "#0a84ff", url: "", dock: false };
@@ -353,7 +355,7 @@ export default function Phone() {
             <button className="glass-pill px-3 py-1 text-sm text-on-glass" onClick={() => setEditMode(!editMode)}>
               {editMode ? t(lang, "done") : t(lang, "edit")}
             </button>
-          </div>
+          </div>}
           {!editMode && <HomeWidgets lang={lang} now={now} openApp={(id) => { const app = translatedApps.find((a) => a.id === id); if (app) tap(app); }} />}
           <div className="grid grid-cols-4 gap-y-6 gap-x-2 px-5 mt-5">
             {grid.map((a) => <Icon key={a.id} app={a} badge={a.id === "kkt" ? unread : 0} wiggle={editMode && a.id !== "settings"} onClick={() => tap(a)} />)}
@@ -374,7 +376,7 @@ export default function Phone() {
       {open && (
         <AppView initialChat={open.id === "kkt" ? chatTarget : null} apps={apps} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onClose={() => setOpen(null)}
           onLock={() => { setOpen(null); setLocked(true); }}
-          onEditApps={() => { setOpen(null); setEditMode(true); }} />
+          onEditApps={() => { if (!owner) return; setOpen(null); setEditMode(true); }} />
       )}
       {!locked && open && !editing && <Button variant="ghost" className="app-home-indicator" aria-label={t(lang, "back")} onClick={() => setOpen(null)}><span /></Button>}
       {editing && (

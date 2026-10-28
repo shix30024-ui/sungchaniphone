@@ -10,12 +10,14 @@ import { confirmDelete, label } from "../labels";
 import { ImageField, KktAvatar, resolveImg, TopBar, EditBar } from "../ui";
 import { SELF_ID, dmAccount, type SocialAccount } from "../social";
 import { postImages } from "../media";
+import { useOwner } from "../owner";
 
 type Story = { id: string; user: string; image: string; text: string; date: string; authorId?: string };
 export const STORIES_KEY = "ig-stories-v1";
 const SEEN_KEY = "ig-story-seen-v1";
 
 export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: (Post & { authorId?: string })[]; profile: Profile; accounts: SocialAccount[]; lang: Lang; onProfile: (id: string) => void }) {
+  const owner = useOwner();
   const [stored, setStored] = usePersist<Story[] | null>(STORIES_KEY, null);
   const [friendStored, setFriendStored] = usePersist<Story[] | null>("ig-friend-stories-v1", null);
   // Derive a small gallery from existing posts, never altering or copying over the posts themselves.
@@ -42,7 +44,7 @@ export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: 
     </div><EditBar save={label(lang, "save")} cancel={label(lang, "cancel")} onCancel={() => setDraft(null)} onSave={() => { saveStory(draft); setDraft(null); }} /></div>;
   return <>
     <div className="ig-stories">
-      <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Add story", ko: "스토리 추가", zh: "新增快拍" })} onClick={() => setDraft({ id: uid(), user: profile.username, image: "", text: "", date: STORY_DATE })}><Plus /></Button>
+      {owner && <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Add story", ko: "스토리 추가", zh: "新增快拍" })} onClick={() => setDraft({ id: uid(), user: profile.username, image: "", text: "", date: STORY_DATE })}><Plus /></Button>}
       {stories.map((s, i) => <Button variant="ghost" key={s.id} className="ig-story-item" onClick={() => setIndex(i)} aria-label={`${tr(lang, { en: "Story", ko: "스토리", zh: "快拍" })} ${i + 1}`}><img src={resolveImg(s.image)} className={`ig-story-avatar ${seen.includes(s.id) ? "ig-story-seen" : ""}`} alt="" /><span>{s.user}</span></Button>)}
     </div>
     {active && <div className="ig-overlay ig-story-view">
@@ -50,12 +52,13 @@ export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: 
       <div className="flex justify-between items-center px-3"><Button variant="ghost" className="text-sm" onClick={() => { const authorId = active.authorId ?? (active.user === profile.username ? SELF_ID : accounts.find((a) => a.username === active.user)?.id); if (authorId) { setIndex(null); onProfile(authorId); } }}>{active.user} · {active.date}</Button><Button variant="ghost" size="icon" aria-label={label(lang, "cancel")} onClick={() => setIndex(null)}><X /></Button></div>
       <img src={resolveImg(active.image)} className="ig-story-media" alt="" />
       <p className="text-center p-4 whitespace-pre-wrap">{active.text}</p>
-      <div className="flex justify-between px-4 pb-5"><Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Previous story", ko: "이전 스토리", zh: "上一条快拍" })} disabled={index === 0} onClick={() => setIndex((index ?? 0) - 1)}><ChevronLeft /></Button><Button variant="ghost" onClick={() => setDraft({ ...active })}>{label(lang, "edit")}</Button><Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Next story", ko: "다음 스토리", zh: "下一条快拍" })} onClick={() => setIndex((index ?? 0) < stories.length - 1 ? (index ?? 0) + 1 : null)}><ChevronRight /></Button></div>
+      <div className="flex justify-between px-4 pb-5"><Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Previous story", ko: "이전 스토리", zh: "上一条快拍" })} disabled={index === 0} onClick={() => setIndex((index ?? 0) - 1)}><ChevronLeft /></Button>{owner && <Button variant="ghost" onClick={() => setDraft({ ...active })}>{label(lang, "edit")}</Button>}<Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Next story", ko: "다음 스토리", zh: "下一条快拍" })} onClick={() => setIndex((index ?? 0) < stories.length - 1 ? (index ?? 0) + 1 : null)}><ChevronRight /></Button></div>
     </div>}
   </>;
 }
 
 export function InstagramDM({ accounts, lang, onClose }: { accounts: SocialAccount[]; lang: Lang; onClose: () => void }) {
+  const owner = useOwner();
   const [msgs, setMsgs] = usePersist<Msg[]>(DM_KEY, []);
   const [queue] = usePersist<PendingReply[]>(QUEUE_KEY, []);
   const contacts = accounts;
@@ -87,7 +90,7 @@ export function InstagramDM({ accounts, lang, onClose }: { accounts: SocialAccou
       const unread = msgs.filter((m) => m.contactId === c.id && m.sender === "them" && !m.read).length;
       return <Button key={c.id} variant="ghost" className="w-full h-auto justify-start py-2.5 px-4 gap-3 rounded-none" onClick={() => setOpen(c.id)}><span className="ig-dm-avatar"><KktAvatar src={c.avatar} /></span><span className="min-w-0 text-left flex-1"><span className={`block text-sm ${unread ? "font-bold" : "font-normal"}`}>{c.name}</span><span className={`block truncate text-xs ${unread ? "text-foreground font-semibold" : "text-muted-foreground"}`}>{latest ? `${messageText(latest, lang)} · ${latest.time}` : ""}</span></span>{unread > 0 ? <span className="ig-dm-dot" /> : <Camera size={20} className="text-muted-foreground" />}</Button>;
     })}</div> : <>
-      <div ref={scroll} className="flex-1 overflow-y-auto p-3 space-y-1.5">{thread.map((m) => <div key={m.id} className={`flex flex-col ${m.sender === "me" ? "items-end" : "items-start"}`}><div className="ig-dm-message-row">{m.sender === "them" && <span className="ig-dm-message-avatar"><KktAvatar src={contact.avatar} size={26} /></span>}<Button variant="ghost" className={`ig-dm-bubble ${m.sender === "me" ? "ig-dm-mine" : ""}`} aria-label={`${label(lang, "edit")} ${messageText(m, lang)}`} title={m.time} onClick={() => setEditing({ ...m })}>{messageText(m, lang)}</Button></div></div>)}{thread.at(-1)?.sender === "me" && thread.at(-1)?.read !== false && <span className="block text-right text-[11px] text-muted-foreground">{tr(lang, { en: "Seen", ko: "읽음", zh: "已读" })}</span>}{typing && <span role="status" aria-label={tr(lang, { en: "Typing", ko: "입력 중", zh: "正在输入" })} className="typing-dots"><i /><i /><i /></span>}</div>
+      <div ref={scroll} className="flex-1 overflow-y-auto p-3 space-y-1.5">{thread.map((m) => <div key={m.id} className={`flex flex-col ${m.sender === "me" ? "items-end" : "items-start"}`}><div className="ig-dm-message-row">{m.sender === "them" && <span className="ig-dm-message-avatar"><KktAvatar src={contact.avatar} size={26} /></span>}<Button variant="ghost" className={`ig-dm-bubble ${m.sender === "me" ? "ig-dm-mine" : ""}`} aria-label={`${label(lang, "edit")} ${messageText(m, lang)}`} title={m.time} onClick={() => owner && setEditing({ ...m })}>{messageText(m, lang)}</Button></div></div>)}{thread.at(-1)?.sender === "me" && thread.at(-1)?.read !== false && <span className="block text-right text-[11px] text-muted-foreground">{tr(lang, { en: "Seen", ko: "읽음", zh: "已读" })}</span>}{typing && <span role="status" aria-label={tr(lang, { en: "Typing", ko: "입력 중", zh: "正在输入" })} className="typing-dots"><i /><i /><i /></span>}</div>
       <form className="ig-dm-compose" onSubmit={(e) => { e.preventDefault(); if (!text.trim()) return; sendChat("ig", contact.id, text.trim(), lang); setText(""); }}><span className="ig-dm-cam"><Camera size={18} /></span><input aria-label={tr(lang, { en: "DM message", ko: "메시지 입력", zh: "输入私信" })} placeholder={tr(lang, { en: "Message...", ko: "메시지 보내기...", zh: "发消息…" })} value={text} onChange={(e) => setText(e.target.value)} /><Button variant="ghost" size="sm" className="ig-dm-send" disabled={!text.trim()} aria-label={tr(lang, { en: "Send DM", ko: "메시지 보내기", zh: "发送私信" })}>{tr(lang, { en: "Send", ko: "보내기", zh: "发送" })}</Button></form>
     </>}
   </div>;
