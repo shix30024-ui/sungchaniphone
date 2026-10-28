@@ -251,7 +251,12 @@ function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initia
 export default function Phone() {
   const now = useDeviceNow();
   const [lang, setLangState] = useState<Lang>("en");
-  const [locked, setLocked] = useState(true);
+  // Keep the unlocked state in sessionStorage so an unexpected remount
+  // (hot reload, error recovery) never bounces the user back to the lock
+  // screen mid-edit. Refresh/close still returns to the lock screen.
+  const [locked, setLocked] = useState(() => {
+    try { return sessionStorage.getItem("phone-unlocked") !== "1"; } catch { return true; }
+  });
   const [apps, setApps] = useState<App[]>(DEFAULT_APPS);
   const [editMode, setEditMode] = useState(false);
   const [editing, setEditing] = useState<App | null>(null);
@@ -343,7 +348,7 @@ export default function Phone() {
       <StatusBar now={now} inApp={Boolean(open || editing)} />
       {locked ? (
         <Lock lang={lang} setLang={setLang} now={now} notifs={lockNotifs} preview={live.preview} onNotif={() => setPendingChat(true)}
-          onUnlock={() => { setLocked(false); if (pendingChat) { setPendingChat(false); openChat(); } }} />
+          onUnlock={() => { setLocked(false); try { sessionStorage.setItem("phone-unlocked", "1"); } catch { /* ignore */ } if (pendingChat) { setPendingChat(false); openChat(); } }} />
       ) : (
         <div className="absolute inset-0 flex flex-col pt-14 home-in" aria-hidden={Boolean(open)} inert={Boolean(open)}>
           {owner && <div className="flex justify-end px-5 gap-2">
@@ -376,7 +381,7 @@ export default function Phone() {
       {!locked && replyError && <div className="reply-error" role="alert"><span>{replyError}</span><Button variant="ghost" size="icon" aria-label={t(lang, "cancel")} onClick={() => setReplyError(null)}><X /></Button></div>}
       {open && (
         <AppView initialChat={open.id === "kkt" ? chatTarget : null} apps={apps} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onClose={() => setOpen(null)}
-          onLock={() => { setOpen(null); setLocked(true); }}
+          onLock={() => { setOpen(null); setLocked(true); try { sessionStorage.removeItem("phone-unlocked"); } catch { /* ignore */ } }}
           onEditApps={() => { if (!owner) return; setOpen(null); setEditMode(true); }} />
       )}
       {!locked && open && !editing && <Button variant="ghost" className="app-home-indicator" aria-label={t(lang, "back")} onClick={() => setOpen(null)}><span /></Button>}
