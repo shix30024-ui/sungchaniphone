@@ -1,4 +1,7 @@
 # Phone story completion
+# X and Weather language correction
+- [ ] Localize X posts/replies with exact-match seed translations and independent editable language versions; preserve originals and saved edits.
+- [ ] Translate the default Weather app name without rewriting custom names; test three languages, editing/cancel/reload and unchanged saved data.
 # Phone and Messages completion
 - [x] Add five fixed fictional calls and three independent multilingual SMS conversations once, skipping existing conversations and preserving edits/deletions; persist actual simulated outcomes only on completion and retain saved player SMS.
 - [x] Complete call newest-first filtering/details/avatar/search/duration and Messages full-history search, preview/unread/contact selection/details/editing/navigation; no KKT data migration or real telephone/SMS delivery.

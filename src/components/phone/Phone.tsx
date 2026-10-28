@@ -33,6 +33,7 @@ import { tickReplies, REPLY_ERROR_EVENT } from "./conversation";
 import { getActiveChat } from "./live";
 import { Wifi, ChevronUp, ChevronDown, X, Search, Plane } from "lucide-react";
 import { SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from "./system";
+import { weatherAppName } from "./x-language";
 
 const notifText = (m: Msg, lang: Lang) => (m.type === "image" ? tr(lang, { en: "Sent a photo", ko: "사진을 보냈습니다", zh: "发送了一张照片" }) : messageText(m, lang));
 
@@ -310,6 +311,7 @@ export default function Phone() {
     if (a.name !== original?.name) return a;
     const name = a.id === "photos" ? { en: "Photos", ko: "사진", zh: "照片" }[lang]
       : a.id === "notes" ? { en: "Notes", ko: "메모", zh: "备忘录" }[lang]
+      : a.id === "weather" ? weatherAppName(a.name, lang)
       : a.id === "calendar" || a.id === "music" ? appLabel(lang, a.id) : a.name;
     return { ...a, name };
   });

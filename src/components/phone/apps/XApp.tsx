@@ -6,6 +6,7 @@ import { BackBtn, EditBar, Field, TopBar, resolveImg } from "../ui";
 import { label, confirmDelete } from "../labels";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, MessageCircle, Repeat2, Heart, BarChart2, Share, Home, Search, Bell, Mail, ChevronLeft } from "lucide-react";
+import { xText, editXText } from "../x-language";
 
 export default function XApp({ lang, onHome }: AppProps) {
   const [tweets, setTweets] = usePersist<Tweet[]>("x-tweets-v1", TWEETS);
@@ -21,7 +22,8 @@ export default function XApp({ lang, onHome }: AppProps) {
       <div className="app-page bg-background">
         <TopBar title={tr(lang, { en: "Edit post", ko: "게시물 수정", zh: "编辑推文" })} />
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          <textarea className="sheet-input" rows={4} value={draft.text} onChange={(e) => set({ text: e.target.value })} />
+          <Field label={tr(lang, { en: "Original post", ko: "게시물 원문", zh: "推文原文" })}><textarea aria-label={tr(lang, { en: "Original post", ko: "게시물 원문", zh: "推文原文" })} className="sheet-input" rows={3} value={draft.text} onChange={(e) => set({ text: e.target.value })} /></Field>
+          {(["ko", "zh", "en"] as const).map((language) => <Field key={language} label={{ ko: "한국어", zh: "简体中文", en: "English" }[language]}><textarea aria-label={language} className="sheet-input" rows={3} value={xText(draft, language)} onChange={(e) => setDraft(editXText(draft, language, e.target.value))} /></Field>)}
           <div className="flex gap-2">
             <Field label={tr(lang, { en: "Date", ko: "날짜", zh: "日期" })}><input type="date" className="sheet-input" value={draft.date} onChange={(e) => set({ date: e.target.value })} /></Field>
             <Field label={tr(lang, { en: "Time", ko: "시간", zh: "时间" })}><input type="time" className="sheet-input" value={draft.time} onChange={(e) => set({ time: e.target.value })} /></Field>
@@ -34,6 +36,7 @@ export default function XApp({ lang, onHome }: AppProps) {
           {(draft.replies ?? []).map((reply) => <div key={reply.id} className="space-y-2 border-b pb-3">
             <Field label={label(lang, "username")}><input className="sheet-input" value={reply.user} onChange={(e) => set({ replies: draft.replies?.map((r) => r.id === reply.id ? { ...r, user: e.target.value } : r) ?? [] })} /></Field>
             <Field label={label(lang, "reply")}><textarea className="sheet-input" value={reply.text} onChange={(e) => set({ replies: draft.replies?.map((r) => r.id === reply.id ? { ...r, text: e.target.value } : r) ?? [] })} /></Field>
+            {(["ko", "zh", "en"] as const).map((language) => <Field key={language} label={{ ko: "한국어", zh: "简体中文", en: "English" }[language]}><textarea aria-label={`reply-${language}`} className="sheet-input" value={xText(reply, language)} onChange={(e) => set({ replies: draft.replies?.map((r) => r.id === reply.id ? editXText(r, language, e.target.value) : r) ?? [] })} /></Field>)}
             <div className="flex gap-2"><input type="date" className="sheet-input" value={reply.date} onChange={(e) => set({ replies: draft.replies?.map((r) => r.id === reply.id ? { ...r, date: e.target.value } : r) ?? [] })} /><input type="time" className="sheet-input" value={reply.time} onChange={(e) => set({ replies: draft.replies?.map((r) => r.id === reply.id ? { ...r, time: e.target.value } : r) ?? [] })} /><Button variant="ghost" size="icon" aria-label={label(lang, "delete")} onClick={() => { if (confirmDelete(lang)) set({ replies: draft.replies?.filter((r) => r.id !== reply.id) ?? [] }); }}><Trash2 /></Button></div>
           </div>)}
           <Button variant="secondary" onClick={() => set({ replies: [...(draft.replies ?? []), { id: uid(), user: "", text: "", date: "2026-10-26", time: "20:26" }] })}><Plus />{label(lang, "reply")}</Button>
@@ -41,7 +44,7 @@ export default function XApp({ lang, onHome }: AppProps) {
         </div>
         <EditBar save={tr(lang, { en: "Save", ko: "저장", zh: "保存" })} cancel={tr(lang, { en: "Cancel", ko: "취소", zh: "取消" })}
           onCancel={() => setDraft(null)}
-          onSave={() => { setTweets(exists ? tweets.map((t) => (t.id === draft.id ? draft : t)) : [draft, ...tweets]); setDraft(null); }} />
+          onSave={() => { setTweets((current) => exists ? current.map((t) => (t.id === draft.id ? draft : t)) : [draft, ...current]); setDraft(null); }} />
       </div>
     );
   }
@@ -50,12 +53,12 @@ export default function XApp({ lang, onHome }: AppProps) {
   if (open) return <div className="app-page bg-background">
     <TopBar title={tr(lang, { en: "Post", ko: "게시물", zh: "帖子" })} left={<BackBtn onClick={() => setOpenId(null)} />} right={<Button variant="ghost" onClick={() => setDraft({ ...open, replies: (open.replies ?? []).map((r) => ({ ...r })) })}>{label(lang, "edit")}</Button>} />
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      <div className="flex gap-3 items-center"><img src={resolveImg(PROFILE.avatar)} alt="" className="w-10 h-10 rounded-full object-cover" /><span className="leading-tight"><b className="block">성찬</b><span className="text-sm text-muted-foreground">@zcc_daily</span></span></div>
-      <p className="text-[17px] whitespace-pre-wrap">{open.text}</p>
+      <div className="flex gap-3 items-center"><img src={resolveImg(PROFILE.avatar)} alt="" className="w-10 h-10 rounded-full object-cover" /><span className="leading-tight"><b className="block">{tr(lang, { en: "Sungchan", ko: "성찬", zh: "成灿" })}</b><span className="text-sm text-muted-foreground">@zcc_daily</span></span></div>
+      <p className="text-[17px] whitespace-pre-wrap">{xText(open, lang)}</p>
       <p className="text-sm text-muted-foreground">{open.time} · {open.date.replaceAll("-", ".")}</p>
       <p className="text-sm border-y py-2.5"><b>{open.rts}</b> <span className="text-muted-foreground">{tr(lang, { en: "Reposts", ko: "재게시", zh: "转帖" })}</span>  <b className="ml-3">{open.likes}</b> <span className="text-muted-foreground">{tr(lang, { en: "Likes", ko: "마음에 들어요", zh: "喜欢" })}</span></p>
       <h2 className="text-sm font-semibold border-t pt-4">{label(lang, "replies")}</h2>
-      {(open.replies ?? []).map((reply) => <div key={reply.id} className="flex gap-3 border-b pb-3"><span className="x-reply-avatar">{reply.user.slice(0, 1).toUpperCase()}</span><div className="min-w-0"><p className="text-sm"><b>{reply.user}</b> <span className="text-muted-foreground">· {reply.date.replaceAll("-", ".")} {reply.time}</span></p><p className="text-[15px] whitespace-pre-wrap">{reply.text}</p></div></div>)}
+      {(open.replies ?? []).map((reply) => <div key={reply.id} className="flex gap-3 border-b pb-3"><span className="x-reply-avatar">{reply.user.slice(0, 1).toUpperCase()}</span><div className="min-w-0"><p className="text-sm"><b>{reply.user}</b> <span className="text-muted-foreground">· {reply.date.replaceAll("-", ".")} {reply.time}</span></p><p className="text-[15px] whitespace-pre-wrap">{xText(reply, lang)}</p></div></div>)}
       <Button variant="secondary" onClick={() => setDraft({ ...open, replies: [...(open.replies ?? []), { id: uid(), user: "", text: "", date: "2026-10-26", time: "20:26" }] })}><Plus />{label(lang, "reply")}</Button>
     </div>
   </div>;
@@ -69,8 +72,8 @@ export default function XApp({ lang, onHome }: AppProps) {
           <button key={t.id} onClick={() => setOpenId(t.id)} className="w-full text-left flex gap-3 px-4 py-3 border-b">
             <img src={resolveImg(PROFILE.avatar)} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
             <div className="min-w-0 flex-1">
-              <div className="text-[15px] truncate"><b>성찬</b> <span className="text-muted-foreground">@zcc_daily · {t.date.slice(5).replace("-", "/")}</span></div>
-              <p className="text-[15px] mt-0.5 whitespace-pre-line">{t.text}</p>
+              <div className="text-[15px] truncate"><b>{tr(lang, { en: "Sungchan", ko: "성찬", zh: "成灿" })}</b> <span className="text-muted-foreground">@zcc_daily · {t.date.slice(5).replace("-", "/")}</span></div>
+              <p className="text-[15px] mt-0.5 whitespace-pre-line">{xText(t, lang)}</p>
               {actions(t)}
             </div>
           </button>

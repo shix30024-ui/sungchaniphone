@@ -246,8 +246,8 @@ export const POSTS: Post[] = [
 ];
 
 /* ---------- X ---------- */
-export type Reply = { id: string; user: string; text: string; date: string; time: string };
-export type Tweet = { id: string; text: string; date: string; time: string; likes: number; rts: number; replies?: Reply[] };
+export type Reply = { id: string; user: string; text: string; date: string; time: string; translations?: Partial<Record<"en" | "ko" | "zh", string>> };
+export type Tweet = { id: string; text: string; date: string; time: string; likes: number; rts: number; replies?: Reply[]; translations?: Partial<Record<"en" | "ko" | "zh", string>> };
 export const TWEETS: Tweet[] = [
   { id: "t10", text: "오늘 본래 그냥 밥만 먹으려고 했음", date: "2026-10-26", time: "14:30", likes: 812, rts: 40 },
   { id: "t9", text: "이 노래 요즘 계속 듣는 중", date: "2026-10-25", time: "00:12", likes: 1203, rts: 88 },
