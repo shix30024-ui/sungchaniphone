@@ -16,14 +16,14 @@ describe("safe contextual phone conversations", () => {
   });
   it("appends one reply and preserves manually edited records and contact names", async () => {
     const saved = [{ ...MESSAGES[1], ko: "edited", id: "manual" }] as Msg[];
-    localStorage.setItem("kkt-msgs-v1", JSON.stringify(saved));
+    localStorage.setItem(DM_KEY, JSON.stringify(saved));
     localStorage.setItem("kkt-contacts-v1", JSON.stringify(CONTACTS.map((c) => ({ ...c, name: "custom", unread: 0 }))));
-    const source = sendChat("kkt", "anton", "Have you eaten?", "en", 1000);
+    const source = sendChat("ig", "anton", "Have you eaten?", "en", 1000);
     expect(await tickReplies(1100, null, generate)).toBeNull();
     expect(pendingReplies()).toHaveLength(1);
     expect((await tickReplies(6000, null, generate))?.replyTo).toBe(source.id);
     expect(await tickReplies(7000, null, generate)).toBeNull();
-    const after = readStored<Msg[]>("kkt-msgs-v1", []);
+    const after = readStored<Msg[]>(DM_KEY, []);
     expect(after[0]).toEqual(JSON.parse(JSON.stringify(saved[0])));
     expect(after).toHaveLength(3);
     expect(readStored("kkt-contacts-v1", CONTACTS)[0]?.name).toBe("custom");
@@ -42,7 +42,7 @@ describe("safe contextual phone conversations", () => {
     expect(localStorage.getItem("ig-posts-v1")).toBe("broken saved value");
   });
   it("keeps one AI request in flight and preserves unrelated edits", async () => {
-    sendChat("kkt", "anton", "今天好累", "zh", 1000);
+    sendChat("ig", "anton", "今天好累", "zh", 1000);
     let resolve: (value: Awaited<ReturnType<typeof generate>>) => void = () => {};
     const waiting = new Promise<Awaited<ReturnType<typeof generate>>>((done) => { resolve = done; });
     const first = tickReplies(6000, null, () => waiting);
@@ -53,10 +53,10 @@ describe("safe contextual phone conversations", () => {
     expect(pendingReplies()).toHaveLength(0);
   });
   it("stops failed requests without fabricating a character response", async () => {
-    sendChat("kkt", "anton", "吃饭了吗？", "zh", 1000);
-    const before = localStorage.getItem("kkt-msgs-v1");
+    sendChat("ig", "anton", "吃饭了吗？", "zh", 1000);
+    const before = localStorage.getItem(DM_KEY);
     await tickReplies(6000, null, async () => ({ ok: false, status: 403, error: "AI unavailable" }));
-    expect(localStorage.getItem("kkt-msgs-v1")).toBe(before);
+    expect(localStorage.getItem(DM_KEY)).toBe(before);
     expect(pendingReplies()[0]?.failed).toBe(true);
     expect(await tickReplies(7000, null, generate)).toBeNull();
   });
