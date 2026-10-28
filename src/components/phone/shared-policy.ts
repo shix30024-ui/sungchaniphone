@@ -7,6 +7,11 @@ export const SHARED_KEYS = new Set([
   "phone-sms-messages-v1", "phone-call-recents-v1",
 ]);
 
+/** Bootstrap only from an authenticated owner's existing authored records, never a fresh visitor's defaults. */
+export function shouldShareExistingContent(owner: boolean, sharedExists: boolean, savedKeys: string[]): boolean {
+  return owner && !sharedExists && savedKeys.some((key) => ["kkt-msgs-v1", "ig-posts-v1", "photos-v1"].includes(key));
+}
+
 /** Explicitly player-originated records and device-only flags never become the shared story. */
 export function authoredValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.filter((v) => !v || typeof v !== "object" || (v as Record<string, unknown>)["source"] !== "player").map(authoredValue);
