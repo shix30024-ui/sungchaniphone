@@ -9,7 +9,9 @@ describe("Fixed Anton lock notifications", () => {
     expect(lockNotifications([]).every((message) => message.contactId === "anton")).toBe(true);
   });
   it("preserves existing messages and never writes fixed notices into phone storage", () => {
-    const existing = [{ ...ANTON_LOCK_NOTIFICATIONS[0], id: "owner-edited", zh: "保留我改过的内容", time: "20:31" }];
+    const fixed = ANTON_LOCK_NOTIFICATIONS[0];
+    if (!fixed) throw new Error("Fixed notification missing");
+    const existing = [{ ...fixed, id: "owner-edited", zh: "保留我改过的内容", time: "20:31" }];
     const before = JSON.stringify(existing);
     const writes = Object.keys(localStorage).map((key) => [key, localStorage.getItem(key)]);
     expect(lockNotifications(existing).slice(2)).toEqual(existing);
