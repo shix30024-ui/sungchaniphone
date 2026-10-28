@@ -16,7 +16,8 @@ export function installShared(payload: Record<string, unknown>, version: number)
   window.dispatchEvent(new Event("phone-shared-refresh"));
 }
 export function sharedRead(key: string): { found: boolean; value?: unknown } {
-  if (!active || owner || !SHARED_KEYS.has(key)) return { found: false };
+  if (!active || !SHARED_KEYS.has(key)) return { found: false };
+  if (owner && localStorage.getItem(key) !== null) return { found: false };
   if (overlays.has(key)) return { found: true, value: overlays.get(key) };
   return key in shared ? { found: true, value: shared[key] } : { found: false };
 }

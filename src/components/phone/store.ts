@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { sharedRead, sharedWrite, queueSharedSave } from "./shared-state";
+import { authoredValue } from "./shared-policy";
 
 /** Persisted state in localStorage. Loads after mount so SSR markup matches. */
 export function backupPhoneData() {
@@ -62,9 +63,10 @@ export function usePersist<T>(key: string, def: T, normalize?: (value: T) => T):
   }, [key]);
   const set = (v: T | ((current: T) => T)) => {
     try {
+      const before = JSON.stringify(authoredValue(readStored(key, def)));
       const next = updateStored(key, def, (current) => typeof v === "function" ? (v as (current: T) => T)(current) : v);
       setVal(next);
-      queueSharedSave(key, next);
+      if (before !== JSON.stringify(authoredValue(next))) queueSharedSave(key, next);
       return true;
     } catch {
       alert("Storage full — try a smaller image. / 저장 공간이 부족합니다 / 存储空间不足");

@@ -9,7 +9,7 @@ export const SHARED_KEYS = new Set([
 
 /** Explicitly player-originated records and device-only flags never become the shared story. */
 export function authoredValue(value: unknown): unknown {
-  if (Array.isArray(value)) return value.filter((v) => !v || typeof v !== "object" || (v as Record<string, unknown>).source !== "player").map(authoredValue);
+  if (Array.isArray(value)) return value.filter((v) => !v || typeof v !== "object" || (v as Record<string, unknown>)["source"] !== "player").map(authoredValue);
   if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).filter(([key]) => !["liked", "saved", "read", "unread", "seen"].includes(key)).map(([k, v]) => [k, authoredValue(v)]));
   return value;
 }
