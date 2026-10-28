@@ -29,7 +29,7 @@ export function updateStored<T>(key: string, fallback: T, update: (current: T) =
   return next;
 }
 
-export function usePersist<T>(key: string, def: T, normalize?: (value: T) => T): [T, (v: T | ((current: T) => T)) => void] {
+export function usePersist<T>(key: string, def: T, normalize?: (value: T) => T): [T, (v: T | ((current: T) => T)) => boolean] {
   const [val, setVal] = useState<T>(def);
   useEffect(() => {
     try {
@@ -57,8 +57,10 @@ export function usePersist<T>(key: string, def: T, normalize?: (value: T) => T):
     try {
       const next = updateStored(key, def, (current) => typeof v === "function" ? (v as (current: T) => T)(current) : v);
       setVal(next);
+      return true;
     } catch {
       alert("Storage full — try a smaller image. / 저장 공간이 부족합니다 / 存储空间不足");
+      return false;
     }
   };
   return [normalize ? normalize(val) : val, set];
