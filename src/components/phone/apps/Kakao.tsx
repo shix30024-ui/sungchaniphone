@@ -5,7 +5,7 @@ import { CONTACTS, MESSAGES, type Contact, type Msg, type MsgType } from "../sto
 import { uid, usePersist } from "../store";
 import { PhotoImg } from "../photo-db";
 import { moveKktImagesToDb } from "../kkt-images";
-import { BackBtn, EditBar, Field, ImageField, KktAvatar, TopBar, resolveImg } from "../ui";
+import { BackBtn, EditBar, Field, ImageField, KktAvatar, TopBar } from "../ui";
 import { useOwner } from "../owner";
 import { Button } from "@/components/ui/button";
 import { Send, Phone, PhoneIncoming, Search, Menu, Plus, Smile, X, Users, MessageCircle, MessageCirclePlus, Settings2, ShoppingBag, MoreHorizontal, SquarePlus, CalendarDays } from "lucide-react";

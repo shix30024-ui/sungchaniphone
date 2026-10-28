@@ -22,7 +22,7 @@ import { backupPhoneData } from "./store";
 import { useOwner } from "./owner";
 import { label as appLabel } from "./labels";
 import { tr } from "./i18n";
-import { resolveImg, KktAvatar } from "./ui";
+import { KktAvatar } from "./ui";
 import { CONTACTS, type Contact, type Msg } from "./story";
 import { usePersist } from "./store";
 import { Button } from "@/components/ui/button";
