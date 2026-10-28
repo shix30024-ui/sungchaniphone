@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import Kakao from "@/components/phone/apps/Kakao";
 import { CONTACTS, type Msg } from "@/components/phone/story";
 import { OWNER_KEY, OWNER_CODE, lockOwner, readOwner, unlockOwner } from "@/components/phone/owner";
@@ -29,14 +29,14 @@ describe("Owner mode", () => {
     await screen.findByText("first");
     // Players can open the chat menu but find no Edit option.
     const menuButtons = screen.getAllByRole("button", { name: "Chat menu" });
-    menuButtons[0]!.click();
+    fireEvent.click(menuButtons[0]!);
     expect(screen.queryByText("Edit")).not.toBeInTheDocument();
     ui.unmount();
     // The owner sees the Edit option.
     unlockOwner(OWNER_CODE);
     render(<Kakao lang="en" onHome={() => {}} initialChat="anton" />);
     await screen.findByText("first");
-    screen.getAllByRole("button", { name: "Chat menu" })[0]!.click();
+    fireEvent.click(screen.getAllByRole("button", { name: "Chat menu" })[0]!);
     expect(screen.getByText("Edit")).toBeInTheDocument();
   });
 });
