@@ -1,4 +1,8 @@
 # Phone story completion
+# Phone and Messages completion
+- [x] Add five fixed fictional calls and three independent multilingual SMS conversations once, skipping existing conversations and preserving edits/deletions; persist actual simulated outcomes only on completion and retain saved player SMS.
+- [x] Complete call newest-first filtering/details/avatar/search/duration and Messages full-history search, preview/unread/contact selection/details/editing/navigation; no KKT data migration or real telephone/SMS delivery.
+- [x] All 64 tests passed; final isolated browser verified All/Missed, contact history, call edit and connected duration/once-only save, preset SMS/edit/send/new contact, preview ordering and reload retention. KKT byte-identical; 375×667 screenshot inspected, language/preservation tests passed, latest build OK, no runtime errors; user preview storage untouched.
 # Anton permanent-message repair
 - [x] Show every saved Anton fixed message independently of reply gates, preserve list access and existing records, and keep player sends temporary without creating story messages. Existing gate waiting still protects the foreground live scheduler.
 - [x] All 57 tests passed; isolated browser verified full authored content/order/times, temporary send, return/reentry/reload and closing/reopening a browser with retained storage. Fixed messages unchanged byte-for-byte, no player text stored, other contact/Notes retained, language regression passed, no runtime errors and latest build OK. User preview storage untouched.
