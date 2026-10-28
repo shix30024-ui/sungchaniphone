@@ -251,7 +251,12 @@ function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initia
 export default function Phone() {
   const now = useDeviceNow();
   const [lang, setLangState] = useState<Lang>("en");
-  const [locked, setLocked] = useState(true);
+  // Keep the unlocked state in sessionStorage so an unexpected remount
+  // (hot reload, error recovery) never bounces the user back to the lock
+  // screen mid-edit. Refresh/close still returns to the lock screen.
+  const [locked, setLocked] = useState(() => {
+    try { return sessionStorage.getItem("phone-unlocked") !== "1"; } catch { return true; }
+  });
   const [apps, setApps] = useState<App[]>(DEFAULT_APPS);
   const [editMode, setEditMode] = useState(false);
   const [editing, setEditing] = useState<App | null>(null);
