@@ -7,8 +7,10 @@ import { label, confirmDelete } from "../labels";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, MessageCircle, Repeat2, Heart, BarChart2, Share, Home, Search, Bell, Mail, ChevronLeft } from "lucide-react";
 import { xText, editXText } from "../x-language";
+import { useOwner } from "../owner";
 
 export default function XApp({ lang, onHome }: AppProps) {
+  const owner = useOwner();
   const [tweets, setTweets] = usePersist<Tweet[]>("x-tweets-v1", TWEETS);
   const [draft, setDraft] = useState<Tweet | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -51,7 +53,7 @@ export default function XApp({ lang, onHome }: AppProps) {
 
   const actions = (t: Tweet) => <div className="x-actions"><span><MessageCircle size={16} />{t.replies?.length || ""}</span><span><Repeat2 size={17} />{t.rts}</span><span><Heart size={16} />{t.likes}</span><span><BarChart2 size={16} />{t.likes * 37 + t.rts * 11}</span><Share size={16} /></div>;
   if (open) return <div className="app-page bg-background">
-    <TopBar title={tr(lang, { en: "Post", ko: "게시물", zh: "帖子" })} left={<BackBtn onClick={() => setOpenId(null)} />} right={<Button variant="ghost" onClick={() => setDraft({ ...open, replies: (open.replies ?? []).map((r) => ({ ...r })) })}>{label(lang, "edit")}</Button>} />
+    <TopBar title={tr(lang, { en: "Post", ko: "게시물", zh: "帖子" })} left={<BackBtn onClick={() => setOpenId(null)} />} right={owner && <Button variant="ghost" onClick={() => setDraft({ ...open, replies: (open.replies ?? []).map((r) => ({ ...r })) })}>{label(lang, "edit")}</Button>} />
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
       <div className="flex gap-3 items-center"><img src={resolveImg(PROFILE.avatar)} alt="" className="w-10 h-10 rounded-full object-cover" /><span className="leading-tight"><b className="block">{tr(lang, { en: "Sungchan", ko: "성찬", zh: "成灿" })}</b><span className="text-sm text-muted-foreground">@zcc_daily</span></span></div>
       <p className="text-[17px] whitespace-pre-wrap">{xText(open, lang)}</p>
@@ -59,7 +61,7 @@ export default function XApp({ lang, onHome }: AppProps) {
       <p className="text-sm border-y py-2.5"><b>{open.rts}</b> <span className="text-muted-foreground">{tr(lang, { en: "Reposts", ko: "재게시", zh: "转帖" })}</span>  <b className="ml-3">{open.likes}</b> <span className="text-muted-foreground">{tr(lang, { en: "Likes", ko: "마음에 들어요", zh: "喜欢" })}</span></p>
       <h2 className="text-sm font-semibold border-t pt-4">{label(lang, "replies")}</h2>
       {(open.replies ?? []).map((reply) => <div key={reply.id} className="flex gap-3 border-b pb-3"><span className="x-reply-avatar">{reply.user.slice(0, 1).toUpperCase()}</span><div className="min-w-0"><p className="text-sm"><b>{reply.user}</b> <span className="text-muted-foreground">· {reply.date.replaceAll("-", ".")} {reply.time}</span></p><p className="text-[15px] whitespace-pre-wrap">{xText(reply, lang)}</p></div></div>)}
-      <Button variant="secondary" onClick={() => setDraft({ ...open, replies: [...(open.replies ?? []), { id: uid(), user: "", text: "", date: "2026-10-26", time: "20:26" }] })}><Plus />{label(lang, "reply")}</Button>
+      {owner && <Button variant="secondary" onClick={() => setDraft({ ...open, replies: [...(open.replies ?? []), { id: uid(), user: "", text: "", date: "2026-10-26", time: "20:26" }] })}><Plus />{label(lang, "reply")}</Button>}
     </div>
   </div>;
 
@@ -80,7 +82,7 @@ export default function XApp({ lang, onHome }: AppProps) {
         ))}
         <p className="text-[10px] text-center text-muted-foreground py-3">{label(lang, "fictional")}</p>
       </div>
-      <button className="x-fab" aria-label={tr(lang, { en: "Post", ko: "게시하기", zh: "发帖" })} onClick={() => setDraft({ id: uid(), text: "", date: "2026-10-26", time: "20:00", likes: 0, rts: 0 })}><Plus /></button>
+      {owner && <button className="x-fab" aria-label={tr(lang, { en: "Post", ko: "게시하기", zh: "发帖" })} onClick={() => setDraft({ id: uid(), text: "", date: "2026-10-26", time: "20:00", likes: 0, rts: 0 })}><Plus /></button>}
       <nav className="x-nav"><Home strokeWidth={2.6} /><Search /><Bell /><Mail /></nav>
     </div>
   );
