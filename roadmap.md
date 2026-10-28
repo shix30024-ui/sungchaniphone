@@ -2,7 +2,7 @@
 # Shared authored phone content
 - [x] Add public shared authored reads, authenticated owner saves, referenced media, original local-data preservation and isolated visitor interactions; tests pass and login UI verified without runtime errors.
 - [ ] Verify authenticated owner save and independent visitor readback with real edited content. Owner now signed in; original preview records are only available in the user's browser, not the isolated verification browser.
-- [ ] Finish setup on the owner's behalf: automatically snapshot/share existing preview records into an empty shared manifest and publish the shared-save update.
+- [x] Add automatic initial sharing from authenticated owner's saved records with a safety snapshot; eight sharing tests pass and latest build OK. Publishing requested for the shared-save update.
 # Preview-to-phone transfer guidance
 - [x] Explain existing export/import steps and ways to send the JSON file to the phone; latest request is transfer only, with no app or storage changes.
 - [x] Manual transfer was superseded by the user's shared-content request; visitors should not need file imports.
