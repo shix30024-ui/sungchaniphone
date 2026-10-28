@@ -663,3 +663,12 @@ button:active > .app-icon { transform: scale(.9); }
 .pv-strip button.on { width: 40px; opacity: 1; }
 .pv-strip img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
 .pv-bar { display: flex; justify-content: space-around; padding: 8px 12px 14px; color: var(--primary); }
+.photo-viewer .pv-bar, .photo-viewer .pv-edit { color: var(--viewer-ink); }
+.photo-viewer .pv-top, .photo-viewer .pv-bar { transition: opacity .2s; }
+.photo-viewer .pv-hidden { opacity: 0; pointer-events: none; }
+.ph-lib-title { font-size: 32px; font-weight: 700; padding: 0 16px; line-height: 1.1; }
+.ph-lib-count { font-size: 14px; color: var(--muted-foreground); padding: 2px 16px 12px; }
+.ph-month { font-size: 20px; font-weight: 700; padding: 14px 16px 8px; }
+.ph-switch { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: var(--glass); backdrop-filter: blur(16px); box-shadow: 0 4px 18px color-mix(in oklab, var(--foreground) 15%, transparent); }
+.ph-switch button { padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+.ph-switch button.on { background: var(--background); }
