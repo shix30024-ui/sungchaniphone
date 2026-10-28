@@ -70,4 +70,4 @@
 - [x] Match KKT chat hierarchy to p2 and grouped lock notifications to p1 without replacing wallpaper or messages.
 - [x] Repair contextual local replies, short answers, laughter and known commitments; local fallback only, no AI service connected.
 - [x] Add separate fictional authors to Instagram Feed with correct profiles, shared detail/editing and independent Stories authors; new friend posts are fictional sample additions.
-- [x] Test reference layouts at 614×710 and 375×667, notification unlock navigation, tired/ack replies, search, cancellation, author comments and unchanged owner records on reload; 27 tests passed. User preview data was not accessed or reset.
+- [x] Test reference layouts at 614×710 and 375×667, notification unlock navigation, tired/ack replies, search, cancellation, author comments and unchanged owner records on reload; 27 tests passed. User preview data was not accessed or reset.- [x] KKT 真实感升级：Anton 根据玩家发送内容 AI 回应（仅临时显示、含输入中动画），固定剧情与临时回复完全分离，实测返回/刷新后固定消息完整、临时回复消失
