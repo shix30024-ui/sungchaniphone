@@ -1,4 +1,7 @@
 # Phone story completion
+# X and Weather language correction
+- [x] Localize X preset posts and author display with exact-match translations; posts/replies have independent editable language versions. Unknown edited originals remain verbatim without invented translations.
+- [x] Default Weather name follows system language on home/search/dock while custom names and raw editor records stay intact. All 68 tests passed; isolated browser verified three languages, Chinese post edit/save/reload and byte-identical tweets during language switching, app-name editor save preservation, screenshot inspected, latest build OK and no runtime errors.
 # Phone and Messages completion
 - [x] Add five fixed fictional calls and three independent multilingual SMS conversations once, skipping existing conversations and preserving edits/deletions; persist actual simulated outcomes only on completion and retain saved player SMS.
 - [x] Complete call newest-first filtering/details/avatar/search/duration and Messages full-history search, preview/unread/contact selection/details/editing/navigation; no KKT data migration or real telephone/SMS delivery.
