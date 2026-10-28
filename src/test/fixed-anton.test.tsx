@@ -100,6 +100,23 @@ describe("Fixed Anton interaction", () => {
     expect(deliverLiveMessage({ test: true })).toBeNull();
     expect(JSON.parse(localStorage.getItem("kkt-msgs-v1") ?? "[]")).toEqual(saved);
   });
+  it("shows Anton's contextual AI answer as a temporary message that never reaches storage", async () => {
+    const before = localStorage.getItem("kkt-msgs-v1");
+    const ui = render(<Kakao lang="en" onHome={() => {}} initialChat="anton" />);
+    await screen.findByText("first");
+    fireEvent.change(screen.getByRole("textbox", { name: "Message" }), { target: { value: "what are you doing?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+    expect(await screen.findByText("AI reply")).toBeInTheDocument();
+    expect(screen.getByText("what are you doing?")).toBeInTheDocument();
+    expect(allStorage()).not.toContain("AI reply");
+    expect(allStorage()).not.toContain("what are you doing?");
+    expect(localStorage.getItem("kkt-msgs-v1")).toBe(before);
+    fireEvent.click(screen.getByRole("button", { name: "‹" }));
+    fireEvent.click(screen.getByRole("button", { name: /찬영 Anton/ }));
+    expect(screen.queryByText("AI reply")).not.toBeInTheDocument();
+    expect(screen.getByText("next")).toBeInTheDocument();
+    ui.unmount();
+  });
   it("old Anton AI jobs cannot stop the existing fixed live progress", () => {
     localStorage.setItem("kkt-msgs-v1", "[]");
     localStorage.setItem(LIVE_STATE_KEY, '{"delivered":[],"nextAt":1}');
