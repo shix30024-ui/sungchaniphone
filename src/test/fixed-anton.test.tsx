@@ -18,9 +18,10 @@ describe("Fixed Anton interaction", () => {
     localStorage.setItem("kkt-contacts-v1", JSON.stringify(CONTACTS.map((c) => ({ ...c, unread: 0 }))));
     localStorage.setItem(LIVE_STATE_KEY, JSON.stringify({ delivered: LIVE_LINES.map((l) => l.id), nextAt: 9000 }));
   });
-  it("orders fixed lines and reveals consecutive lines only after the configured gate", () => {
-    expect(fixedFlow(saved, EMPTY_PROGRESS).visible.map((m) => m.id)).toEqual(["first", "gate"]);
+  it("shows all fixed lines in order even before any player reply or gate progress", () => {
+    expect(fixedFlow(saved, EMPTY_PROGRESS).visible.map((m) => m.id)).toEqual(["first", "gate", "next"]);
     expect(fixedFlow(saved, { answeredIds: ["gate"] }).visible.map((m) => m.id)).toEqual(["first", "gate", "next"]);
+    expect(fixedFlow(saved, EMPTY_PROGRESS).visible).toEqual([saved[2], saved[1], saved[0]]);
     expect(saved[0]?.id).toBe("next");
   });
   it("does not persist player text or enqueue it even through the legacy send boundary", () => {
@@ -44,7 +45,7 @@ describe("Fixed Anton interaction", () => {
     const messagesBefore = localStorage.getItem("kkt-msgs-v1");
     const ui = render(<Kakao lang="en" onHome={() => {}} initialChat="anton" />);
     await screen.findByText("gate");
-    expect(screen.queryByText("next")).not.toBeInTheDocument();
+    expect(screen.getByText("next")).toBeInTheDocument();
     fireEvent.change(screen.getByRole("textbox", { name: "Message" }), { target: { value: "My private reply" } });
     fireEvent.click(screen.getByRole("button", { name: "Send message" }));
     expect(screen.getByText("My private reply")).toBeInTheDocument();
@@ -65,6 +66,29 @@ describe("Fixed Anton interaction", () => {
     await screen.findByText("next");
     expect(screen.queryByText("My private reply")).not.toBeInTheDocument();
     expect(localStorage.getItem("notes-v1")).toBe('[{"id":"manual","body":"keep"}]');
+    expect(localStorage.getItem("kkt-msgs-v1")).toBe(messagesBefore);
+  });
+  it("keeps Anton accessible without overwriting a legacy contact list missing him", async () => {
+    const contacts = JSON.stringify(CONTACTS.filter((c) => c.id !== "anton"));
+    localStorage.setItem("kkt-contacts-v1", contacts);
+    render(<Kakao lang="en" onHome={() => {}} />);
+    fireEvent.click(await screen.findByRole("button", { name: /찬영 Anton/ }));
+    await screen.findByText("first");
+    expect(screen.getByText("gate")).toBeInTheDocument();
+    expect(screen.getByText("next")).toBeInTheDocument();
+    expect(localStorage.getItem("kkt-contacts-v1")).toBe(contacts);
+  });
+  it("sending a temporary reply never appends an undelivered story line", async () => {
+    localStorage.setItem(LIVE_STATE_KEY, '{"delivered":[],"nextAt":9000}');
+    const before = localStorage.getItem("kkt-msgs-v1");
+    render(<Kakao lang="en" onHome={() => {}} initialChat="anton" />);
+    await screen.findByText("first");
+    fireEvent.change(screen.getByRole("textbox", { name: "Message" }), { target: { value: "no story creation" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+    expect(screen.getByText("no story creation")).toBeInTheDocument();
+    expect(localStorage.getItem("kkt-msgs-v1")).toBe(before);
+    expect(JSON.parse(localStorage.getItem(LIVE_STATE_KEY) ?? "{}").delivered).toEqual([]);
+    expect(allStorage()).not.toContain("no story creation");
   });
   it("live delivery respects gates and cannot invent messages when complete, including test delivery", () => {
     expect(deliverLiveMessage()).toBeNull();

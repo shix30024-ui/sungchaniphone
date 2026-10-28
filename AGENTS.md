@@ -17,7 +17,7 @@
 - Keep ordered post images, tweet replies, calendar events and music collections in browser-safe dedicated utilities; captions/comments and unrelated records remain isolated during edits.
 - Reference music additions use an optional one-time marker on the existing library and stable IDs; append only missing tracks so edited or deleted additions never reseed.
 - Simulated Anton messages live in phone/live.ts: append-only with fixed ids and one timer in Phone, so saved chats are never rewritten and each message arrives once.
-- Phone owns the single foreground scheduler; Anton KKT excludes AI jobs and uses fixed-conversation for author-set gates, ID-only progress and React-only anchored player replies. Other channels retain source-linked AI jobs and cross-tab locks, keeping their behavior isolated.
+- Phone owns the single foreground scheduler; Anton KKT excludes AI jobs and uses fixed-conversation for full saved-thread display, ID-only gate progress and React-only anchored player replies. Gates never hide saved records and player sends never deliver story messages, so persistence and temporary interaction stay independent. Other channels retain source-linked AI jobs and cross-tab locks, keeping their behavior isolated.
 - AI prompts and gateway credentials remain behind server functions; send only source-bounded contact history and image-presence metadata, keeping all phone records in the existing browser store.
 - Visible lock/status clocks use a mount-initialized ticking device clock, separate from immutable story chronology and saved message dates.
 - Phone dialer favorites and simulated recent calls use separate versioned browser records; reuse existing contact identities and simulated Call view without microphone/audio access.
