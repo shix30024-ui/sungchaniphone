@@ -17,7 +17,7 @@ export default function Music({ lang, onHome }: AppProps) {
     } catch { /* Unreadable saved music must never be replaced. */ }
   }, []);
   const [tab, setTab] = useState<"songs" | "playlists" | "favorites">("songs");
-  const [library, setLibrary] = useState(true);
+  const [library, setLibrary] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [songDraft, setSongDraft] = useState<Song | null>(null);
   const [playlistDraft, setPlaylistDraft] = useState<Playlist | null>(null);
