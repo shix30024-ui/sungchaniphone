@@ -42,7 +42,7 @@ export function temporaryIncoming(reply: { ko: string; zh: string; en: string },
     id: `temporary-${uid()}`, contactId: "anton", sender: "them", type: "text",
     ko: reply.ko, zh: reply.zh, en: reply.en, date: after?.date ?? STORY_DATE,
     time: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
-    order: after?.order ?? 0, read: true, replyTo: after?.id, replyKind: "ai",
+    order: after?.order ?? 0, read: true, ...(after ? { replyTo: after.id } : {}), replyKind: "ai",
   } };
 }
 
