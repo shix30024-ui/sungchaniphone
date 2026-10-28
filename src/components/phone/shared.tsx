@@ -7,6 +7,7 @@ import { SHARED_KEYS, authoredValue, shouldShareExistingContent } from "./shared
 import { installShared, isSharedOwner, setSharedOwner, setSharedSave, sharedRevision, advanceSharedRevision, clearSharedRevision } from "./shared-state";
 import { listPhotoImages, putKv } from "./photo-db";
 import { type Lang, tr } from "./i18n";
+import { boundedSharingStep, mapSharedMedia } from "./shared-upload";
 
 const EVENT = "phone-sharing-status";
 let status = "";
@@ -15,6 +16,7 @@ let pending: Record<string, unknown> = {};
 let sending = false;
 let lastError = false;
 let conflicted = false;
+const uploadedMedia = new Map<string, string>();
 const notify = (message: string, error = false) => { status = message; lastError = error; window.dispatchEvent(new Event(EVENT)); };
 function subscribe(fn: () => void) { window.addEventListener(EVENT, fn); return () => window.removeEventListener(EVENT, fn); }
 export function useSharingStatus() { return useSyncExternalStore(subscribe, () => status, () => ""); }
@@ -34,8 +36,11 @@ async function publishMedia(value: unknown, images: Record<string, string>): Pro
   const blob = await (await fetch(data)).blob();
   const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await blob.arrayBuffer()))).map((v) => v.toString(16).padStart(2, "0")).join("");
   const path = `${hash}.${blob.type === "image/png" ? "png" : "jpg"}`;
-  const { error } = await supabase.storage.from("phone-shared-media").upload(path, blob, { contentType: blob.type, upsert: false });
+  const previous = uploadedMedia.get(path);
+  if (previous) return previous;
+  const { error } = await boundedSharingStep(supabase.storage.from("phone-shared-media").upload(path, blob, { contentType: blob.type, upsert: false }));
   if (error && !/already exists|duplicate/i.test(error.message)) throw error;
+  uploadedMedia.set(path, `shared-media:${path}`);
   return `shared-media:${path}`;
 }
 
@@ -45,10 +50,18 @@ async function flush() {
   sending = true; busy = true; notify("Saving for everyone… / 모두에게 저장 중… / 正在保存给所有人…");
   const patch = pending; pending = {};
   try {
-    const published = await publishMedia(patch, await listPhotoImages());
-    const version = await saveSharedPhone({ data: { patch: published, revision: sharedRevision() } });
+    const images = await boundedSharingStep(listPhotoImages());
+    const mapped = await mapSharedMedia(patch, (source) => publishMedia(source, images).then(String), (done, total) => {
+      if (total) notify(`Uploading photos ${done}/${total} / 사진 업로드 ${done}/${total} / 正在上传照片 ${done}/${total}`);
+    });
+    const published = await publishMedia(mapped, images);
+    notify("Saving chats and posts… / 대화 저장 중… / 正在保存聊天和帖子…");
+    const version = await boundedSharingStep(saveSharedPhone({ data: { patch: published, revision: sharedRevision() } }));
+    if (typeof version !== "number" || version < 1) throw new Error("Save was not confirmed / 尚未确认保存成功");
     // The owner's original local records stay untouched, including their idb references.
     advanceSharedRevision(version);
+    const { data: saved, error: readError } = await boundedSharingStep(supabase.from("phone_shared_content").select("revision").eq("id", "main").maybeSingle());
+    if (readError || !saved || saved.revision < version) throw new Error("Shared content could not be verified / 共享内容尚未核实，请重试");
     notify("Saved for everyone / 모두에게 저장됨 / 已保存，所有人可见");
   } catch (e) {
     pending = { ...patch, ...pending };
