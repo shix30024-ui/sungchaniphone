@@ -20,3 +20,8 @@ export function lockNotifications(existing: Msg[]): Msg[] {
   const fixedIds = new Set(ANTON_LOCK_NOTIFICATIONS.map((message) => message.id));
   return [...ANTON_LOCK_NOTIFICATIONS, ...existing.filter((message) => !fixedIds.has(message.id))];
 }
+/** Display-only: shows the fixed lock notices at the end of Anton's chat without saving them. */
+export function withLockNotices(thread: Msg[]): Msg[] {
+  const ids = new Set(thread.map((m) => m.id));
+  return [...thread, ...ANTON_LOCK_NOTIFICATIONS.filter((m) => !ids.has(m.id))];
+}

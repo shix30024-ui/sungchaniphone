@@ -20,3 +20,10 @@ describe("Fixed Anton lock notifications", () => {
     expect(lockNotifications(lockNotifications(existing))).toHaveLength(3);
   });
 });
+import { withLockNotices as wln } from "@/components/phone/lock-notifications";
+import { test as t2, expect as e2 } from "vitest";
+t2("Anton chat shows both lock notices last, once", () => {
+  const base = [{ id: "a1" } as any];
+  const out = wln(wln(base));
+  e2(out.map((m) => m.id)).toEqual(["a1", "anton-lock-cello-v1", "anton-lock-busy-v1"]);
+});
