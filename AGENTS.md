@@ -18,6 +18,7 @@
 - Keep ordered post images, tweet replies, calendar events and music collections in browser-safe dedicated utilities; captions/comments and unrelated records remain isolated during edits.
 - Reference music additions use an optional one-time marker on the existing library and stable IDs; append only missing tracks so edited or deleted additions never reseed.
 - Simulated Anton messages live in phone/live.ts: append-only with fixed ids and one timer in Phone, so saved chats are never rewritten and each message arrives once.
+- Fixed lock-only notices live separately from chat records; displaying or dismissing them never writes story storage.
 - Edit UI requires the authenticated phone owner role plus the local editing unlock flag; server-side RLS and role validation exclusively authorize shared writes. Player interactions remain isolated from authored shared saves.
 - Shared media stays private and manifest-referenced; preserve local IndexedDB originals, deduplicate uploads, bound concurrency/waiting, and read back the saved revision before reporting success to prevent stalled or unverified sharing.
 - Recovery bundles must whitelist fictional phone keys and exclude authentication sessions and owner flags; never export arbitrary browser storage.

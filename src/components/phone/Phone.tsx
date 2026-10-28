@@ -38,6 +38,7 @@ import { SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from "./syst
 import { weatherAppName } from "./x-language";
 import { useSharedPhone, useSharingStatus } from "./shared";
 import { isSharedOwner, queueSharedSave } from "./shared-state";
+import { lockNotifications } from "./lock-notifications";
 
 const notifText = (m: Msg, lang: Lang) => (m.type === "image" ? tr(lang, { en: "Sent a photo", ko: "사진을 보냈습니다", zh: "发送了一张照片" }) : messageText(m, lang));
 
@@ -49,7 +50,7 @@ function NotifCard({ m, lang, preview, onClick }: { m: Msg; lang: Lang; preview:
       <span className="notif-avatar"><KktAvatar src={contact?.avatar ?? ""} size={38} /><img src={KKT_ICON} alt="" className="notif-app-badge" /></span>
       <div className="min-w-0 flex-1">
         <div className="flex justify-between gap-2 text-[13px]"><b className="truncate">{contact?.name ?? KKT_NAME}</b><span className="notif-time">{m.time}</span></div>
-        <div className="text-[14px] truncate">{preview ? notifText(m, lang) : tr(lang, { en: "New message", ko: "새 메시지", zh: "新消息" })}</div>
+        <div className="text-[14px] whitespace-normal break-words">{preview ? notifText(m, lang) : tr(lang, { en: "New message", ko: "새 메시지", zh: "新消息" })}</div>
       </div>
       {preview && m.type === "image" && m.image && <PhotoImg src={m.image} alt="" className="w-9 h-9 rounded-md object-cover" />}
     </Button>
@@ -355,7 +356,7 @@ export default function Phone() {
       <StatusBar now={now} inApp={Boolean(open || editing)} />
       {sharingStatus && isSharedOwner() && <div className="absolute bottom-8 inset-x-3 z-50 bg-background text-foreground border border-border rounded-md p-2 text-xs" role="status">{sharingStatus}</div>}
       {locked ? (
-        <Lock lang={lang} setLang={setLang} now={now} notifs={lockNotifs} preview={live.preview} onNotif={() => setPendingChat(true)}
+        <Lock lang={lang} setLang={setLang} now={now} notifs={lockNotifications(lockNotifs)} preview={live.preview} onNotif={() => setPendingChat(true)}
           onUnlock={() => { setLocked(false); try { sessionStorage.setItem("phone-unlocked", "1"); } catch { /* ignore */ } if (pendingChat) { setPendingChat(false); openChat(); } }} />
       ) : (
         <div className="absolute inset-0 flex flex-col pt-14 home-in" aria-hidden={Boolean(open)} inert={Boolean(open)}>
