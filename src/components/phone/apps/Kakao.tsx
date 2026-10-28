@@ -69,7 +69,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState("");
   const [emoji, setEmoji] = useState(false);
-  useEffect(() => { setTemporary([]); setCompose(""); setEmoji(false); }, [openId, editing, call]);
+  useEffect(() => { setTemporary([]); setCompose(""); setEmoji(false); setAntonTyping(false); }, [openId, editing, call]);
   const [listTab, setListTab] = useState<"friends" | "chats" | "openchat" | "shopping" | "more">("chats");
   const [listMenu, setListMenu] = useState(false);
   const [gifts, setGifts] = usePersist<{ id: string; title: string }[]>("phone-kkt-gifts-v1", []);
@@ -160,10 +160,22 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const thread = open.id === "anton" ? withTemporaryReplies(fixedThread, temporary) : fixedThread;
   const send = (text: string, image?: string) => {
     if (open.id !== "anton") { sendChat("kkt", open.id, text, lang, Date.now(), image); return; }
-    setTemporary((old) => [...old, temporaryReply(text, lang, fixedThread.at(-1), image)]);
+    const playerMsg = temporaryReply(text, lang, fixedThread.at(-1), image);
+    setTemporary((old) => [...old, playerMsg]);
     // Player content stays in React state; only an existing gate ID may advance.
     // Sending never creates or delivers an Anton story message.
     if (flow.waiting) acknowledgeFixedNode(flow.waiting.id);
+    // Anton answers the player's actual words via AI, but the answer is temporary
+    // too: it lives only in this page's state and is never written to storage.
+    const source = playerMsg.message;
+    const context = buildReplyContext([...fixedThread, ...temporary.map((r) => r.message), source], source);
+    setAntonTyping(true);
+    void generatePhoneReply({ data: context })
+      .then((result) => {
+        if (result.ok) setTemporary((old) => old.some((r) => r.message.id === source.id) ? [...old, temporaryIncoming(result.reply, source)] : old);
+      })
+      .catch(() => { /* No fabricated fallback: the fixed storyline stays untouched. */ })
+      .finally(() => setAntonTyping(false));
   };
   if (call) return <Call contact={open} lang={lang} incoming={call === "incoming"} onClose={() => setCall(null)} />;
   const startEdit = () => { editIds.current = new Set(savedThread.map((m) => m.id)); setDraft(savedThread.map((m) => ({ ...m }))); setDraftC({ ...open }); setEditing(true); };
