@@ -13,6 +13,7 @@
 - Persist fictional phone edits through the existing browser-local store; load only after mount to keep server and browser markup consistent.
 - Centralize story dates and message sorting in browser-safe data utilities so all app views use the same chronology.
 - Use one Phone-owned system language for every app; legacy chats gain translations only by exact original-text match, preserving explicit edits.
+- X uses optional per-language text through x-language; built-in translations apply only to unchanged seed IDs/text, and language switching never persists or rewrites originals. Default Weather naming is display-only, preserving customized app names.
 - Extend existing versioned local-store records with optional fields; snapshot phone storage once before changes and never reseed or reset saved data.
 - Keep ordered post images, tweet replies, calendar events and music collections in browser-safe dedicated utilities; captions/comments and unrelated records remain isolated during edits.
 - Reference music additions use an optional one-time marker on the existing library and stable IDs; append only missing tracks so edited or deleted additions never reseed.
