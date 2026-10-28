@@ -1,8 +1,8 @@
 # Phone story completion
 # Fixed Anton interaction and reference songs
-- [ ] Preserve Anton records/progress; separate session-only player replies and optional author-set reply gates; block Anton KKT AI jobs.
-- [ ] Add the twelve screenshot tracks without overwriting existing music.
-- [ ] Test ordering, reply send/exit/reload, progress, saved-edit preservation and unrelated conversations/apps/languages.
+- [x] Preserve Anton records/progress; separate session-only player replies and optional author-set reply gates; block Anton KKT AI jobs without deleting old jobs or lines. Tone screenshots retained as future-authoring guidance, not used to rewrite saved lines.
+- [x] Add the twelve screenshot tracks once without overwriting existing music or supplying unlicensed audio.
+- [x] All 51 tests passed; isolated browser verified fixed order/gate/send/display, no stored player text, exit/reopen/reload, preserved author records, twelve added tracks and saved song. No browser errors; user preview storage untouched.
 # Widgets, camera, contacts and Notes language
 - [x] Add tappable current-date calendar and photo widgets without replacing saved icons; no invented weather data.
 - [x] Add permission-based camera, capture/review/retake/save to Photos and mobile capture fallback; stop streams on exit or hidden page.

@@ -34,7 +34,6 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const [openId, setOpenId] = useState<string | null>(initialChat ?? null);
   const [temporary, setTemporary] = useState<TemporaryReply[]>([]);
   const [progress] = usePersist<FixedProgress>(ANTON_PROGRESS_KEY, EMPTY_PROGRESS);
-  useEffect(() => { setTemporary([]); setCompose(""); setEmoji(false); }, [openId]);
   useEffect(() => { setActiveChat(openId); return () => setActiveChat(null); }, [openId]);
   // Opening a chat marks it read. Works on the saved copy directly so defaults never overwrite saved edits.
   useEffect(() => {
@@ -68,6 +67,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState("");
   const [emoji, setEmoji] = useState(false);
+  useEffect(() => { setTemporary([]); setCompose(""); setEmoji(false); }, [openId, editing, call]);
   const [listTab, setListTab] = useState<"friends" | "chats" | "openchat" | "shopping" | "more">("chats");
   const [listMenu, setListMenu] = useState(false);
   const [gifts, setGifts] = usePersist<{ id: string; title: string }[]>("phone-kkt-gifts-v1", []);
