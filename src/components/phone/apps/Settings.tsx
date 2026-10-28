@@ -9,7 +9,6 @@ import { STORY_DATE } from "../chronology";
 import { usePersist } from "../store";
 import { SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from "../system";
 import { lockOwner, unlockOwner, useOwner } from "../owner";
-import { exportPhoneData, inspectRecovery, readBackup, restoreFromBackup } from "../recovery";
 
 type Page = "main" | "language" | "notifications" | "about" | "general" | "owner";
 export default function Settings({ lang, setLang, live, setLive, apps, onHome, onLock, onEditApps }: {
@@ -74,15 +73,6 @@ export default function Settings({ lang, setLang, live, setLive, apps, onHome, o
             <Button variant="ghost" className="settings-row" onClick={() => { if (unlockOwner(code)) setPage("main"); else setCodeError(true); }}><span className="settings-row-name text-primary">{L("Unlock editing", "편집 잠금 해제", "解锁编辑")}</span></Button>
           </>}
         </div>
-        {owner && <>
-          <div className="settings-section-title">{L("KKT / IG data check", "KKT / IG 데이터 확인", "KKT / IG 数据检查")}</div>
-          <div className="settings-group">
-            {inspectRecovery().map((r) => <div key={r.key} className="settings-row"><span className="settings-row-name">{r.key}</span><span className="settings-row-value">{L("now", "현재", "当前")} {r.current} · {L("backup", "백업", "备份")} {r.backup}{r.differs ? " ⚠" : ""}</span></div>)}
-            {!readBackup() && <div className="settings-row"><span className="settings-row-name">{L("No backup on this device", "이 기기에 백업 없음", "此设备没有备份")}</span></div>}
-            <Button variant="ghost" className="settings-row" onClick={exportPhoneData}><span className="settings-row-name text-primary">{L("Download all data", "모든 데이터 다운로드", "下载全部数据")}</span></Button>
-            {readBackup() && <Button variant="ghost" className="settings-row" onClick={() => { if (window.confirm(L("Restore KKT/IG from backup? Current data is copied aside first.", "백업에서 KKT/IG를 복원할까요? 현재 데이터는 먼저 따로 보관됩니다.", "从备份恢复 KKT/IG？当前数据会先另存一份。"))) { restoreFromBackup(); window.location.reload(); } }}><span className="settings-row-name text-primary">{L("Restore KKT/IG from backup", "백업에서 KKT/IG 복원", "从备份恢复 KKT/IG")}</span></Button>}
-          </div>
-        </>}
       </> : <>
         <div className="settings-group">
           {[ [L("Name", "이름", "名称"), "Sungchan’s iPhone"], [L("Date", "날짜", "日期"), STORY_DATE], [L("Apps", "앱", "应用"), String(apps.length)], [L("Passcode", "암호", "密码"), PASSCODE] ].map(([name, value]) => <div key={name} className="settings-row"><span className="settings-row-name">{name}</span><span className="settings-row-value">{value}</span></div>)}
