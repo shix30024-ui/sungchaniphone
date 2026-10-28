@@ -15,8 +15,9 @@ describe("Owner mode", () => {
   it("unlocks only with the exact owner code and locks again", () => {
     expect(readOwner()).toBe(false);
     expect(unlockOwner("0000")).toBe(false);
+    expect(unlockOwner("1026")).toBe(false);
     expect(readOwner()).toBe(false);
-    expect(unlockOwner(OWNER_CODE)).toBe(true);
+    expect(unlockOwner("0321")).toBe(true);
     expect(readOwner()).toBe(true);
     expect(localStorage.getItem(OWNER_KEY)).toBe('{"unlocked":true}');
     lockOwner();
