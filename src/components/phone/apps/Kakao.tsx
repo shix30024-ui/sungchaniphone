@@ -3,6 +3,8 @@ import { setActiveChat } from "../live";
 import { type AppProps, tr } from "../i18n";
 import { CONTACTS, MESSAGES, type Contact, type Msg, type MsgType } from "../story";
 import { uid, usePersist } from "../store";
+import { PhotoImg } from "../photo-db";
+import { moveKktImagesToDb } from "../kkt-images";
 import { BackBtn, EditBar, Field, ImageField, KktAvatar, TopBar, resolveImg } from "../ui";
 import { useOwner } from "../owner";
 import { Button } from "@/components/ui/button";
@@ -41,6 +43,8 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const setTemporary = (updater: (old: TemporaryReply[]) => TemporaryReply[]) =>
     setTemporaryState((old) => { const next = updater(old); writeTemporaryReplies("anton", next); return next; });
   const [progress] = usePersist<FixedProgress>(ANTON_PROGRESS_KEY, EMPTY_PROGRESS);
+  // One-time: move large chat images out of the small browser storage. Text and order are untouched.
+  useEffect(() => { void moveKktImagesToDb(); }, []);
   useEffect(() => { setActiveChat(openId); return () => setActiveChat(null); }, [openId]);
   // Opening a chat marks it read. Works on the saved copy directly so defaults never overwrite saved edits.
   useEffect(() => {
@@ -253,7 +257,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
               </div>
               {open.id === "anton" && m.sender === "them" && (m.type === "text" || m.type === "image") && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={m.requiresReply ?? false} onChange={(e) => upd(m.id, { requiresReply: e.target.checked })} />{tr(lang, { en: "Wait for player reply", ko: "플레이어 답장 기다리기", zh: "等待玩家回复" })}</label>}
               {m.type === "image" ? (
-                <ImageField label={tr(lang, { en: "Choose image", ko: "이미지 선택", zh: "选择图片" })} value={m.image} onChange={(v) => upd(m.id, { image: v })} />
+                <ImageField label={tr(lang, { en: "Choose image", ko: "이미지 선택", zh: "选择图片" })} value={m.image} large onChange={(v) => upd(m.id, { image: v })} />
               ) : null}
               {m.type !== "date" && (
                 <>
@@ -301,7 +305,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
             const prev = thread[i - 1];
             const head = !mine && (!prev || prev.sender !== "them" || prev.date !== m.date || prev.type === "system");
             const content = m.type === "image"
-              ? <div className={`kkt-image-bubble ${mine ? "kkt-image-mine" : ""}`}><img src={resolveImg(m.image)} alt="" className="kkt-img" loading="lazy" />{(m.originalText || m[lang]) && <p className="text-sm whitespace-pre-wrap">{text}</p>}</div>
+              ? <div className={`kkt-image-bubble ${mine ? "kkt-image-mine" : ""}`}><PhotoImg src={m.image} alt="" className="kkt-img" loading="lazy" />{(m.originalText || m[lang]) && <p className="text-sm whitespace-pre-wrap">{text}</p>}</div>
               : <div className={mine ? "kkt-bubble-me" : "kkt-bubble-them"}>{text}</div>;
             parts.push(
               <div key={m.id} className={`kkt-message-row flex gap-2 ${mine ? "justify-end" : ""}`}>

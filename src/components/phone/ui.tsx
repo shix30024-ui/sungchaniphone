@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { fileToDataUrl } from "./store";
 import { IMG } from "./story";
+import { PhotoImg, putPhotoImage } from "./photo-db";
 import { Button } from "@/components/ui/button";
 
 export const resolveImg = (s?: string) => (s ? (s.startsWith("img:") ? IMG[s.slice(4)] ?? "" : s) : "");
@@ -19,17 +20,16 @@ export const BackBtn = ({ onClick, label = "‹" }: { onClick: () => void; label
   <Button variant="ghost" size="icon" onClick={onClick} className="text-2xl leading-none">{label}</Button>
 );
 
-export function ImageField({ value, onChange, label }: { value?: string | undefined; onChange: (v: string) => void; label: string }) {
-  const src = resolveImg(value);
+export function ImageField({ value, onChange, label, large }: { value?: string | undefined; onChange: (v: string) => void; label: string; large?: boolean }) {
   return (
     <div className="flex items-center gap-2">
-      {src ? <img src={src} alt="" className="w-12 h-12 rounded-md object-cover" /> : <div className="w-12 h-12 rounded-md bg-muted" />}
+      {value ? <PhotoImg src={value} alt="" className="w-12 h-12 rounded-md object-cover" /> : <div className="w-12 h-12 rounded-md bg-muted" />}
       <label className="edit-chip cursor-pointer">
         {label}
         <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
           const input = e.currentTarget;
           const f = input.files?.[0];
-          try { if (f) onChange(await fileToDataUrl(f)); }
+          try { if (f) { const data = await fileToDataUrl(f); onChange(large ? await putPhotoImage(data) : data); } }
           catch { alert("Could not open image / 이미지를 열 수 없습니다 / 无法打开图片"); }
           finally { input.value = ""; }
         }} />
