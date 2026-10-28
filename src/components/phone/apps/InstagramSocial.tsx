@@ -10,12 +10,14 @@ import { confirmDelete, label } from "../labels";
 import { ImageField, KktAvatar, resolveImg, TopBar, EditBar } from "../ui";
 import { SELF_ID, dmAccount, type SocialAccount } from "../social";
 import { postImages } from "../media";
+import { useOwner } from "../owner";
 
 type Story = { id: string; user: string; image: string; text: string; date: string; authorId?: string };
 export const STORIES_KEY = "ig-stories-v1";
 const SEEN_KEY = "ig-story-seen-v1";
 
 export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: (Post & { authorId?: string })[]; profile: Profile; accounts: SocialAccount[]; lang: Lang; onProfile: (id: string) => void }) {
+  const owner = useOwner();
   const [stored, setStored] = usePersist<Story[] | null>(STORIES_KEY, null);
   const [friendStored, setFriendStored] = usePersist<Story[] | null>("ig-friend-stories-v1", null);
   // Derive a small gallery from existing posts, never altering or copying over the posts themselves.
@@ -42,7 +44,7 @@ export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: 
     </div><EditBar save={label(lang, "save")} cancel={label(lang, "cancel")} onCancel={() => setDraft(null)} onSave={() => { saveStory(draft); setDraft(null); }} /></div>;
   return <>
     <div className="ig-stories">
-      <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Add story", ko: "스토리 추가", zh: "新增快拍" })} onClick={() => setDraft({ id: uid(), user: profile.username, image: "", text: "", date: STORY_DATE })}><Plus /></Button>
+      {owner && <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Add story", ko: "스토리 추가", zh: "新增快拍" })} onClick={() => setDraft({ id: uid(), user: profile.username, image: "", text: "", date: STORY_DATE })}><Plus /></Button>}
       {stories.map((s, i) => <Button variant="ghost" key={s.id} className="ig-story-item" onClick={() => setIndex(i)} aria-label={`${tr(lang, { en: "Story", ko: "스토리", zh: "快拍" })} ${i + 1}`}><img src={resolveImg(s.image)} className={`ig-story-avatar ${seen.includes(s.id) ? "ig-story-seen" : ""}`} alt="" /><span>{s.user}</span></Button>)}
     </div>
     {active && <div className="ig-overlay ig-story-view">
@@ -50,7 +52,7 @@ export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: 
       <div className="flex justify-between items-center px-3"><Button variant="ghost" className="text-sm" onClick={() => { const authorId = active.authorId ?? (active.user === profile.username ? SELF_ID : accounts.find((a) => a.username === active.user)?.id); if (authorId) { setIndex(null); onProfile(authorId); } }}>{active.user} · {active.date}</Button><Button variant="ghost" size="icon" aria-label={label(lang, "cancel")} onClick={() => setIndex(null)}><X /></Button></div>
       <img src={resolveImg(active.image)} className="ig-story-media" alt="" />
       <p className="text-center p-4 whitespace-pre-wrap">{active.text}</p>
-      <div className="flex justify-between px-4 pb-5"><Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Previous story", ko: "이전 스토리", zh: "上一条快拍" })} disabled={index === 0} onClick={() => setIndex((index ?? 0) - 1)}><ChevronLeft /></Button><Button variant="ghost" onClick={() => setDraft({ ...active })}>{label(lang, "edit")}</Button><Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Next story", ko: "다음 스토리", zh: "下一条快拍" })} onClick={() => setIndex((index ?? 0) < stories.length - 1 ? (index ?? 0) + 1 : null)}><ChevronRight /></Button></div>
+      <div className="flex justify-between px-4 pb-5"><Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Previous story", ko: "이전 스토리", zh: "上一条快拍" })} disabled={index === 0} onClick={() => setIndex((index ?? 0) - 1)}><ChevronLeft /></Button>{owner && <Button variant="ghost" onClick={() => setDraft({ ...active })}>{label(lang, "edit")}</Button>}<Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Next story", ko: "다음 스토리", zh: "下一条快拍" })} onClick={() => setIndex((index ?? 0) < stories.length - 1 ? (index ?? 0) + 1 : null)}><ChevronRight /></Button></div>
     </div>}
   </>;
 }
