@@ -22,6 +22,7 @@
 - Visible lock/status clocks use a mount-initialized ticking device clock, separate from immutable story chronology and saved message dates.
 - Phone dialer favorites and simulated recent calls use separate versioned browser records; reuse existing contact identities and simulated Call view without microphone/audio access.
 - Instagram Stories and DMs use separate versioned keys; feed and profile share existing posts by ID, so captions, comments and KKT records remain isolated.
+- Resolve Instagram DM identities from the same social-account IDs supplied to Feed and profiles, never KKT contacts, so profile edits update every Instagram avatar without rewriting conversations.
 - Store added fictional Instagram accounts/posts separately from legacy owner records and merge read-only by author ID; author profile, Feed and detail use the same record, so upgrades never reseed owner captions or comments.
 - Local reply intents and prior-statement matching live in reply-context; use only history up to the source message, so future queued messages cannot leak into an earlier reply.
 - Use functional persistence updates for async message and social interactions; parse failures must prevent writes rather than replace saved content with defaults.
