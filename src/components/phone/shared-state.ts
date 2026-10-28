@@ -7,6 +7,11 @@ let revision = 0;
 let shared: Record<string, unknown> = {};
 const overlays = new Map<string, unknown>();
 let onSave: ((key: string, value: unknown) => void) | undefined;
+let localInteraction = false;
+export function withLocalInteraction(action: () => void) {
+  const previous = localInteraction; localInteraction = true;
+  try { action(); } finally { localInteraction = previous; }
+}
 export const isSharedOwner = () => owner;
 export const sharedRevision = () => revision;
 export function advanceSharedRevision(value: number) { revision = value; }
@@ -30,5 +35,5 @@ export function sharedWrite(key: string, value: unknown): boolean {
   return true;
 }
 export function queueSharedSave(key: string, value: unknown) {
-  if (owner && SHARED_KEYS.has(key)) onSave?.(key, value);
+  if (owner && !localInteraction && SHARED_KEYS.has(key)) onSave?.(key, value);
 }
