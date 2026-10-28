@@ -1,10 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { authoredValue, validateSharedPatch } from "@/components/phone/shared-policy";
+import { authoredValue, validateSharedPatch, shouldShareExistingContent } from "@/components/phone/shared-policy";
 import { installShared, setSharedOwner, sharedRead, sharedWrite, setSharedSave, queueSharedSave, withLocalInteraction } from "@/components/phone/shared-state";
 import { readOwner, unlockOwner } from "@/components/phone/owner";
 
 describe("Shared fictional phone content", () => {
   beforeEach(() => { localStorage.clear(); setSharedOwner(false); installShared({}, 1); });
+  it("automatically shares the signed-in owner's saved story on first setup", () => {
+    expect(shouldShareExistingContent(true, false, ["kkt-msgs-v1", "ig-posts-v1", "photos-v1"])).toBe(true);
+    expect(shouldShareExistingContent(false, false, ["kkt-msgs-v1"])).toBe(false);
+    expect(shouldShareExistingContent(true, true, ["kkt-msgs-v1"])).toBe(false);
+    expect(shouldShareExistingContent(true, false, ["phone-apps-v2"])).toBe(false);
+  });
   it("lets a new visitor read the owner's changed chats and posts without importing", () => {
     installShared({ "kkt-msgs-v1": [{ id: "edited", zh: "我改好的消息", order: 7, time: "20:26" }], "ig-posts-v1": [{ id: "post", caption: "我改好的帖子" }] }, 2);
     expect(sharedRead("kkt-msgs-v1").value).toEqual([{ id: "edited", zh: "我改好的消息", order: 7, time: "20:26" }]);

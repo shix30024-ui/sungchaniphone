@@ -10,7 +10,7 @@
 <!-- LOVABLE:END -->
 
 - Keep phone app views inside the existing Phone shell, dispatched by stable app ID, so icon edits cannot change app identity or replace the home screen.
-- Keep original browser-local authored records intact; layer public shared content after mount with session-local visitor overlays, and auto-save owner changes through authenticated role-checked server functions with revision conflict checks.
+- Preserve original local records; use session-local visitor overlays and role-checked shared saves with revision checks. Bootstrap an empty manifest only from a signed-in owner's existing chat/post/photo records, snapshotting first; never overwrite a manifest with another device's defaults.
 - Centralize story dates and message sorting in browser-safe data utilities so all app views use the same chronology.
 - Use one Phone-owned system language for every app; legacy chats gain translations only by exact original-text match, preserving explicit edits.
 - X uses optional per-language text through x-language; built-in translations apply only to unchanged seed IDs/text, and language switching never persists or rewrites originals. Default Weather naming is display-only, preserving customized app names.

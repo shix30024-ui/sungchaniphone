@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { saveSharedPhone } from "@/lib/phone-sharing.functions";
 import { Button } from "@/components/ui/button";
-import { SHARED_KEYS, authoredValue } from "./shared-policy";
+import { SHARED_KEYS, authoredValue, shouldShareExistingContent } from "./shared-policy";
 import { installShared, isSharedOwner, setSharedOwner, setSharedSave, sharedRevision, advanceSharedRevision, clearSharedRevision } from "./shared-state";
 import { listPhotoImages, putKv } from "./photo-db";
 import { type Lang, tr } from "./i18n";
@@ -70,6 +70,7 @@ export function useSharedPhone() {
   useEffect(() => {
     let live = true;
     let refreshing = false;
+    let attemptedInitialShare = false;
     const refresh = async () => {
       if (refreshing || sending || (isSharedOwner() && Object.keys(pending).length)) return;
       refreshing = true;
@@ -82,6 +83,10 @@ export function useSharedPhone() {
       const { data, error } = await supabase.from("phone_shared_content").select("payload,revision").eq("id", "main").maybeSingle();
       if (!live) return;
       if (error) { notify("Shared content unavailable; saved local content is unchanged. / 共享读取失败，原内容未改动", true); return; }
+      if (!attemptedInitialShare && shouldShareExistingContent(role === true, !!data, Object.keys(localStorage))) {
+        attemptedInitialShare = true;
+        await shareExistingContent();
+      }
       if (data && data.revision !== sharedRevision()) {
         const resolve = async (value: unknown): Promise<unknown> => {
           if (Array.isArray(value)) return Promise.all(value.map(resolve));
