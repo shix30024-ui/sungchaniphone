@@ -1,4 +1,7 @@
 # Phone story completion
+# Anton replies and Instagram language
+- [ ] Diagnose and restore Anton automatic replies, improve contextual variety, and verify real send/follow-up plus temporary persistence.
+- [ ] Make Instagram post captions follow system language without rewriting originals; verify translations and preservation.
 # Shared authored phone content
 - [x] Screenshot confirmed saving-in-progress, not success; added bounded/deduplicated photo uploads, progress and revision readback. Eleven tests pass and build OK; actual edited-content sharing remains blocked on execution in the user's original browser (independent public read still empty).
 - [x] Add public shared authored reads, authenticated owner saves, referenced media, original local-data preservation and isolated visitor interactions; tests pass and login UI verified without runtime errors.
