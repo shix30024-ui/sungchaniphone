@@ -57,7 +57,7 @@ export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: 
   </>;
 }
 
-export function InstagramDM({ accounts, lang, onClose }: { accounts: SocialAccount[]; lang: Lang; onClose: () => void }) {
+export function InstagramDM({ accounts, lang, onClose, initialContactId }: { accounts: SocialAccount[]; lang: Lang; onClose: () => void; initialContactId?: string }) {
   const owner = useOwner();
   const [msgs, setMsgs] = usePersist<Msg[]>(DM_KEY, []);
   // Add this fictional follower's opening DM once, without replacing any saved conversations.
@@ -75,9 +75,10 @@ export function InstagramDM({ accounts, lang, onClose }: { accounts: SocialAccou
   const contacts = accounts;
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Msg | null>(null);
-  const [open, setOpen] = useState<string | null>(null);
+  const [open, setOpen] = useState<string | null>(initialContactId ?? null);
   const [text, setText] = useState("");
   const scroll = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (initialContactId && accounts.some((a) => a.id === initialContactId)) setOpen(initialContactId); }, [initialContactId, accounts]);
   const contact = open ? dmAccount(accounts, open) : undefined;
   const typing = queue.some((q) => !q.failed && q.channel === "ig" && q.contactId === open);
   const thread = msgs.filter((m) => m.contactId === open);
