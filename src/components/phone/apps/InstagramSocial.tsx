@@ -60,17 +60,27 @@ export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: 
 export function InstagramDM({ accounts, lang, onClose, initialContactId }: { accounts: SocialAccount[]; lang: Lang; onClose: () => void; initialContactId?: string }) {
   const owner = useOwner();
   const [msgs, setMsgs] = usePersist<Msg[]>(DM_KEY, []);
-  // Add this fictional follower's opening DM once, without replacing any saved conversations.
+  // Yuna's messages are a fixed story thread. Merge by ID so player replies and edits survive.
   useEffect(() => {
-    if (msgs.some((m) => m.contactId === "yuna")) return;
-    setMsgs((current) => current.some((m) => m.contactId === "yuna") ? current : [...current, {
-      id: "ig-yuna-first-dm-20261028", contactId: "yuna", sender: "them", type: "text",
-      ko: "안녕하세요 선배님! 사진 분위기가 너무 좋아서 팔로우했어요 :) 예전부터 팬이었어요",
-      zh: "学长你好！我很喜欢你照片的氛围，所以关注你了 :) 其实我之前就是你的粉丝。",
-      en: "Hi, sunbaenim! I really like the mood of your photos, so I followed you :) I have been a fan for a while.",
-      date: "2026-10-28", time: "19:42", order: Date.now(), read: false,
-    }]);
-  }, [msgs, setMsgs]);
+    const fixed: Msg[] = [
+      { id: "ig-yuna-hello-20261028", contactId: "yuna", sender: "them", type: "text", ko: "성찬 선배 안녕하세요!", zh: "成灿学长你好！", en: "Hello, Sungchan sunbaenim!", date: "2026-10-28", time: "19:38", order: 1, read: true },
+      { id: "ig-yuna-reply-1-20261028", contactId: "yuna", sender: "me", type: "text", ko: "안녕하세요", zh: "你好", en: "Hello", date: "2026-10-28", time: "19:39", order: 2, read: true },
+      { id: "ig-yuna-reply-2-20261028", contactId: "yuna", sender: "me", type: "text", ko: "아 후배구나", zh: "啊，是学妹啊", en: "Oh, you're my junior", date: "2026-10-28", time: "19:40", order: 3, read: true },
+      { id: "ig-yuna-confession-20261028", contactId: "yuna", sender: "them", type: "text", ko: "선배 좋아한 지 오래됐어요~", zh: "喜欢学长好久了～", en: "I've liked you for a long time, sunbaenim~", date: "2026-10-28", time: "19:42", order: 4, read: true },
+      { id: "ig-yuna-day2-20261029", contactId: "yuna", sender: "them", type: "text", ko: "선배 오늘 수업 잘 끝났어요? 저는 방금 끝났어요ㅎㅎ", zh: "学长今天课程顺利结束了吗？我刚刚下课ㅎㅎ", en: "Did your classes go well today, sunbaenim? I just finished mineㅎㅎ", date: "2026-10-29", time: "18:16", order: 5, read: true },
+      { id: "ig-yuna-day3-20261030", contactId: "yuna", sender: "them", type: "text", ko: "오늘 학교에서 선배 본 것 같은데 인사할까 하다가 못 했어요ㅋㅋ", zh: "今天好像在学校看到学长了，本来想打招呼，结果没敢ㅋㅋ", en: "I think I saw you at school today. I wanted to say hi but got shyㅋㅋ", date: "2026-10-30", time: "20:04", order: 6, read: true },
+      { id: "ig-yuna-day4-20261031", contactId: "yuna", sender: "them", type: "text", ko: "주말에도 학교에 계세요? 과제 때문에 도서관 왔어요!", zh: "学长周末也在学校吗？我因为作业来图书馆了！", en: "Are you at school on weekends too? I'm at the library for an assignment!", date: "2026-10-31", time: "14:27", order: 7, read: true },
+      { id: "ig-yuna-day5-20261101", contactId: "yuna", sender: "them", type: "text", ko: "선배가 올린 사진 봤어요! 오늘 날씨랑 분위기가 잘 어울려요", zh: "看到学长发的照片了！和今天的天气、氛围很配。", en: "I saw the photo you posted! It matches today's weather and mood so well.", date: "2026-11-01", time: "17:51", order: 8, read: true },
+      { id: "ig-yuna-day6-20261102", contactId: "yuna", sender: "them", type: "text", ko: "혹시 이번 주에 학교 축구 경기 있어요? 선배 경기하는 거 보고 싶어요ㅎㅎ", zh: "这周学校有足球比赛吗？我想看看学长踢球ㅎㅎ", en: "Is there a university football match this week? I'd like to watch you playㅎㅎ", date: "2026-11-02", time: "19:33", order: 9, read: true },
+      { id: "ig-yuna-day7-20261103", contactId: "yuna", sender: "them", type: "text", ko: "오늘도 고생 많으셨어요 선배! 저녁 꼭 챙겨 드세요 :)", zh: "学长今天也辛苦了！记得好好吃晚饭 :)", en: "You worked hard today too, sunbaenim! Make sure you have dinner :)", date: "2026-11-03", time: "20:18", order: 10, read: true },
+      { id: "ig-yuna-day8-20261104", contactId: "yuna", sender: "them", type: "text", ko: "선배 요즘 바쁘신가 봐요. 답장 부담 갖지 마세요! 그냥 안부 전하고 싶었어요ㅎㅎ", zh: "学长最近好像很忙呢。不用有回复压力！只是想跟你问声好ㅎㅎ", en: "You seem busy lately, sunbaenim. No pressure to reply! I just wanted to say helloㅎㅎ", date: "2026-11-04", time: "21:06", order: 11, read: true },
+    ];
+    setMsgs((current) => {
+      const existing = new Set(current.map((m) => m.id));
+      const missing = fixed.filter((m) => !existing.has(m.id));
+      return missing.length ? [...current, ...missing] : current;
+    });
+  }, [setMsgs]);
   const [queue] = usePersist<PendingReply[]>(QUEUE_KEY, []);
   const contacts = accounts;
   const [search, setSearch] = useState("");
