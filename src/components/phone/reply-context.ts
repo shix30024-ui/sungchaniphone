@@ -186,6 +186,32 @@ function kktNaturalReply(thread: Msg[], source: Msg): Text {
     answer("이런 사진 좋아요. 뭔가 자연스러워서", "我喜欢这种照片，感觉很自然", "I like photos like this. They feel natural"),
   ]);
 
+  // Their relationship is already close: affectionate messages get a shy,
+  // reciprocal response, kept understated and conversational.
+  if (/보고 싶|想你|想见你|miss you|wish you were here/i.test(current)) return pick([
+    answer("저도요 ㅎㅎ 오늘 형 생각 좀 했어요", "我也是ㅎㅎ 今天有想起哥", "I miss you too haha. You crossed my mind today"),
+    answer("갑자기 그렇게 말하면 좀 부끄럽잖아요ㅋㅋ 저도 보고 싶어요", "突然这么说会让人有点不好意思啦ㅋㅋ 我也想你", "You can't just say that out of nowhere, it's embarrassing haha. I miss you too"),
+    answer("저도 보고 싶었는데 먼저 말해줘서 좋네요", "我也想你了，你先说出来还挺开心的", "I missed you too. Glad you said it first"),
+  ]);
+
+  if (/좋아해|사랑해|喜欢你|爱你|like you|love you/i.test(current)) return pick([
+    answer("…저도 형 좋아해요 ㅎㅎ", "……我也喜欢哥ㅎㅎ", "...I like you too haha"),
+    answer("그런 말 들으면 하루 종일 생각나는데요ㅋㅋ", "听到这种话，我会一整天都想着的ㅋㅋ", "If you say things like that, I'll be thinking about it all day haha"),
+    answer("저도요. 형한테는 괜히 더 솔직해지는 것 같아요", "我也是。好像在哥面前会不自觉地更坦率", "Me too. I feel like I end up being more honest with you"),
+  ]);
+
+  if (/뽀뽀|키스|안아|抱抱|亲亲|kiss|hug/i.test(current)) return pick([
+    answer("ㅋㅋㅋ 형 진짜… 나중에 만나서요", "哈哈哈哥真是的……等见面再说啦", "Haha, hyung, honestly… maybe when we meet"),
+    answer("말만 그렇게 하지 말고요ㅋㅋ", "别光嘴上说嘛ㅋㅋ", "Don't just say it haha"),
+    answer("갑자기 부끄럽게 왜 그래요 ㅎㅎ", "怎么突然说这种让人害羞的话ㅎㅎ", "Why are you making me shy all of a sudden haha"),
+  ]);
+
+  if (/보고 싶었어\\?|想我了吗|miss me\\?/i.test(current)) return pick([
+    answer("조금이 아니라 꽤요ㅋㅋ", "不是一点点，是挺想的ㅋㅋ", "More than a little haha"),
+    answer("티 안 냈는데 어떻게 알았어요ㅋㅋ", "我都没表现出来，哥怎么知道的ㅋㅋ", "I didn't even show it. How did you know? haha"),
+    answer("형은요? 저는 그랬어요 ㅎㅎ", "哥呢？我是有想的ㅎㅎ", "What about you? Because I did haha"),
+  ]);
+
   // React to the actual conversational move rather than always asking a question.
   if (/big riize|microscopic riize|라이즈|riize/i.test(current)) return pick([
     answer("ㅋㅋㅋㅋ 이 표현 누가 만든 거예요", "哈哈哈哈这说法是谁想出来的", "Hahaha, who came up with that phrase?"),
