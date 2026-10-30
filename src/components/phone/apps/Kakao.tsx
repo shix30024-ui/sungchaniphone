@@ -44,7 +44,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       for (const seed of CONTACTS) {
         const existing = byId.get(seed.id);
         if (!existing) byId.set(seed.id, seed);
-        else if (seed.id === "anton") byId.set(seed.id, { ...existing, name: seed.name, pinned: true });
+        // Existing contact edits are user-owned; never overwrite Anton's custom settings.
       }
       return [...byId.values()];
     });
@@ -55,8 +55,22 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       const kept = current.filter((message) => message.contactId !== "group-family" || (!/^m\\d+$/.test(message.id) && !familyIds.has(message.id)));
       const existingIds = new Set(kept.map((message) => message.id));
       const additions = MESSAGES.filter((message) => message.contactId !== "group-family" && !existingIds.has(message.id));
-      return [...kept, ...additions, ...familySeed];
-    });
+      const merged = [...kept, ...additions, ...familySeed];
+
+      // Deduplicate only identical messages in the individual parent chats.
+      // Different edits, wording, dates, times, and player-authored messages remain intact.
+      const seenParentMessages = new Set<string>();
+      return merged.filter((message) => {
+        if (message.contactId !== "mom" && message.contactId !== "dad") return true;
+        const signature = JSON.stringify([
+          message.contactId, message.date, message.time, message.sender,
+          message.type, message.ko, message.zh, message.en ?? "", message.image ?? "",
+        ]);
+        if (seenParentMessages.has(signature)) return false;
+        seenParentMessages.add(signature);
+        return true;
+      });
+    });;
   // Run once after persisted state has hydrated; the setters merge against the latest stored value.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
