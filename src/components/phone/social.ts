@@ -10,7 +10,7 @@ export const FRIEND_ACCOUNTS: SocialAccount[] = [
   { id: "minjae", username: "minjae_fc", name: "김민재", bio: "FC 공대 ⚽\n주말은 운동장에서", avatar: "img:football", followers: "1,204", following: "381", followingIds: [SELF_ID, "doyun"] },
   { id: "doyun", username: "doyun.p", name: "박도윤", bio: "마감 전 커피 한 잔\nSeoul", avatar: "img:cafe", followers: "573", following: "302", followingIds: [SELF_ID, "minjae"] },
   { id: "jiho", username: "jiho_l", name: "이지호", bio: "산책하면서 찍은 것들", avatar: "img:hanriver", followers: "649", following: "257", followingIds: [SELF_ID, "anton"] },
-  { id: "yuna", username: "yuna_Yuna", name: "김유나", bio: "", avatar: "https://images.unsplash.com/photo-1652564521843-0b4da636de85?auto=format&fit=crop&w=512&h=512&q=85", followers: "1,083", following: "486", followingIds: [SELF_ID], isPrivate: true },
+  { id: "yuna", username: "yuna_Yuna", name: "김유나", bio: "", avatar: "https://images.pexels.com/photos/26201109/pexels-photo-26201109/free-photo-of-white-maltese-dog.jpeg?auto=compress&cs=tinysrgb&w=512&h=512&fit=crop", followers: "1,083", following: "486", followingIds: [SELF_ID], isPrivate: true },
 ];
 export const FRIEND_POSTS: SocialPost[] = [
   { id: "friend-anton-practice-20261026", authorId: "anton", image: "img:practice", caption: "같은 네 마디만 한 시간째. 잠깐 쉬자", date: "2026-10-26", time: "18:40", likes: 83, comments: [{ id: "fc-a1", user: "jiho_l", text: "손목도 쉬어야 돼", date: "2026-10-26", time: "18:52" }] },
