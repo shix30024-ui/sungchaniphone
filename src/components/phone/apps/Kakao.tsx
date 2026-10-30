@@ -49,9 +49,13 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       return [...byId.values()];
     });
     setMsgs((current) => {
-      const existingIds = new Set(current.map((message) => message.id));
-      const additions = MESSAGES.filter((message) => !existingIds.has(message.id));
-      return additions.length ? [...current, ...additions] : current;
+      const familySeed = MESSAGES.filter((message) => message.contactId === "group-family");
+      const familyIds = new Set(familySeed.map((message) => message.id));
+      // Replace only the old built-in family-chat seed rows; keep player-authored/live rows.
+      const kept = current.filter((message) => message.contactId !== "group-family" || (!/^m\\d+$/.test(message.id) && !familyIds.has(message.id)));
+      const existingIds = new Set(kept.map((message) => message.id));
+      const additions = MESSAGES.filter((message) => message.contactId !== "group-family" && !existingIds.has(message.id));
+      return [...kept, ...additions, ...familySeed];
     });
   // Run once after persisted state has hydrated; the setters merge against the latest stored value.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -325,7 +329,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
           else {
             const mine = m.sender === "me";
             const prev = thread[i - 1];
-            const head = !mine && (!prev || prev.sender !== "them" || prev.date !== m.date || prev.type === "system");
+            const head = !mine && (!prev || prev.sender !== "them" || prev.date !== m.date || prev.type === "system" || (open.id === "group-family" && prev.speaker !== m.speaker));
             const content = m.type === "image"
               ? <div className={`kkt-image-bubble ${mine ? "kkt-image-mine" : ""}`}><PhotoImg src={m.image} alt="" className="kkt-img" loading="lazy" />{(m.originalText || m[lang]) && <p className="text-sm whitespace-pre-wrap">{text}</p>}</div>
               : <div className={mine ? "kkt-bubble-me" : "kkt-bubble-them"}>{text}</div>;
@@ -333,7 +337,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
               <div key={m.id} className={`kkt-message-row flex gap-2 ${mine ? "justify-end" : ""}`}>
                 {!mine && <div className="w-10 shrink-0">{head && <KktAvatar src={open.avatar} size={40} />}</div>}
                 <div className={`kkt-message-body flex flex-col ${mine ? "items-end" : "items-start"}`}>
-                  {head && <span className="text-[12px] mb-0.5 opacity-80">{open.name}</span>}
+                  {head && <span className="text-[12px] mb-0.5 opacity-80">{m.speaker === "mom" ? tr(lang, { en: "Mom", ko: "엄마", zh: "妈妈" }) : m.speaker === "dad" ? tr(lang, { en: "Dad", ko: "아빠", zh: "爸爸" }) : m.speaker === "brother" ? tr(lang, { en: "Older brother", ko: "형", zh: "哥哥" }) : open.name}</span>}
                   <div className={`flex items-end gap-1 ${mine ? "flex-row-reverse" : ""}`}>
                     {content}
                     <span className="kkt-message-time">{mine && m.originalText !== undefined && !m.read && <span className="kkt-read-count">1</span>}{fmt12(m.time, lang)}</span>
