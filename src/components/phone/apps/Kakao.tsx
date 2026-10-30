@@ -19,6 +19,7 @@ import { ANTON_PROGRESS_KEY, EMPTY_PROGRESS, fixedFlow, acknowledgeFixedNode, te
 import { withLockNotices } from "../lock-notifications";
 import { buildReplyContext } from "../ai-context";
 import { generatePhoneReply } from "@/lib/phone-reply.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 const TODAY = STORY_DATE;
 const sortMsgs = sortMessages<Msg>;
@@ -94,6 +95,9 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const scroll = useRef<HTMLDivElement>(null);
   const editIds = useRef(new Set<string>());
   const [antonTyping, setAntonTyping] = useState(false);
+  const replyFn = useServerFn(generatePhoneReply);
+  const [antonError, setAntonError] = useState<string | null>(null);
+  const antonRequests = useRef(0);
   const typing = antonTyping || (openId !== "anton" && queue.some((q) => !q.failed && q.channel === "kkt" && q.contactId === openId));
   // Auto-scroll only when opening a chat or when the player is already near
   // the bottom, so scrolling up to read history is never yanked back down.
@@ -177,7 +181,8 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const thread = open.id === "anton" ? withTemporaryReplies(fixedThread, temporary) : fixedThread;
   const send = (text: string, image?: string) => {
     if (open.id !== "anton") { sendChat("kkt", open.id, text, lang, Date.now(), image); return; }
-    const playerMsg = temporaryReply(text, lang, fixedThread.at(-1), image);
+    const visibleThread = withTemporaryReplies(fixedThread, readTemporaryReplies("anton"));
+    const playerMsg = temporaryReply(text, lang, visibleThread.at(-1), image);
     setTemporary((old) => [...old, playerMsg]);
     // Player content stays in React state; only an existing gate ID may advance.
     // Sending never creates or delivers an Anton story message.
@@ -185,14 +190,17 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
     // Anton answers the player's actual words via AI, but the answer is temporary
     // too: it lives only in this page's state and is never written to storage.
     const source = playerMsg.message;
-    const context = buildReplyContext([...fixedThread, ...temporary.map((r) => r.message), source], source);
+    const context = buildReplyContext([...visibleThread, source], source, true);
+    setAntonError(null);
+    antonRequests.current += 1;
     setAntonTyping(true);
-    void generatePhoneReply({ data: context })
+    void replyFn({ data: context })
       .then((result) => {
         if (result.ok) setTemporary((old) => old.some((r) => r.message.id === source.id) ? [...old, temporaryIncoming(result.reply, source)] : old);
+        else setAntonError(result.error);
       })
-      .catch(() => { /* No fabricated fallback: the fixed storyline stays untouched. */ })
-      .finally(() => setAntonTyping(false));
+      .catch(() => setAntonError(tr(lang, { en: "Could not receive a reply. Your message remains here until refresh.", ko: "답장을 받지 못했어요. 새로고침 전까지 메시지는 유지돼요.", zh: "暂时未收到回复；你的消息会保留到刷新页面。" })))
+      .finally(() => { antonRequests.current -= 1; setAntonTyping(antonRequests.current > 0); });
   };
   if (call) return <Call contact={open} lang={lang} incoming={call === "incoming"} onClose={() => setCall(null)} />;
   const startEdit = () => { editIds.current = new Set(savedThread.map((m) => m.id)); setDraft(savedThread.map((m) => ({ ...m }))); setDraftC({ ...open }); setEditing(true); };
@@ -324,6 +332,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
           return parts;
         })}
         {typing && <div className="flex gap-2 items-center py-2" role="status" aria-label={tr(lang, { en: "Typing", ko: "입력 중", zh: "正在输入" })}><KktAvatar src={open.avatar} size={28} /><span className="typing-dots"><i /><i /><i /></span></div>}
+        {open.id === "anton" && antonError && <p role="alert" className="px-3 py-2 text-sm text-destructive whitespace-pre-wrap break-words">{antonError}</p>}
       </div>
       {emoji && <div className="kkt-emoji-panel">{["😊", "ㅋㅋ", "❤️", "👍", "😭", "😂"].map((face) => <Button variant="ghost" key={face} onClick={() => { setCompose((text) => text + face); setEmoji(false); }}>{face}</Button>)}</div>}
       <form className="kkt-input" onSubmit={(event) => {

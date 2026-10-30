@@ -73,7 +73,8 @@ export function withTemporaryReplies(fixed: Msg[], temporary: TemporaryReply[]):
     while (inserted) {
       inserted = false;
       for (let i = pending.length - 1; i >= 0; i--) {
-        const r = pending[i]!;
+        const r = pending[i];
+        if (!r) continue;
         const at = result.findIndex((m) => m.id === r.afterId);
         if (at >= 0) { result.splice(at + 1, 0, r.message); pending.splice(i, 1); inserted = true; }
       }
