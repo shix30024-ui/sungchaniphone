@@ -286,6 +286,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
                 <select className="edit-select" value={m.type} onChange={(e) => upd(m.id, { type: e.target.value as MsgType })}>
                   <option value="text">{tr(lang, { en: "Text", ko: "텍스트", zh: "文字" })}</option>
                   <option value="image">{tr(lang, { en: "Image", ko: "이미지", zh: "图片" })}</option>
+                  <option value="music">{tr(lang, { en: "Music share", ko: "음악 공유", zh: "音乐分享" })}</option>
                   <option value="system">{tr(lang, { en: "System", ko: "시스템", zh: "系统提示" })}</option>
                   <option value="date">{tr(lang, { en: "Date divider", ko: "날짜 구분선", zh: "日期分隔线" })}</option>
                 </select>
@@ -342,6 +343,9 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
             parts.push(<div key={m.id + "d"} className="kkt-date"><span><CalendarDays size={12} />{koDate(m.date, lang)}</span></div>);
           }
           const text = messageText(m, lang);
+          const mine = m.sender === "me";
+          const prev = thread[i - 1];
+          const head = !mine && (!prev || prev.sender !== "them" || prev.date !== m.date || prev.type === "system" || (open.id === "group-family" && prev.speaker !== m.speaker));
           if (m.type === "date") { /* The date heading above already displays this divider. */ }
           else if (m.type === "system" && text.includes("통화")) parts.push(
             <div key={m.id} className="flex justify-center py-2">
@@ -371,9 +375,6 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
             </div>
           );
           else {
-            const mine = m.sender === "me";
-            const prev = thread[i - 1];
-            const head = !mine && (!prev || prev.sender !== "them" || prev.date !== m.date || prev.type === "system" || (open.id === "group-family" && prev.speaker !== m.speaker));
             const content = m.type === "image"
               ? <div className={`kkt-image-bubble ${mine ? "kkt-image-mine" : ""}`}><PhotoImg src={m.image} alt="" className="kkt-img" loading="lazy" />{(m.originalText || m[lang]) && <p className="text-sm whitespace-pre-wrap">{text}</p>}</div>
               : <div className={mine ? "kkt-bubble-me" : "kkt-bubble-them"}>{text}</div>;
