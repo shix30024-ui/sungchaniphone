@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { type AppProps, tr } from "../i18n";
 import { POSTS, PROFILE, type Post, type Profile } from "../story";
 import { uid, usePersist } from "../store";
@@ -30,6 +30,10 @@ export default function Instagram({ lang, onHome }: AppProps) {
   const [posts, setPosts] = usePersist<Post[]>("ig-posts-v1", POSTS);
   const [friendPosts, setFriendPosts] = usePersist<SocialPost[]>(FRIEND_POSTS_KEY, FRIEND_POSTS);
   const [accounts, setAccounts] = usePersist<SocialAccount[]>(ACCOUNTS_KEY, FRIEND_ACCOUNTS);
+  // Restore newly added fictional accounts into older saved lists without overwriting existing edits.
+  useEffect(() => {
+    setAccounts((current) => current.some((a) => a.id === "yuna") ? current : [...current, FRIEND_ACCOUNTS.find((a) => a.id === "yuna")!]);
+  }, [setAccounts]);
   const [profileId, setProfileId] = useState(SELF_ID);
   const [prof, setProf] = usePersist<Profile>("ig-profile-v1", PROFILE);
   const [openId, setOpenId] = useState<string | null>(null);
