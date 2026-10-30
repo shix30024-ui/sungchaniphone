@@ -33,7 +33,7 @@ export function sendChat(channel: "kkt" | "ig", contactId: string, text: string,
   const existing = readStored<Msg[]>(key, fallback);
   const msg: Msg = { id: uid(), contactId, sender: "me", type: image ? "image" : "text", image: image ?? "", ko: lang === "ko" ? text : "", zh: lang === "zh" ? text : "", en: lang === "en" ? text : "", originalText: text, date: STORY_DATE, time: nextMessageTime(existing), order: Math.max(0, ...existing.map((m) => m.order)) + 1, read: false, createdAt: new Date(now).toISOString() };
   updateStored<Msg[]>(key, fallback, (rows) => [...rows, msg]);
-  if (channel === "ig" || contactId === "anton") {
+  if ((channel === "ig" && contactId !== "yuna") || contactId === "anton") {
     updateStored<PendingReply[]>(QUEUE_KEY, [], (q) => [...q.filter((item) => !(item.channel === "ig" && item.failed)), { channel, contactId, sourceId: msg.id, dueAt: now + 2400 + Math.min(text.length * 20, 1600) }]);
   }
   return msg;
@@ -50,7 +50,8 @@ export async function tickReplies(now = Date.now(), activeKkt: string | null = n
 
 async function processReply(now: number, activeKkt: string | null, generate: Generator) {
   const queue = pendingReplies();
-  const item = queue.find((q) => !(q.channel === "kkt" && q.contactId === "anton") && !q.failed && q.dueAt <= now && !queue.some((prior) => prior !== q && prior.channel === q.channel && prior.contactId === q.contactId && prior.dueAt < q.dueAt && !prior.failed));
+  // Yuna never receives an automatic reply: her thread is a one-sided fixed story.
+  const item = queue.find((q) => !(q.channel === "ig" && q.contactId === "yuna") && ((q) => !(q.channel === "kkt" && q.contactId === "anton") && !q.failed && q.dueAt <= now && !queue.some((prior) => prior !== q && prior.channel === q.channel && prior.contactId === q.contactId && prior.dueAt < q.dueAt && !prior.failed));
   if (!item) return null;
   const key = item.channel === "kkt" ? MSGS_KEY : DM_KEY;
   const fallback = item.channel === "kkt" ? MESSAGES : [];
