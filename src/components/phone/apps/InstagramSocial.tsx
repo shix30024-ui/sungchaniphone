@@ -64,8 +64,6 @@ export function InstagramDM({ accounts, lang, onClose, initialContactId }: { acc
   useEffect(() => {
     const fixed: Msg[] = [
       { id: "ig-yuna-hello-20261028", contactId: "yuna", sender: "them", type: "text", ko: "성찬 선배 안녕하세요!", zh: "成灿学长你好！", en: "Hello, Sungchan sunbaenim!", date: "2026-10-28", time: "19:38", order: 1, read: true },
-      { id: "ig-yuna-reply-1-20261028", contactId: "yuna", sender: "me", type: "text", ko: "안녕하세요", zh: "你好", en: "Hello", date: "2026-10-28", time: "19:39", order: 2, read: true },
-      { id: "ig-yuna-reply-2-20261028", contactId: "yuna", sender: "me", type: "text", ko: "아 후배구나", zh: "啊，是学妹啊", en: "Oh, you're my junior", date: "2026-10-28", time: "19:40", order: 3, read: true },
       { id: "ig-yuna-confession-20261028", contactId: "yuna", sender: "them", type: "text", ko: "선배 좋아한 지 오래됐어요~", zh: "喜欢学长好久了～", en: "I've liked you for a long time, sunbaenim~", date: "2026-10-28", time: "19:42", order: 4, read: true },
       { id: "ig-yuna-day2-20261029", contactId: "yuna", sender: "them", type: "text", ko: "선배 오늘 수업 잘 끝났어요? 저는 방금 끝났어요ㅎㅎ", zh: "学长今天课程顺利结束了吗？我刚刚下课ㅎㅎ", en: "Did your classes go well today, sunbaenim? I just finished mineㅎㅎ", date: "2026-10-29", time: "18:16", order: 5, read: true },
       { id: "ig-yuna-day3-20261030", contactId: "yuna", sender: "them", type: "text", ko: "오늘 학교에서 선배 본 것 같은데 인사할까 하다가 못 했어요ㅋㅋ", zh: "今天好像在学校看到学长了，本来想打招呼，结果没敢ㅋㅋ", en: "I think I saw you at school today. I wanted to say hi but got shyㅋㅋ", date: "2026-10-30", time: "20:04", order: 6, read: true },
@@ -84,11 +82,40 @@ export function InstagramDM({ accounts, lang, onClose, initialContactId }: { acc
   const [open, setOpen] = useState<string | null>(initialContactId ?? null);
   const [text, setText] = useState("");
   const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const [scriptedTyping, setScriptedTyping] = useState(false);
+  const typingTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const scroll = useRef<HTMLDivElement>(null);
   useEffect(() => { if (initialContactId && accounts.some((a) => a.id === initialContactId)) setOpen(initialContactId); }, [initialContactId, accounts]);
   const contact = open ? dmAccount(accounts, open) : undefined;
   const typing = queue.some((q) => !q.failed && q.channel === "ig" && q.contactId === open);
   const thread = msgs.filter((m) => m.contactId === open);
+  const yunaReplyTexts = ["你好", "是学妹啊"];
+  const sentYunaReplies = thread.filter((m) => m.sender === "me" && yunaReplyTexts.includes(m.originalText ?? messageText(m, "zh")));
+  const visibleThread = open === "yuna"
+    ? thread.filter((m) => {
+        if (m.id === "ig-yuna-confession-20261028" || m.id === "ig-yuna-day2-20261029" || m.id === "ig-yuna-day3-20261030") return sentYunaReplies.length >= 2;
+        return true;
+      })
+    : thread;
+  const startYunaTyping = () => {
+    if (open !== "yuna" || scriptedTyping || typingTimer.current) return;
+    const next = yunaReplyTexts[sentYunaReplies.length];
+    if (!next) return;
+    setKeyboardOpen(true);
+    setScriptedTyping(true);
+    setText("");
+    let index = 0;
+    typingTimer.current = setInterval(() => {
+      index += 1;
+      setText(next.slice(0, index));
+      if (index >= next.length) {
+        if (typingTimer.current) clearInterval(typingTimer.current);
+        typingTimer.current = null;
+        setScriptedTyping(false);
+      }
+    }, 170);
+  };
+  useEffect(() => () => { if (typingTimer.current) clearInterval(typingTimer.current); }, []);
   useEffect(() => {
     if (!open) return;
     if (scroll.current) scroll.current.scrollTop = scroll.current.scrollHeight;
@@ -109,8 +136,8 @@ export function InstagramDM({ accounts, lang, onClose, initialContactId }: { acc
       const unread = msgs.filter((m) => m.contactId === c.id && m.sender === "them" && !m.read).length;
       return <Button key={c.id} variant="ghost" className="w-full h-auto justify-start py-2.5 px-4 gap-3 rounded-none" onClick={() => setOpen(c.id)}><span className="ig-dm-avatar"><KktAvatar src={c.avatar} /></span><span className="min-w-0 text-left flex-1"><span className={`block text-sm ${unread ? "font-bold" : "font-normal"}`}>{c.name}</span><span className={`block truncate text-xs ${unread ? "text-foreground font-semibold" : "text-muted-foreground"}`}>{latest ? `${messageText(latest, lang)} · ${latest.time}` : ""}</span></span>{unread > 0 ? <span className="ig-dm-dot" /> : <Camera size={20} className="text-muted-foreground" />}</Button>;
     })}</div> : <>
-      <div ref={scroll} className="flex-1 overflow-y-auto p-3 space-y-1.5">{thread.map((m) => <div key={m.id} className={`flex flex-col ${m.sender === "me" ? "items-end" : "items-start"}`}><div className="ig-dm-message-row">{m.sender === "them" && <span className="ig-dm-message-avatar"><KktAvatar src={contact.avatar} size={26} /></span>}<Button variant="ghost" className={`ig-dm-bubble ${m.sender === "me" ? "ig-dm-mine" : ""}`} aria-label={`${label(lang, "edit")} ${messageText(m, lang)}`} title={m.time} onClick={() => owner && setEditing({ ...m })}>{messageText(m, lang)}</Button></div></div>)}{thread.at(-1)?.sender === "me" && thread.at(-1)?.read !== false && <span className="block text-right text-[11px] text-muted-foreground">{tr(lang, { en: "Seen", ko: "읽음", zh: "已读" })}</span>}{typing && <span role="status" aria-label={tr(lang, { en: "Typing", ko: "입력 중", zh: "正在输入" })} className="typing-dots"><i /><i /><i /></span>}</div>
-      <form className="ig-dm-compose" onSubmit={(e) => { e.preventDefault(); if (!text.trim()) return; sendChat("ig", contact.id, text.trim(), lang); setText(""); setKeyboardOpen(false); }}><span className="ig-dm-cam"><Camera size={18} /></span><input aria-label={tr(lang, { en: "DM message", ko: "메시지 입력", zh: "输入私信" })} placeholder={tr(lang, { en: "Message...", ko: "메시지 보내기...", zh: "发消息…" })} value={text} onFocus={() => setKeyboardOpen(true)} onChange={(e) => setText(e.target.value)} /><Button variant="ghost" size="sm" className="ig-dm-send" disabled={!text.trim()} aria-label={tr(lang, { en: "Send DM", ko: "메시지 보내기", zh: "发送私信" })}>{tr(lang, { en: "Send", ko: "보내기", zh: "发送" })}</Button></form>
+      <div ref={scroll} className="flex-1 overflow-y-auto p-3 space-y-1.5">{visibleThread.map((m) => <div key={m.id} className={`flex flex-col ${m.sender === "me" ? "items-end" : "items-start"}`}><div className="ig-dm-message-row">{m.sender === "them" && <span className="ig-dm-message-avatar"><KktAvatar src={contact.avatar} size={26} /></span>}<Button variant="ghost" className={`ig-dm-bubble ${m.sender === "me" ? "ig-dm-mine" : ""}`} aria-label={`${label(lang, "edit")} ${messageText(m, lang)}`} title={m.time} onClick={() => owner && setEditing({ ...m })}>{messageText(m, lang)}</Button></div></div>)}{thread.at(-1)?.sender === "me" && thread.at(-1)?.read !== false && <span className="block text-right text-[11px] text-muted-foreground">{tr(lang, { en: "Seen", ko: "읽음", zh: "已读" })}</span>}{typing && <span role="status" aria-label={tr(lang, { en: "Typing", ko: "입력 중", zh: "正在输入" })} className="typing-dots"><i /><i /><i /></span>}</div>
+      <form className="ig-dm-compose" onSubmit={(e) => { e.preventDefault(); if (!text.trim()) return; sendChat("ig", contact.id, text.trim(), lang); setText(""); setKeyboardOpen(false); }}><span className="ig-dm-cam"><Camera size={18} /></span><input aria-label={tr(lang, { en: "DM message", ko: "메시지 입력", zh: "输入私信" })} placeholder={tr(lang, { en: "Message...", ko: "메시지 보내기...", zh: "发消息…" })} value={text} onFocus={() => { setKeyboardOpen(true); if (open === "yuna" && sentYunaReplies.length < 2 && !text) startYunaTyping(); }} onChange={(e) => setText(e.target.value)} /><Button variant="ghost" size="sm" className="ig-dm-send" disabled={!text.trim() || scriptedTyping} aria-label={tr(lang, { en: "Send DM", ko: "메시지 보내기", zh: "发送私信" })}>{tr(lang, { en: "Send", ko: "보내기", zh: "发送" })}</Button></form>
       {keyboardOpen && <div className="border-t bg-muted/80 px-2 py-3 space-y-2" aria-label={tr(lang, { en: "On-screen keyboard", ko: "화면 키보드", zh: "屏幕键盘" })}>
         {["qwertyuiop", "asdfghjkl", "zxcvbnm"].map((row, index) => <div className="flex justify-center gap-1" key={row}>{row.split("").map((key) => <button type="button" className="h-10 min-w-0 flex-1 rounded-md bg-card text-foreground shadow-sm text-sm font-medium active:bg-accent" key={key} onMouseDown={(e) => e.preventDefault()} onClick={() => setText((value) => value + key)}>{key}</button>)}{index === 2 && <button type="button" className="h-10 min-w-0 flex-1 rounded-md bg-secondary text-foreground shadow-sm text-sm font-medium active:bg-accent" onMouseDown={(e) => e.preventDefault()} onClick={() => setText((value) => value.slice(0, -1))}>⌫</button>}</div>)}
         <div className="ig-key-row"><button type="button" className="ig-key ig-key-wide" onClick={() => setText((value) => value + ",")}>,</button><button type="button" className="h-10 min-w-0 flex-[5] rounded-md bg-card text-foreground shadow-sm text-xs font-medium active:bg-accent" onClick={() => setText((value) => value + " ")}>{tr(lang, { en: "space", ko: "공백", zh: "空格" })}</button><button type="button" className="ig-key ig-key-wide" onClick={() => setText((value) => value + ".")}>.</button><button type="button" className="ig-key ig-key-wide" onClick={() => setKeyboardOpen(false)}>⌄</button></div>
