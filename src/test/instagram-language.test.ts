@@ -10,10 +10,14 @@ describe("Instagram system language without original changes", () => {
       expect(instagramCaption(post, "zh")).not.toBe(post.caption);
       expect(instagramCaption(post, "en")).not.toBe(post.caption);
     }
-    expect(instagramCaption(POSTS[0], "zh")).toBe("最后一个秋季学期 🍂");
+    const first = POSTS[0];
+    if (!first) throw new Error("Missing seed");
+    expect(instagramCaption(first, "zh")).toBe("最后一个秋季学期 🍂");
   });
   it("preserves manual originals, images and comments and edits only the current language", () => {
-    const post = { ...POSTS[0], caption: "我自己改的帖子" };
+    const first = POSTS[0];
+    if (!first) throw new Error("Missing seed");
+    const post = { ...first, caption: "我自己改的帖子" };
     const before = JSON.stringify(post);
     expect(instagramCaption(post, "en")).toBe("我自己改的帖子");
     const edited = editInstagramCaption(post, "en", "My own post");

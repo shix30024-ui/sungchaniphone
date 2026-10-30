@@ -6,8 +6,10 @@ const msg = (id: string, order: number, text: string, contactId = "anton"): Msg 
 describe("Context and player clock", () => {
   it("keeps Anton visible order and prior session answers despite earlier device times", () => {
     const rows = [msg("fixed", 90, "哥今天在忙什么？"), msg("player", 90, "我吃了番茄面"), { ...msg("ai", 90, "听起来不错"), sender: "them" as const }, msg("followup", 90, "我刚才吃的是什么？")];
-    rows[0].time = "23:59";
+    const first = rows[0];
     const source = rows[3];
+    if (!first || !source) throw new Error("Missing fixture");
+    first.time = "23:59";
     const before = JSON.stringify(rows);
     expect(buildReplyContext(rows, source, true).history.map((m) => m.text)).toEqual(["哥今天在忙什么？", "我吃了番茄面", "听起来不错", "我刚才吃的是什么？"]);
     expect(JSON.stringify(rows)).toBe(before);
