@@ -22,6 +22,7 @@ export default function Instagram({ lang, onHome }: AppProps) {
   const [activity, setActivity] = useState(false);
   const [newFollowerUnread, setNewFollowerUnread] = useState(true);
   const [followedYuna, setFollowedYuna] = usePersist<boolean>("ig-follow-yuna-v1", false);
+  const [showYunaDmPrompt, setShowYunaDmPrompt] = useState(false);
   const [query, setQuery] = useState("");
   const [comment, setComment] = useState("");
   const [commentsOpen, setCommentsOpen] = useState(false);
@@ -75,6 +76,20 @@ export default function Instagram({ lang, onHome }: AppProps) {
     <Button variant="ghost" size="icon" className="ml-auto" aria-label={tr(lang, { en: "Save post", ko: "게시물 저장", zh: "收藏帖子" })} aria-pressed={!!p.saved} onClick={() => updatePost(p.id, (current) => ({ ...current, saved: !current.saved }))}><Bookmark fill={p.saved ? "currentColor" : "none"} /></Button>
   </div>;
   const share = shareId && <div className="ig-share-sheet" role="dialog"><div className="sheet"><div className="flex justify-between items-center"><b>{tr(lang, { en: "Share", ko: "공유", zh: "分享" })}</b><Button variant="ghost" size="icon" aria-label={C} onClick={() => setShareId(null)}><ArrowLeft /></Button></div>{["anton", "minjae", "doyun"].map((id) => <Button key={id} variant="ghost" className="w-full justify-start" onClick={() => { const shared = sorted.find((p) => p.id === shareId); if (shared) { sendChat("ig", id, `${account(shared.authorId).username} · ${instagramCaption(shared, lang)}`, lang); setShareId(null); setDm(true); } }}>{id === "anton" ? "Anton" : id === "minjae" ? "김민재" : "박도윤"}</Button>)}</div></div>;
+  if (showYunaDmPrompt) return <div className="app-page bg-background">
+    <TopBar title={tr(lang, { en: "Following", ko: "팔로우", zh: "已回关" })} left={<BackBtn onClick={() => setShowYunaDmPrompt(false)} />} />
+    <div className="flex-1 flex items-center justify-center p-6">
+      <div className="w-full max-w-sm rounded-2xl border bg-card p-5 text-center space-y-3">
+        <img src={resolveImg(yunaFollower?.avatar ?? "img:campus")} alt="" className="w-16 h-16 rounded-full object-cover mx-auto" />
+        <b className="block">{tr(lang, { en: "You followed Yuna back", ko: "유나님을 맞팔로우했습니다", zh: "你已回关 Yuna" })}</b>
+        <p className="text-sm text-muted-foreground">{tr(lang, { en: "Yuna has sent you a message.", ko: "유나님이 메시지를 보냈어요.", zh: "Yuna 给你发来了一条私信。" })}</p>
+        <div className="flex gap-2 pt-2">
+          <Button variant="outline" className="flex-1" onClick={() => setShowYunaDmPrompt(false)}>{tr(lang, { en: "Later", ko: "나중에", zh: "稍后再看" })}</Button>
+          <Button className="flex-1" onClick={() => { setShowYunaDmPrompt(false); setDm(true); }}>{tr(lang, { en: "View message", ko: "메시지 보기", zh: "查看私信" })}</Button>
+        </div>
+      </div>
+    </div>
+  </div>;
   if (dm) return <InstagramDM accounts={accounts} lang={lang} onClose={() => setDm(false)} initialContactId="yuna" />;
 
   const yunaFollower = accounts.find((a) => a.id === "yuna") ?? FRIEND_ACCOUNTS.find((a) => a.id === "yuna");
@@ -88,7 +103,7 @@ export default function Instagram({ lang, onHome }: AppProps) {
         {follower && <Button variant="ghost" className="w-full h-auto justify-start gap-3 py-3 px-2" onClick={() => { setActivity(false); showProfile(follower.id); }}>
           <img src={resolveImg(follower.avatar)} alt="" className="w-11 h-11 rounded-full object-cover" />
           <span className="flex-1 text-left text-sm"><b>{follower.username}</b> {tr(lang, { en: "started following you.", ko: "님이 회원님을 팔로우하기 시작했습니다.", zh: "开始关注了你。" })}<span className="block text-xs text-muted-foreground mt-1">{tr(lang, { en: "Yesterday", ko: "어제", zh: "昨天" })}</span></span>
-          <span role="button" className="text-xs text-primary font-semibold" onClick={(e) => { e.stopPropagation(); followYuna(); setActivity(false); setDm(true); }}>{followedYuna ? tr(lang, { en: "Following", ko: "팔로잉", zh: "已关注" }) : tr(lang, { en: "Follow", ko: "팔로우", zh: "关注" })}</span>
+          <span role="button" className="text-xs text-primary font-semibold" onClick={(e) => { e.stopPropagation(); followYuna(); setActivity(false); setShowYunaDmPrompt(true); }}>{followedYuna ? tr(lang, { en: "Following", ko: "팔로잉", zh: "已关注" }) : tr(lang, { en: "Follow", ko: "팔로우", zh: "关注" })}</span>
         </Button>}
       </div>
     </div>;
@@ -216,7 +231,7 @@ export default function Instagram({ lang, onHome }: AppProps) {
         </div>
         <div className="px-4 py-2 text-sm whitespace-pre-line"><b>{selectedProfile.name}</b>{"\n"}{selectedProfile.bio}</div>
         {owner && <div className="px-4 pb-3"><button className="w-full py-1.5 rounded-lg bg-muted text-sm font-semibold" onClick={() => setProfDraft({ ...selectedProfile })}>{profileId === SELF_ID ? tr(lang, { en: "Edit profile", ko: "프로필 편집", zh: "编辑主页" }) : tr(lang, { en: "Manage profile", ko: "프로필 관리", zh: "管理主页" })}</button></div>}
-        {profileId === "yuna" && <div className="px-4 pb-3"><Button className="w-full" variant={followedYuna ? "secondary" : "default"} onClick={() => { if (!followedYuna) followYuna(); setDm(true); }}>{followedYuna ? tr(lang, { en: "Following", ko: "팔로잉", zh: "已关注" }) : tr(lang, { en: "Follow back", ko: "맞팔로우", zh: "回关" })}</Button></div>}
+        {profileId === "yuna" && <div className="px-4 pb-3"><Button className="w-full" variant={followedYuna ? "secondary" : "default"} onClick={() => { if (!followedYuna) { followYuna(); setShowYunaDmPrompt(true); } else setDm(true); }}>{followedYuna ? tr(lang, { en: "Following", ko: "팔로잉", zh: "已关注" }) : tr(lang, { en: "Follow back", ko: "맞팔로우", zh: "回关" })}</Button></div>}
         <div className="grid grid-cols-3 gap-0.5">
           {profilePosts.map((p) => (
             <button key={p.id} onClick={() => { setOpenId(p.id); setImageIndex(0); }} className="aspect-square bg-muted">
