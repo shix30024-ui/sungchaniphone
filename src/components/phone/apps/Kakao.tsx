@@ -17,9 +17,7 @@ import { confirmDelete, label, localeFor } from "../labels";
 import { completeTranslations } from "../translations";
 import { ANTON_PROGRESS_KEY, EMPTY_PROGRESS, fixedFlow, acknowledgeFixedNode, temporaryReply, temporaryIncoming, withTemporaryReplies, readTemporaryReplies, writeTemporaryReplies, type FixedProgress, type TemporaryReply } from "../fixed-conversation";
 import { withLockNotices } from "../lock-notifications";
-import { buildReplyContext } from "../ai-context";
-import { generatePhoneReply } from "@/lib/phone-reply.functions";
-import { useServerFn } from "@tanstack/react-start";
+import { replyFromContext } from "../reply-context";
 
 const TODAY = STORY_DATE;
 const sortMsgs = sortMessages<Msg>;
@@ -95,9 +93,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const scroll = useRef<HTMLDivElement>(null);
   const editIds = useRef(new Set<string>());
   const [antonTyping, setAntonTyping] = useState(false);
-  const replyFn = useServerFn(generatePhoneReply);
   const [antonError, setAntonError] = useState<string | null>(null);
-  const antonRequests = useRef(0);
   const typing = antonTyping || (openId !== "anton" && queue.some((q) => !q.failed && q.channel === "kkt" && q.contactId === openId));
   // Auto-scroll only when opening a chat or when the player is already near
   // the bottom, so scrolling up to read history is never yanked back down.
@@ -187,20 +183,16 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
     // Player content stays in React state; only an existing gate ID may advance.
     // Sending never creates or delivers an Anton story message.
     if (flow.waiting) acknowledgeFixedNode(flow.waiting.id);
-    // Anton answers the player's actual words via AI, but the answer is temporary
-    // too: it lives only in this page's state and is never written to storage.
+    // Anton answers locally using the same free, rule-based story engine as Instagram.
+    // Both messages remain temporary in page memory and never call the paid API.
     const source = playerMsg.message;
-    const context = buildReplyContext([...visibleThread, source], source, true);
     setAntonError(null);
-    antonRequests.current += 1;
     setAntonTyping(true);
-    void replyFn({ data: context })
-      .then((result) => {
-        if (result.ok) setTemporary((old) => old.some((r) => r.message.id === source.id) ? [...old, temporaryIncoming(result.reply, source)] : old);
-        else setAntonError(result.error);
-      })
-      .catch(() => setAntonError(tr(lang, { en: "Could not receive a reply. Your message remains here until refresh.", ko: "답장을 받지 못했어요. 새로고침 전까지 메시지는 유지돼요.", zh: "暂时未收到回复；你的消息会保留到刷新页面。" })))
-      .finally(() => { antonRequests.current -= 1; setAntonTyping(antonRequests.current > 0); });
+    const reply = replyFromContext([...visibleThread, source], source);
+    window.setTimeout(() => {
+      setTemporary((old) => old.some((r) => r.message.id === source.id) ? [...old, temporaryIncoming(reply, source)] : old);
+      setAntonTyping(false);
+    }, 1100 + Math.min(text.length * 18, 900));
   };
   if (call) return <Call contact={open} lang={lang} incoming={call === "incoming"} onClose={() => setCall(null)} />;
   const startEdit = () => { editIds.current = new Set(savedThread.map((m) => m.id)); setDraft(savedThread.map((m) => ({ ...m }))); setDraftC({ ...open }); setEditing(true); };
