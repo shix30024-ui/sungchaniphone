@@ -1,26 +1,49 @@
-import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
+import type { ReplyContext } from "@/components/phone/ai-context";
 
-const input = z.object({
-  contactId: z.string().min(1).max(80),
-  date: z.string().max(10),
-  time: z.string().max(5),
-  history: z.array(z.object({
-    sender: z.enum(["me", "them"]),
-    date: z.string().max(10),
-    time: z.string().max(5),
-    text: z.string().max(4000),
-    image: z.boolean(),
-  })).min(1).max(60),
-});
+const ENDPOINT = "https://ajuumztqrqgnvbnpzhac.supabase.co/functions/v1/anton-chat";
 
-export const generatePhoneReply = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => input.parse(data))
-  .handler(async ({ data }) => {
-    const sharedSecret = process.env["ANTON_CHAT_SHARED_SECRET"];
-    if (!sharedSecret) {
-      return { ok: false as const, status: 503, error: "AI reply connection is not configured." };
+type Reply = { ko: string; zh: string; en: string };
+export type ReplyResult =
+  | { ok: true; reply: Reply }
+  | { ok: false; status: number; error: string };
+
+export async function generatePhoneReply(context: ReplyContext): Promise<ReplyResult> {
+  try {
+    const response = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ context }),
+      signal: AbortSignal.timeout(45000),
+    });
+
+    const payload = await response.json().catch(() => ({})) as {
+      reply?: Partial<Reply>;
+      error?: string;
+    };
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        status: response.status,
+        error: (payload.error || "AI reply service is temporarily unavailable.").slice(0, 500),
+      };
     }
-    const { generateReply } = await import("./phone-reply.server");
-    return generateReply(sharedSecret, data);
-  });
+
+    const reply = payload.reply;
+    if (
+      !reply ||
+      typeof reply.ko !== "string" || !reply.ko.trim() ||
+      typeof reply.zh !== "string" || !reply.zh.trim() ||
+      typeof reply.en !== "string" || !reply.en.trim()
+    ) {
+      return { ok: false, status: 502, error: "AI reply service returned an invalid response." };
+    }
+
+    return {
+      ok: true,
+      reply: { ko: reply.ko.trim(), zh: reply.zh.trim(), en: reply.en.trim() },
+    };
+  } catch {
+    return { ok: false, status: 503, error: "AI reply service could not be reached. Your message is saved." };
+  }
+}
