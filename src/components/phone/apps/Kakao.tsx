@@ -47,10 +47,14 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   useEffect(() => { void moveKktImagesToDb(); }, []);
   // Add Seoyun to existing saves without replacing the player's edited contacts or messages.
   useEffect(() => {
-    setContacts((current) => current.some((c) => c.id === "seoyun") ? current : [...current, CONTACTS.find((c) => c.id === "seoyun")!]);
+    setContacts((current) => {
+      const ids = new Set(current.map((c) => c.id));
+      const additions = CONTACTS.filter((c) => !ids.has(c.id));
+      return [...current.map((c) => c.id === "anton" ? { ...c, name: "守护天使🪽", pinned: true } : c), ...additions];
+    });
     setMsgs((current) => {
       const known = new Set(current.map((m) => m.id));
-      const additions = MESSAGES.filter((m) => m.contactId === "seoyun" && !known.has(m.id));
+      const additions = MESSAGES.filter((m) => ["seoyun", "mom", "dad", "brother", "group-family"].includes(m.contactId) && !known.has(m.id));
       return additions.length ? [...current, ...additions] : current;
     });
   }, [setContacts, setMsgs]);
@@ -124,16 +128,17 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   // This is a read-only view fallback, never a reseed of edited contact data.
   const defaultAnton = CONTACTS.find((c) => c.id === "anton");
   const defaultSeoyun = CONTACTS.find((c) => c.id === "seoyun");
+  const familyFallbacks = CONTACTS.filter((c) => ["mom", "dad", "brother", "group-family"].includes(c.id));
   const displayContacts = [
-    ...contacts,
-    ...[defaultAnton, defaultSeoyun].filter((fallback): fallback is Contact => !!fallback && !contacts.some((c) => c.id === fallback.id)),
+    ...contacts.map((c) => c.id === "anton" ? { ...c, name: "守护天使🪽", pinned: true } : c),
+    ...[defaultAnton, defaultSeoyun, ...familyFallbacks].filter((fallback): fallback is Contact => !!fallback && !contacts.some((c) => c.id === fallback.id)),
   ];
   const open = displayContacts.find((c) => c.id === openId);
 
   if (!open) {
     const rows = displayContacts
       .map((c) => ({ c, last: sortMsgs(msgs.filter((m) => m.contactId === c.id && m.type !== "date")).at(-1) }))
-      .sort((a, b) => ((b.last?.date ?? "") + (b.last?.time ?? "")).localeCompare((a.last?.date ?? "") + (a.last?.time ?? "")));
+      .sort((a, b) => Number(!!b.c.pinned) - Number(!!a.c.pinned) || ((b.last?.date ?? "") + (b.last?.time ?? "")).localeCompare((a.last?.date ?? "") + (a.last?.time ?? "")));
     return (
       <div className="app-page bg-background">
         <TopBar className="kkt-list-top" title={listTab === "chats" ? L.chats : listTab === "friends" ? tr(lang, { en: "Friends", ko: "친구", zh: "好友" }) : listTab === "openchat" ? tr(lang, { en: "OpenChat", ko: "오픈채팅", zh: "开放聊天" }) : listTab === "shopping" ? tr(lang, { en: "Shopping", ko: "쇼핑", zh: "购物" }) : tr(lang, { en: "More", ko: "더보기", zh: "更多" })}
