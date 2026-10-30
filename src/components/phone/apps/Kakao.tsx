@@ -17,7 +17,7 @@ import { confirmDelete, label, localeFor } from "../labels";
 import { completeTranslations } from "../translations";
 import { ANTON_PROGRESS_KEY, EMPTY_PROGRESS, fixedFlow, acknowledgeFixedNode, temporaryReply, temporaryIncoming, withTemporaryReplies, readTemporaryReplies, writeTemporaryReplies, type FixedProgress, type TemporaryReply } from "../fixed-conversation";
 import { withLockNotices } from "../lock-notifications";
-import { replyFromContext } from "../reply-context";
+import { replyFromKktContext } from "../reply-context";
 
 const TODAY = STORY_DATE;
 const sortMsgs = sortMessages<Msg>;
@@ -188,7 +188,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
     const source = playerMsg.message;
     setAntonError(null);
     setAntonTyping(true);
-    const reply = replyFromContext([...visibleThread, source], source);
+    const reply = replyFromKktContext([...visibleThread, source], source);
     window.setTimeout(() => {
       setTemporary((old) => old.some((r) => r.message.id === source.id) ? [...old, temporaryIncoming(reply, source)] : old);
       setAntonTyping(false);
