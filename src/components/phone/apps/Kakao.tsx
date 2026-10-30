@@ -57,9 +57,26 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       const antonSeedIds = new Set(
         MESSAGES.filter((message) => message.contactId === "anton").map((message) => message.id),
       );
+      const obsoleteAntonContinuation = new Set([
+        "오늘 연습 잘 끝났어?",
+        "응 생각보다 일찍 끝났어",
+        "근데 집 가는 길에 비 와",
+        "우산 있어?",
+        "없어ㅋㅋ 아까 날씨 좋았잖아",
+        "어디야 내가 데리러 갈까",
+        "괜찮아 편의점에서 우산 샀어",
+        "감기 걸리지 말고 집 가면 따뜻한 물 마셔",
+        "ㅋㅋㅋ 알았어 형도 늦게까지 깨어 있지 마",
+        "과제만 마무리하고 잘게",
+        "맨날 그 말 하더라",
+        "오늘은 진짜임ㅋㅋ",
+      ]);
       const kept = current.filter((message) => {
         if (message.contactId === "group-family") return !/^m\\d+$/.test(message.id) && !familyIds.has(message.id);
         if (message.contactId === "anton" && antonSeedIds.has(message.id)) return false;
+        // Remove this obsolete authored continuation even when it was saved
+        // locally under custom IDs by an earlier version of the story.
+        if (message.contactId === "anton" && message.date === "2026-10-29" && obsoleteAntonContinuation.has(message.ko)) return false;
         return true;
       });
       const existingKeys = new Set(kept.map((message) => `${message.contactId}:${message.id}`));
