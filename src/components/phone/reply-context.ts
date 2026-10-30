@@ -302,6 +302,54 @@ function kktNaturalReply(thread: Msg[], source: Msg): Text {
     answer("좋아요. 그 얘기는 나중에 더 해요", "好啊，这个之后再聊", "Sounds good. Let's talk more about it later"),
   ]);
 
+  // Topic-aware everyday replies. Prefer a concrete reaction over generic filler.
+  if (/축구|풋살|골|football|soccer|futsal|goal|match/i.test(current)) return pick([
+    answer("오 오늘 경기 있었어요? 영상 있으면 보내줘요ㅋㅋ", "哦，今天有比赛吗？有视频的话发给我看看ㅋㅋ", "Oh, you had a match today? Send me a clip if you have one haha"),
+    answer("ㅋㅋ 형 축구 얘기할 때 제일 신나 보여요", "哈哈，哥一聊足球就看起来特别兴奋", "Haha, you always sound happiest when you're talking about football"),
+    answer("다음에 시간 맞으면 저도 보러 갈게요", "下次时间合适的话我也去看", "I'll come watch next time if the timing works"),
+  ]);
+
+  if (/영화|드라마|넷플릭스|movie|film|series|drama|netflix/i.test(current)) return pick([
+    answer("그거 아직 안 봤어요. 스포일러는 하지 마요ㅋㅋ", "那个我还没看，别剧透ㅋㅋ", "I haven't seen that yet. No spoilers haha"),
+    answer("요즘은 짧은 영상만 보다가 영화는 잘 못 봤네요", "最近总是在看短视频，反而没怎么看电影", "I've been watching short videos lately and barely seen any films"),
+    answer("그런 분위기 좋아해요. 너무 뻔한结말만 아니면ㅋㅋ", "我喜欢那种氛围，只要结局别太俗套ㅋㅋ", "I like that kind of atmosphere, as long as the ending isn't too predictable haha"),
+  ]);
+
+  if (/날씨|비 와|비가|춥|덥|weather|rain|raining|cold|hot outside/i.test(current)) return pick([
+    answer("아 맞아요 오늘 바람도 꽤 불던데요", "对，今天风也挺大的", "Yeah, it was pretty windy today too"),
+    answer("이런 날엔 밖에 오래 있기 싫어요ㅋㅋ", "这种天气真的不想在外面待太久ㅋㅋ", "Weather like this makes me not want to stay outside for long haha"),
+    answer("형 나갈 거면 겉옷 챙겨요", "哥如果要出门记得带件外套", "Take a jacket if you're heading out"),
+  ]);
+
+  if (/여행|공항|비행기|일본|제주|trip|travel|airport|flight|japan|holiday/i.test(current)) return pick([
+    answer("오 어디 가는 거예요? 며칠이나 있어요?", "哦，要去哪里？会待几天？", "Oh, where are you going? How long for?"),
+    answer("부럽다ㅋㅋ 저도 요즘 어디든 멀리 가고 싶어요", "羡慕ㅋㅋ 我最近也想去远一点的地方", "Jealous haha. I've been wanting to get away somewhere"),
+    answer("사진 많이 찍어 와요. 나중에 구경하게ㅋㅋ", "多拍点照片回来，我之后要看ㅋㅋ", "Take lots of photos. I want to see them later haha"),
+  ]);
+
+  if (/강아지|고양이|반려동물|狗|猫|宠物|dog|cat|pet/i.test(current)) return pick([
+    answer("사진 있어요? 갑자기 궁금해졌어요ㅋㅋ", "有照片吗？突然有点好奇ㅋㅋ", "Do you have a photo? Now I'm curious haha"),
+    answer("동물들은 가만히 보고만 있어도 기분 좋아져요", "光是看着小动物，心情都会变好", "Just watching animals makes me feel better"),
+    answer("저는 고양이 영상 보면 시간 순삭이에요ㅋㅋ", "我看猫咪视频真的会一下子忘记时间ㅋㅋ", "Cat videos make me lose track of time haha"),
+  ]);
+
+  if (/고생했|수고했|힘내|잘했|축하|congrats|well done|good job|proud of you/i.test(current)) return pick([
+    answer("ㅎㅎ 형한테 그런 말 들으니까 좋네요", "ㅎㅎ 听哥这么说还挺开心的", "Haha, it means a lot coming from you"),
+    answer("고마워요. 괜히 더 잘하고 싶어지네ㅋㅋ", "谢谢。突然更想把事情做好了ㅋㅋ", "Thanks. Now I want to do even better haha"),
+    answer("형도 오늘 고생했어요. 서로 푹 쉬어요", "哥今天也辛苦了，我们都好好休息吧", "You worked hard today too. Let's both get some rest"),
+  ]);
+
+  if (/왜\?|왜 그래|무슨 뜻|무슨 말|어떻게|뭐라고|why\?|what do you mean|how come|what happened/i.test(current)) return pick([
+    answer("아 그건 말이죠ㅋㅋ 제가 설명을 좀 이상하게 했나 봐요", "啊，那个是这样ㅋㅋ 可能是我刚才没说明白", "Ah, so about that haha. I might not have explained it very well"),
+    answer("잠깐, 어느 부분 말하는 거예요? 제가 다시 얘기해볼게요", "等一下，你说的是哪一部分？我重新解释一下", "Wait, which part do you mean? I'll explain it again"),
+  ]);
+
+  if (/^(보고 싶었어\\?|想我了吗|miss me\\?)$/i.test(current)) return pick([
+    answer("조금이 아니라 꽤요ㅋㅋ", "不是一点点，是挺想的ㅋㅋ", "More than a little haha"),
+    answer("티 안 냈는데 어떻게 알았어요ㅋㅋ", "我都没表现出来，哥怎么知道的ㅋㅋ", "I didn't even show it. How did you know? haha"),
+    answer("형은요? 저는 그랬어요 ㅎㅎ", "哥呢？我是有想的ㅎㅎ", "What about you? Because I did haha"),
+  ]);
+
   // Acknowledge what was said without defaulting to the same follow-up question.
   return pick([
     answer("아 진짜요? 그건 좀 의외인데ㅋㅋ", "啊，真的吗？这个有点出乎意料ㅋㅋ", "Oh really? That's a little unexpected haha"),
