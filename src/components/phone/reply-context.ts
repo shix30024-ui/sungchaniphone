@@ -25,7 +25,7 @@ export function replyFromContext(thread: Msg[], source: Msg): Text {
 
 /** KKT-specific conversational fallback. Uses recent turns to avoid repeating itself. */
 export function replyFromKktContext(thread: Msg[], source: Msg): Text {
-  return contextualReply(thread, source, "kkt");
+  return kktNaturalReply(thread, source);
 }
 
 function contextualReply(thread: Msg[], source: Msg, channel: "ig" | "kkt"): Text {
@@ -153,4 +153,136 @@ function contextualReply(thread: Msg[], source: Msg, channel: "ig" | "kkt"): Tex
     /조금만 더|再说一点|bit more/i,
   ][i]?.test(recentGeneric));
   return choose(alternatives.length ? alternatives : generic, seed);
+}
+
+
+/**
+ * KKT voice: casual, observant and topic-led. Anton does not turn every
+ * message into reassurance or a follow-up question. He can react, add a
+ * small detail, change the subject, or simply leave a natural short reply.
+ */
+function kktNaturalReply(thread: Msg[], source: Msg): Text {
+  const ordered = sortMessages(thread);
+  const index = ordered.findIndex((m) => m.id === source.id);
+  const history = ordered.slice(0, index < 0 ? ordered.length : index)
+    .filter((m) => m.type === "text" || m.type === "image").slice(-24);
+  const current = textOf(source).trim();
+  const lower = current.toLowerCase();
+  const anton = history.filter((m) => m.sender === "them");
+  const player = history.filter((m) => m.sender === "me");
+  const previousAnton = anton.at(-1) ? textOf(anton.at(-1)!) : "";
+  const previousPlayer = player.at(-1) ? textOf(player.at(-1)!) : "";
+  const recent = anton.slice(-5).map(textOf).join(" ");
+  const seed = source.id || current;
+
+  const pick = (items: Text[]) => {
+    const unused = items.filter((item) => !recent.includes(item.ko) && !recent.includes(item.zh) && !recent.includes(item.en));
+    return choose(unused.length ? unused : items, seed);
+  };
+
+  if (source.type === "image") return pick([
+    answer("ㅋㅋ 이건 언제 찍은 거예요?", "哈哈，这是什么时候拍的？", "Haha, when did you take this?"),
+    answer("오 사진 분위기 좋다", "哦，这张照片氛围不错", "Oh, this photo has a nice vibe"),
+    answer("이런 사진 좋아요. 뭔가 자연스러워서", "我喜欢这种照片，感觉很自然", "I like photos like this. They feel natural"),
+  ]);
+
+  // React to the actual conversational move rather than always asking a question.
+  if (/big riize|microscopic riize|라이즈|riize/i.test(current)) return pick([
+    answer("ㅋㅋㅋㅋ 이 표현 누가 만든 거예요", "哈哈哈哈这说法是谁想出来的", "Hahaha, who came up with that phrase?"),
+    answer("big riize는 알겠는데 microscopic은 뭐예요ㅋㅋ", "big riize 我懂，microscopic 又是什么ㅋㅋ", "I get big riize, but what's microscopic riize? haha"),
+    answer("이거 은근 중독성 있네 계속 생각나요ㅋㅋ", "这个莫名有点洗脑，我一直在想ㅋㅋ", "This is oddly catchy. It's stuck in my head haha"),
+  ]);
+
+  if (/수업|강의|课程|上课|class|lecture/i.test(current)) {
+    if (/어땠|怎么样|어땠어|how was/i.test(current)) return pick([
+      answer("생각보다 괜찮았어요 ㅎㅎ 근데 뒤에 내용은 조금 어려웠어요", "比想象中有意思ㅎㅎ 不过后面的内容有一点难", "It was better than I expected haha. The last part was a little difficult"),
+      answer("재밌었어요. 교수님이 예시를 재밌게 들어주셔서", "挺有意思的，教授举的例子蛮有趣", "It was interesting. The lecturer used some pretty good examples"),
+      answer("오늘은 그냥 평범했어요ㅋㅋ 다음 주가 더 바쁠 것 같아요", "今天就普普通通ㅋㅋ 感觉下周会更忙", "Pretty normal today haha. I think next week will be busier"),
+    ]);
+    return pick([
+      answer("아 그 수업이요? 오늘은 그 부분까지 했어요", "啊，那门课吗？今天刚好讲到那部分", "Oh, that class? We covered up to that part today"),
+      answer("그거 아직 듣고 있어요 ㅎㅎ 은근 재밌어요", "我还在听那个ㅎㅎ 意外地还挺有意思", "I'm still taking that one haha. It's actually quite interesting"),
+    ]);
+  }
+
+  if (/개념|concept|이해|understand|懂|理解|什么意思/i.test(current)) return pick([
+    answer("ㅋㅋ 처음엔 헷갈렸는데 예시 보니까 알겠더라고요", "哈哈一开始有点搞不懂，看了例子之后就明白了", "Haha, I was confused at first, but the example made it click"),
+    answer("아직 완전히는요ㅋㅋ 한 번 더 보면 알 것 같아요", "还没有完全懂ㅋㅋ 感觉再看一遍就差不多了", "Not completely yet haha. I think one more look should do it"),
+    answer("그 개념은 말로 설명하려니까 더 어렵네요ㅋㅋ", "那个概念一要用语言解释就更难了ㅋㅋ", "That concept is even harder to explain out loud haha"),
+  ]);
+
+  if (/촬영|shoot|filming|촬영이었|拍摄|拍片/i.test(current)) return pick([
+    answer("재밌는 촬영이었어요 ㅎㅎ 생각보다 빨리 끝났어요", "是一次很有意思的拍摄ㅎㅎ 比想象中结束得早", "It was a fun shoot haha. Finished earlier than I expected"),
+    answer("촬영할 땐 정신없었는데 결과물 보니까 괜찮더라고요", "拍的时候有点手忙脚乱，不过看成品感觉还不错", "It was hectic while filming, but the result turned out pretty nice"),
+    answer("다음엔 야외에서도 찍어보고 싶어요", "下次也想试试看外景拍摄", "I'd like to try filming outdoors next time"),
+  ]);
+
+  if (/주황색 머리|orange hair|오렌지 머리|橘色头发|橙色头发/i.test(current)) return pick([
+    answer("맞아요ㅋㅋ 그때 아직 주황색 머리였어요", "对ㅋㅋ 那时候还是橘色头发", "Right haha, I still had orange hair then"),
+    answer("그때 사진 보면 색이 진짜 밝았어요ㅋㅋ", "现在看那时候的照片，发色真的很亮ㅋㅋ", "Looking back at those photos, the colour was so bright haha"),
+    answer("벌써 그때 얘기하네요. 시간 빠르다ㅋㅋ", "都聊到那时候了，时间过得真快ㅋㅋ", "We're already talking about that time. Time flies haha"),
+  ]);
+
+  if (/soon|곧|금방|很快|马上|잠깐만/i.test(current)) return pick([
+    answer("조금만 기다려요ㅋㅋ 거의 다 됐어요", "再等一下ㅋㅋ 差不多快好了", "Just a little longer haha. Nearly there"),
+    answer("생각보다 오래 걸리네요ㅋㅋ 그래도 곧이에요", "比想象中花时间ㅋㅋ 不过真的快了", "Taking longer than I thought haha, but it'll be soon"),
+  ]);
+
+  if (/뭐해|在干嘛|what are you doing|what're you doing/i.test(current)) return pick([
+    answer("방금 연습 끝났어요. 지금은 그냥 누워 있어요ㅋㅋ", "刚练习完，现在就躺着ㅋㅋ", "Just finished practising. Lying down now haha"),
+    answer("영상 보고 있었어요. 하나만 보려다가 계속 보게 되네요", "刚在看视频，本来只想看一个，结果一直看下去了", "I was watching videos. Planned to watch one and somehow kept going"),
+    answer("별거 안 해요 ㅎㅎ 형은요?", "没做什么ㅎㅎ 哥呢？", "Not much haha. What about you?"),
+  ]);
+
+  if (/밥 먹었|吃饭了吗|吃了没|먹었어\?|have you eaten|did you eat/i.test(current)) return pick([
+    answer("네 먹었어요 ㅎㅎ 형은 뭐 먹었어요?", "吃了ㅎㅎ 哥吃了什么？", "Yeah, I have haha. What did you eat?"),
+    answer("아직이요. 뭐 먹을지 고민 중이에요ㅋㅋ", "还没呢，正在想吃什么ㅋㅋ", "Not yet. Still deciding what to eat haha"),
+    answer("조금 전에 먹었어요. 오늘은 간단하게요", "刚刚吃过了，今天吃得比较简单", "A little while ago. Kept it simple today"),
+  ]);
+
+  if (/ㅋㅋ|ㅎㅎ|haha|lol|😂/.test(lower) && current.length < 35) return pick([
+    answer("아 왜 웃어요ㅋㅋ 저도 궁금하잖아요", "啊，干嘛笑ㅋㅋ 我也很好奇啊", "Hey, why are you laughing? Now I'm curious too"),
+    answer("ㅋㅋㅋㅋ 형 오늘 텐션 좋네요", "哈哈哈哈哥今天兴致不错嘛", "Hahaha, you're in a good mood today"),
+    answer("뭐야ㅋㅋ 나만 모르는 얘기예요?", "什么嘛ㅋㅋ 是只有我不知道的事吗？", "Wait haha, is this something only I don't know about?"),
+  ]);
+
+  if (/고마워|谢谢|thank you|thanks/i.test(current)) return pick([
+    answer("아니에요 ㅎㅎ 별것도 아닌데요", "没事ㅎㅎ 又不是什么大事", "It's nothing haha. Really"),
+    answer("형한테는 이 정도 해줄 수 있죠ㅋㅋ", "对哥的话，这点事还是可以的ㅋㅋ", "I can do at least that much for you haha"),
+  ]);
+
+  if (/잘 자|晚安|good night|졸려|困了|자러 갈게/i.test(current)) return pick([
+    answer("형도 잘 자요. 내일 얘기해요 ㅎㅎ", "哥也晚安，明天再聊ㅎㅎ", "Sleep well too. Talk tomorrow haha"),
+    answer("네 얼른 자요ㅋㅋ 내일 봐요", "好啦快睡ㅋㅋ 明天见", "Alright, get some sleep haha. See you tomorrow"),
+  ]);
+
+  // If the player answers something Anton asked earlier, acknowledge that answer
+  // without pretending the topic is new.
+  if (/어디|where/i.test(previousAnton) && /집|학교|카페|성수|家|学校|咖啡馆|圣水|home|campus|cafe/i.test(current)) {
+    return pick([
+      answer("아 거기구나ㅋㅋ 그 근처 지나간 적 있어요", "啊，原来在那里ㅋㅋ 我之前路过那附近", "Oh, there haha. I've passed by that area before"),
+      answer("오 거기요? 생각보다 멀진 않네요", "哦，那里吗？感觉没有想象中远", "Oh, there? That's not as far as I thought"),
+    ]);
+  }
+
+  if (/언제|几时|什么时候|when/i.test(current)) return pick([
+    answer("이번 주는 조금 애매하고 다음 주는 괜찮을 것 같아요", "这周时间有点难定，下周应该可以", "This week is a bit uncertain, but next week should work"),
+    answer("아직 정확히는 모르겠어요. 일정 확인해볼게요", "还不太确定，我看一下时间安排", "I'm not completely sure yet. I'll check my schedule"),
+  ]);
+
+  if (/좋아|可以|好啊|ok|okay|sure|응|네|알겠어/i.test(current) && current.length < 24) return pick([
+    answer("ㅋㅋ 그럼 그렇게 해요", "哈哈，那就这样吧", "Haha, let's do that then"),
+    answer("넹 ㅎㅎ", "嗯嗯ㅎㅎ", "Yup haha"),
+    answer("좋아요. 그 얘기는 나중에 더 해요", "好啊，这个之后再聊", "Sounds good. Let's talk more about it later"),
+  ]);
+
+  // Acknowledge what was said without defaulting to the same follow-up question.
+  return pick([
+    answer("아 진짜요? 그건 좀 의외인데ㅋㅋ", "啊，真的吗？这个有点出乎意料ㅋㅋ", "Oh really? That's a little unexpected haha"),
+    answer("오 그런 일이 있었구나. 처음 듣는 얘기예요", "哦，原来还有这种事，我第一次听说", "Oh, so that happened. That's the first I've heard of it"),
+    answer("ㅋㅋ 형은 그런 쪽이구나. 저는 반대일 때가 많아요", "哈哈，原来哥是那种类型。我反而经常相反", "Haha, so that's how you are. I'm often the opposite"),
+    answer("아 그 말 뭔지 알 것 같아요", "啊，我好像懂你说的那种感觉", "Ah, I think I know what you mean"),
+    answer("잠깐 그건 좀 웃긴데요ㅋㅋ", "等一下，这个有点好笑ㅋㅋ", "Wait, that's actually quite funny haha"),
+    answer("저도 비슷한 적 있어요. 근데 상황은 조금 달랐어요", "我也有过类似的经历，不过情况有点不一样", "I've had something similar happen, though it was a little different"),
+  ]);
 }
