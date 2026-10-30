@@ -8,6 +8,7 @@ import { temporaryReply } from "./fixed-conversation";
 export const DM_KEY = "ig-dm-messages-v1";
 export const QUEUE_KEY = "phone-reply-queue-v1";
 export type PendingReply = { channel: "kkt" | "ig"; contactId: string; sourceId: string; dueAt: number; failed?: boolean; error?: string };
+import { replyFromContext } from "./reply-context";
 export { replyFromContext as contextualReply } from "./reply-context";
 import { buildReplyContext, type ReplyContext } from "./ai-context";
 import { generatePhoneReply } from "@/lib/phone-reply.functions";
@@ -55,8 +56,13 @@ async function processReply(now: number, activeKkt: string | null, generate: Gen
   }
   const context = buildReplyContext(rows, source);
   let result: ReplyResult;
-  try { result = await generate(context); }
-  catch { result = { ok: false, status: 503, error: "AI reply connection interrupted. Your message is saved. / AI 回复连接中断，消息已保留。 / AI 연결이 끊겼습니다. 메시지는 저장됐습니다." }; }
+  if (item.channel === "ig") {
+    // Instagram uses the local, rule-based story reply engine; no paid API call.
+    result = { ok: true, reply: replyFromContext(rows, source) };
+  } else {
+    try { result = await generate(context); }
+    catch { result = { ok: false, status: 503, error: "AI reply connection interrupted. Your message is saved. / AI 回复连接中断，消息已保留。 / AI 연결이 끊겼습니다. 메시지는 저장됐습니다." }; }
+  }
   if (!result.ok) {
     updateStored<PendingReply[]>(QUEUE_KEY, [], (q) => q.map((p) => p.sourceId === item.sourceId || result.status === 402 || result.status === 403 ? { ...p, failed: true, error: result.error } : p));
     window.dispatchEvent(new CustomEvent(REPLY_ERROR_EVENT, { detail: result.error }));
