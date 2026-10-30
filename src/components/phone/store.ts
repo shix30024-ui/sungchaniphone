@@ -35,7 +35,22 @@ export function updateStored<T>(key: string, fallback: T, update: (current: T) =
 }
 
 export function usePersist<T>(key: string, def: T, normalize?: (value: T) => T): [T, (v: T | ((current: T) => T)) => boolean] {
-  const [val, setVal] = useState<T>(def);
+  // Hydrate persisted content during the first browser render. Starting from the
+  // bundled defaults and waiting for useEffect caused edited photos/posts to flash
+  // briefly as their original versions before localStorage was read.
+  const [val, setVal] = useState<T>(() => {
+    if (typeof window === "undefined") return def;
+    try {
+      const composed = sharedRead(key);
+      if (composed.found) return normalize ? normalize(composed.value as T) : composed.value as T;
+      const raw = localStorage.getItem(key);
+      if (raw !== null) {
+        const loaded = JSON.parse(raw) as T;
+        return normalize ? normalize(loaded) : loaded;
+      }
+    } catch { /* Fall back safely; the effect below retries hydration. */ }
+    return def;
+  });
   useEffect(() => {
     try {
       const composed = sharedRead(key);
