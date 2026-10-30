@@ -234,7 +234,7 @@ export const PROFILE: Profile = {
 };
 const c = (user: string, text: string): Comment => ({ id: Math.random().toString(36).slice(2), user, text });
 export const POSTS: Post[] = [
-  { id: "p9", image: "img:campus", caption: "마지막 가을 학기 🍂", date: "2026-10-20", likes: 5120, comments: [c("doyun.p", "벌써 졸업이라니"), c("jiho_l", "형 사진 왜 이렇게 잘 찍어요")] },
+  { id: "p9", image: "img:campus", caption: "마지막 가을 학기 🍂", date: "2026-10-20", likes: 5120, comments: [c("doyun.p", "벌써 졸업이라니"), c("jiho_l", "형 사진 왜 이렇게 잘 찍어요"), c("yuna.archive", "사진 분위기 너무 좋아요! 혹시 학교 근처예요?")] },
   { id: "p8", image: "img:football", caption: "이겼다 ⚽ 오늘 다들 고생했어", date: "2026-09-27", likes: 6890, comments: [c("minjae_fc", "골 넣고 세레머니 뭐임ㅋㅋ"), c("a.ntonn", "ㅊㅋ")] },
   { id: "p7", image: "img:cafe", caption: "성수 산책", date: "2025-09-06", likes: 4310, comments: [c("hyeri.k", "여기 어디예요?")] },
   { id: "p6", image: "img:hanriver", caption: "한강 라면은 진리", date: "2025-07-19", likes: 3980, comments: [c("minjae_fc", "나 왜 안 불렀냐")] },
