@@ -60,6 +60,17 @@ export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: 
 export function InstagramDM({ accounts, lang, onClose }: { accounts: SocialAccount[]; lang: Lang; onClose: () => void }) {
   const owner = useOwner();
   const [msgs, setMsgs] = usePersist<Msg[]>(DM_KEY, []);
+  // Add this fictional follower's opening DM once, without replacing any saved conversations.
+  useEffect(() => {
+    if (msgs.some((m) => m.contactId === "yuna")) return;
+    setMsgs((current) => current.some((m) => m.contactId === "yuna") ? current : [...current, {
+      id: "ig-yuna-first-dm-20261028", contactId: "yuna", sender: "them", type: "text",
+      ko: "안녕하세요! 사진 분위기가 좋아서 팔로우했어요 :)",
+      zh: "你好！觉得你的照片很有氛围，所以关注你了 :)",
+      en: "Hi! I really liked the mood of your photos, so I followed you :)",
+      date: "2026-10-28", time: "19:42", order: Date.now(), read: false,
+    }]);
+  }, [msgs, setMsgs]);
   const [queue] = usePersist<PendingReply[]>(QUEUE_KEY, []);
   const contacts = accounts;
   const [search, setSearch] = useState("");
