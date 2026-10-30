@@ -45,6 +45,15 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const [progress] = usePersist<FixedProgress>(ANTON_PROGRESS_KEY, EMPTY_PROGRESS);
   // One-time: move large chat images out of the small browser storage. Text and order are untouched.
   useEffect(() => { void moveKktImagesToDb(); }, []);
+  // Add Seoyun to existing saves without replacing the player's edited contacts or messages.
+  useEffect(() => {
+    setContacts((current) => current.some((c) => c.id === "seoyun") ? current : [...current, CONTACTS.find((c) => c.id === "seoyun")!]);
+    setMsgs((current) => {
+      const known = new Set(current.map((m) => m.id));
+      const additions = MESSAGES.filter((m) => m.contactId === "seoyun" && !known.has(m.id));
+      return additions.length ? [...current, ...additions] : current;
+    });
+  }, [setContacts, setMsgs]);
   useEffect(() => { setActiveChat(openId); return () => setActiveChat(null); }, [openId]);
   // Opening a chat marks it read. Works on the saved copy directly so defaults never overwrite saved edits.
   useEffect(() => {
@@ -114,7 +123,11 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   // Keep Anton reachable even if a legacy saved contact list omitted him.
   // This is a read-only view fallback, never a reseed of edited contact data.
   const defaultAnton = CONTACTS.find((c) => c.id === "anton");
-  const displayContacts = contacts.some((c) => c.id === "anton") || !defaultAnton ? contacts : [...contacts, defaultAnton];
+  const defaultSeoyun = CONTACTS.find((c) => c.id === "seoyun");
+  const displayContacts = [
+    ...contacts,
+    ...[defaultAnton, defaultSeoyun].filter((fallback): fallback is Contact => !!fallback && !contacts.some((c) => c.id === fallback.id)),
+  ];
   const open = displayContacts.find((c) => c.id === openId);
 
   if (!open) {
