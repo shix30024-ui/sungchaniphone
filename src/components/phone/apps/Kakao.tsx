@@ -36,6 +36,26 @@ const fmt12 = (t: string, lang: AppProps["lang"]) => {
 export default function Kakao({ lang, onHome, initialChat }: AppProps & { initialChat?: string | null }) {
   const [contacts, setContacts] = usePersist<Contact[]>("kkt-contacts-v1", CONTACTS);
   const [msgs, setMsgs] = usePersist<Msg[]>("kkt-msgs-v1", MESSAGES, completeTranslations);
+  // Add newly authored story records to existing saves without replacing player edits.
+  // This is an additive migration: existing messages, photos, and other app data stay intact.
+  useEffect(() => {
+    setContacts((current) => {
+      const byId = new Map(current.map((contact) => [contact.id, contact]));
+      for (const seed of CONTACTS) {
+        const existing = byId.get(seed.id);
+        if (!existing) byId.set(seed.id, seed);
+        else if (seed.id === "anton") byId.set(seed.id, { ...existing, name: seed.name, pinned: true });
+      }
+      return [...byId.values()];
+    });
+    setMsgs((current) => {
+      const existingIds = new Set(current.map((message) => message.id));
+      const additions = MESSAGES.filter((message) => !existingIds.has(message.id));
+      return additions.length ? [...current, ...additions] : current;
+    });
+  // Run once after persisted state has hydrated; the setters merge against the latest stored value.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [openId, setOpenId] = useState<string | null>(initialChat ?? null);
   // Temporary replies live in page memory (fixed-conversation module), so they
   // survive leaving/re-entering the chat but vanish on refresh or close.
