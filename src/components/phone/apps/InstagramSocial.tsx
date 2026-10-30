@@ -65,9 +65,9 @@ export function InstagramDM({ accounts, lang, onClose }: { accounts: SocialAccou
     if (msgs.some((m) => m.contactId === "yuna")) return;
     setMsgs((current) => current.some((m) => m.contactId === "yuna") ? current : [...current, {
       id: "ig-yuna-first-dm-20261028", contactId: "yuna", sender: "them", type: "text",
-      ko: "안녕하세요! 사진 분위기가 좋아서 팔로우했어요 :)",
-      zh: "你好！觉得你的照片很有氛围，所以关注你了 :)",
-      en: "Hi! I really liked the mood of your photos, so I followed you :)",
+      ko: "안녕하세요 선배님! 사진 분위기가 너무 좋아서 팔로우했어요 :) 예전부터 팬이었어요",
+      zh: "学长你好！我很喜欢你照片的氛围，所以关注你了 :) 其实我之前就是你的粉丝。",
+      en: "Hi, sunbaenim! I really like the mood of your photos, so I followed you :) I have been a fan for a while.",
       date: "2026-10-28", time: "19:42", order: Date.now(), read: false,
     }]);
   }, [msgs, setMsgs]);
