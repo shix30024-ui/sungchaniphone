@@ -66,8 +66,10 @@ export default function Instagram({ lang, onHome }: AppProps) {
   const share = shareId && <div className="ig-share-sheet" role="dialog"><div className="sheet"><div className="flex justify-between items-center"><b>{tr(lang, { en: "Share", ko: "공유", zh: "分享" })}</b><Button variant="ghost" size="icon" aria-label={C} onClick={() => setShareId(null)}><ArrowLeft /></Button></div>{["anton", "minjae", "doyun"].map((id) => <Button key={id} variant="ghost" className="w-full justify-start" onClick={() => { const shared = sorted.find((p) => p.id === shareId); if (shared) { sendChat("ig", id, `${account(shared.authorId).username} · ${instagramCaption(shared, lang)}`, lang); setShareId(null); setDm(true); } }}>{id === "anton" ? "Anton" : id === "minjae" ? "김민재" : "박도윤"}</Button>)}</div></div>;
   if (dm) return <InstagramDM accounts={accounts} lang={lang} onClose={() => setDm(false)} />;
 
+  const yunaFollower = accounts.find((a) => a.id === "yuna") ?? FRIEND_ACCOUNTS.find((a) => a.id === "yuna");
+
   if (activity) {
-    const follower = accounts.find((a) => a.id === "yuna");
+    const follower = yunaFollower;
     return <div className="app-page bg-background">
       <TopBar title={tr(lang, { en: "Notifications", ko: "알림", zh: "通知" })} left={<BackBtn onClick={() => setActivity(false)} />} />
       <div className="flex-1 overflow-y-auto p-3">
@@ -178,7 +180,7 @@ export default function Instagram({ lang, onHome }: AppProps) {
     );
 
   if (tab !== "profile") return <div className="app-page bg-background">
-    <header className="ig-header"><Button variant="ghost" size="icon" aria-label={C} onClick={onHome}><ChevronLeft /></Button><span className="ig-logo">Instagram</span><span className="flex-1" /><Button variant="ghost" size="icon" className="relative" aria-label={tr(lang, { en: "Notifications", ko: "알림", zh: "通知" })} onClick={() => { setNewFollowerUnread(false); setActivity(true); }}><Heart strokeWidth={1.8} />{newFollowerUnread && accounts.some((a) => a.id === "yuna") && <span className="absolute right-1 top-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-background" />}</Button><Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Messages", ko: "메시지", zh: "私信" })} onClick={() => setDm(true)}><Send strokeWidth={1.8} /></Button></header>
+    <header className="ig-header"><Button variant="ghost" size="icon" aria-label={C} onClick={onHome}><ChevronLeft /></Button><span className="ig-logo">Instagram</span><span className="flex-1" /><Button variant="ghost" size="icon" className="relative" aria-label={tr(lang, { en: "Notifications", ko: "알림", zh: "通知" })} onClick={() => { setNewFollowerUnread(false); setActivity(true); }}><Heart strokeWidth={1.8} />{newFollowerUnread && yunaFollower && <span className="absolute right-1 top-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-background" />}</Button><Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Messages", ko: "메시지", zh: "私信" })} onClick={() => setDm(true)}><Send strokeWidth={1.8} /></Button></header>
     <div className="flex-1 overflow-y-auto">
       {tab === "home" ? <><Stories posts={sorted} profile={prof} accounts={accounts} lang={lang} onProfile={showProfile} />{sorted.map((p) => <article key={p.id} className="border-b pb-3">
         <Button variant="ghost" className="h-auto w-full justify-start gap-2 py-2" onClick={() => showProfile(p.authorId)}><img src={resolveImg(account(p.authorId).avatar)} className="w-8 h-8 rounded-full object-cover ig-ring" alt="" /><b className="text-[13px]">{account(p.authorId).username}</b><MoreHorizontal className="ml-auto" size={18} /></Button>
