@@ -51,7 +51,7 @@ export async function tickReplies(now = Date.now(), activeKkt: string | null = n
 async function processReply(now: number, activeKkt: string | null, generate: Generator) {
   const queue = pendingReplies();
   // Yuna never receives an automatic reply: her thread is a one-sided fixed story.
-  const item = queue.find((q) => !(q.channel === "ig" && q.contactId === "yuna") && ((q) => !(q.channel === "kkt" && q.contactId === "anton") && !q.failed && q.dueAt <= now && !queue.some((prior) => prior !== q && prior.channel === q.channel && prior.contactId === q.contactId && prior.dueAt < q.dueAt && !prior.failed));
+  const item = queue.find((q) => !(q.channel === "ig" && q.contactId === "yuna") && !(q.channel === "kkt" && q.contactId === "anton") && !q.failed && q.dueAt <= now && !queue.some((prior) => prior !== q && prior.channel === q.channel && prior.contactId === q.contactId && prior.dueAt < q.dueAt && !prior.failed));
   if (!item) return null;
   const key = item.channel === "kkt" ? MSGS_KEY : DM_KEY;
   const fallback = item.channel === "kkt" ? MESSAGES : [];
