@@ -8,7 +8,7 @@ import { moveKktImagesToDb } from "../kkt-images";
 import { BackBtn, EditBar, Field, ImageField, KktAvatar, TopBar } from "../ui";
 import { useOwner } from "../owner";
 import { Button } from "@/components/ui/button";
-import { Send, Phone, PhoneIncoming, Search, Menu, Plus, Smile, X, Users, MessageCircle, MessageCirclePlus, Settings2, ShoppingBag, MoreHorizontal, SquarePlus, CalendarDays } from "lucide-react";
+import { Send, Phone, PhoneIncoming, Search, Menu, Plus, Smile, X, Users, MessageCircle, MessageCirclePlus, Settings2, ShoppingBag, MoreHorizontal, SquarePlus, CalendarDays, Music } from "lucide-react";
 import { fileToDataUrl } from "../store";
 import Call from "./Call";
 import { type PendingReply, QUEUE_KEY, sendChat } from "../conversation";
@@ -343,7 +343,33 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
           }
           const text = messageText(m, lang);
           if (m.type === "date") { /* The date heading above already displays this divider. */ }
+          else if (m.type === "system" && text.includes("통화")) parts.push(
+            <div key={m.id} className="flex justify-center py-2">
+              <div className="flex items-center gap-3 rounded-2xl bg-card/90 border px-4 py-3 shadow-sm">
+                <div className="rounded-full bg-primary/10 p-2"><Phone size={18} /></div>
+                <div className="text-sm"><div className="font-medium">{text}</div><div className="text-xs opacity-60">{fmt12(m.time, lang)}</div></div>
+              </div>
+            </div>
+          );
           else if (m.type === "system") parts.push(<div key={m.id} className="kkt-system">{text}</div>);
+          else if (m.type === "music") parts.push(
+            <div key={m.id} className={`kkt-message-row flex gap-2 ${m.sender === "me" ? "justify-end" : ""}`}>
+              {m.sender === "them" && <div className="w-10 shrink-0">{head && <KktAvatar src={open.avatar} size={40} />}</div>}
+              <div className={`kkt-message-body flex flex-col ${m.sender === "me" ? "items-end" : "items-start"}`}>
+                {head && <span className="text-[12px] mb-0.5 opacity-80">{open.name}</span>}
+                <div className="flex items-end gap-1">
+                  <div className="w-[238px] overflow-hidden rounded-2xl border bg-card text-card-foreground shadow-sm">
+                    <div className="flex items-center gap-3 p-3">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-200 to-orange-400 text-white"><Music size={25} /></div>
+                      <div className="min-w-0"><div className="truncate text-sm font-semibold">Lost Stars</div><div className="truncate text-xs opacity-65">Adam Levine</div><div className="mt-1 text-[10px] opacity-55">Music share</div></div>
+                    </div>
+                    <div className="border-t px-3 py-2 text-[11px] opacity-65">Lost Stars · Adam Levine</div>
+                  </div>
+                  <span className="kkt-message-time">{fmt12(m.time, lang)}</span>
+                </div>
+              </div>
+            </div>
+          );
           else {
             const mine = m.sender === "me";
             const prev = thread[i - 1];
