@@ -17,7 +17,7 @@ import { confirmDelete, label, localeFor } from "../labels";
 import { completeTranslations } from "../translations";
 import { ANTON_PROGRESS_KEY, EMPTY_PROGRESS, fixedFlow, acknowledgeFixedNode, temporaryReply, temporaryIncoming, withTemporaryReplies, readTemporaryReplies, writeTemporaryReplies, type FixedProgress, type TemporaryReply } from "../fixed-conversation";
 import { withLockNotices } from "../lock-notifications";
-import { replyFromKktContext } from "../reply-context";
+import { generateAntonReply } from "../local-anton-model";
 
 const TODAY = STORY_DATE;
 const sortMsgs = sortMessages<Msg>;
@@ -183,16 +183,20 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
     // Player content stays in React state; only an existing gate ID may advance.
     // Sending never creates or delivers an Anton story message.
     if (flow.waiting) acknowledgeFixedNode(flow.waiting.id);
-    // Anton answers locally using the same free, rule-based story engine as Instagram.
-    // Both messages remain temporary in page memory and never call the paid API.
+    // Anton generates a new, context-aware reply with a language model running
+    // in this browser. No OpenAI API key, paid endpoint, or server request is used.
     const source = playerMsg.message;
     setAntonError(null);
     setAntonTyping(true);
-    const reply = replyFromKktContext([...visibleThread, source], source);
-    window.setTimeout(() => {
-      setTemporary((old) => old.some((r) => r.message.id === source.id) ? [...old, temporaryIncoming(reply, source)] : old);
-      setAntonTyping(false);
-    }, 1100 + Math.min(text.length * 18, 900));
+    void generateAntonReply([...visibleThread, source], source)
+      .then((reply) => {
+        setTemporary((old) => old.some((r) => r.message.id === source.id) ? [...old, temporaryIncoming(reply, source)] : old);
+      })
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : "本地模型暂时无法运行，请检查浏览器是否支持 WebGPU。";
+        setAntonError(message);
+      })
+      .finally(() => setAntonTyping(false));
   };
   if (call) return <Call contact={open} lang={lang} incoming={call === "incoming"} onClose={() => setCall(null)} />;
   const startEdit = () => { editIds.current = new Set(savedThread.map((m) => m.id)); setDraft(savedThread.map((m) => ({ ...m }))); setDraftC({ ...open }); setEditing(true); };
