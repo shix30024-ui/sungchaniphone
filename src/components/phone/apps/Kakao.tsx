@@ -51,20 +51,19 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
     setMsgs((current) => {
       const familySeed = MESSAGES.filter((message) => message.contactId === "group-family");
       const familyIds = new Set(familySeed.map((message) => message.id));
-      // Refresh only the two authored Anton story days. Older bundled rows on
-      // these dates used the same generated IDs, so a normal add-only merge
-      // kept stale text forever. Preserve any user-created rows with custom IDs.
-      const refreshableAntonDates = new Set(["2023-08-12", "2023-09-02"]);
-      const refreshableAntonIds = new Set(
-        MESSAGES.filter((message) => message.contactId === "anton" && refreshableAntonDates.has(message.date)).map((message) => message.id),
+      // Refresh every bundled Anton story row from story.ts, not just two dates.
+      // This updates stale persisted copies while keeping player-created messages
+      // (their IDs are not bundled seed IDs), all other contacts, and other apps.
+      const antonSeedIds = new Set(
+        MESSAGES.filter((message) => message.contactId === "anton").map((message) => message.id),
       );
       const kept = current.filter((message) => {
-        if (message.contactId === "group-family") return !/^m\d+$/.test(message.id) && !familyIds.has(message.id);
-        if (message.contactId === "anton" && refreshableAntonDates.has(message.date) && refreshableAntonIds.has(message.id)) return false;
+        if (message.contactId === "group-family") return !/^m\\d+$/.test(message.id) && !familyIds.has(message.id);
+        if (message.contactId === "anton" && antonSeedIds.has(message.id)) return false;
         return true;
       });
-      const existingIds = new Set(kept.map((message) => message.id));
-      const additions = MESSAGES.filter((message) => message.contactId !== "group-family" && !existingIds.has(message.id));
+      const existingKeys = new Set(kept.map((message) => `${message.contactId}:${message.id}`));
+      const additions = MESSAGES.filter((message) => !existingKeys.has(`${message.contactId}:${message.id}`));
       const merged = [...kept, ...additions, ...familySeed];
       const seenParentMessages = new Set<string>();
       return merged.filter((message) => {
