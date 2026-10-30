@@ -312,7 +312,7 @@ function kktNaturalReply(thread: Msg[], source: Msg): Text {
   if (/영화|드라마|넷플릭스|movie|film|series|drama|netflix/i.test(current)) return pick([
     answer("그거 아직 안 봤어요. 스포일러는 하지 마요ㅋㅋ", "那个我还没看，别剧透ㅋㅋ", "I haven't seen that yet. No spoilers haha"),
     answer("요즘은 짧은 영상만 보다가 영화는 잘 못 봤네요", "最近总是在看短视频，反而没怎么看电影", "I've been watching short videos lately and barely seen any films"),
-    answer("그런 분위기 좋아해요. 너무 뻔한结말만 아니면ㅋㅋ", "我喜欢那种氛围，只要结局别太俗套ㅋㅋ", "I like that kind of atmosphere, as long as the ending isn't too predictable haha"),
+    answer("그런 분위기 좋아해요. 너무 뻔한 결말만 아니면ㅋㅋ", "我喜欢那种氛围，只要结局别太俗套ㅋㅋ", "I like that kind of atmosphere, as long as the ending isn't too predictable haha"),
   ]);
 
   if (/날씨|비 와|비가|춥|덥|weather|rain|raining|cold|hot outside/i.test(current)) return pick([
@@ -342,12 +342,6 @@ function kktNaturalReply(thread: Msg[], source: Msg): Text {
   if (/왜\?|왜 그래|무슨 뜻|무슨 말|어떻게|뭐라고|why\?|what do you mean|how come|what happened/i.test(current)) return pick([
     answer("아 그건 말이죠ㅋㅋ 제가 설명을 좀 이상하게 했나 봐요", "啊，那个是这样ㅋㅋ 可能是我刚才没说明白", "Ah, so about that haha. I might not have explained it very well"),
     answer("잠깐, 어느 부분 말하는 거예요? 제가 다시 얘기해볼게요", "等一下，你说的是哪一部分？我重新解释一下", "Wait, which part do you mean? I'll explain it again"),
-  ]);
-
-  if (/^(보고 싶었어\\?|想我了吗|miss me\\?)$/i.test(current)) return pick([
-    answer("조금이 아니라 꽤요ㅋㅋ", "不是一点点，是挺想的ㅋㅋ", "More than a little haha"),
-    answer("티 안 냈는데 어떻게 알았어요ㅋㅋ", "我都没表现出来，哥怎么知道的ㅋㅋ", "I didn't even show it. How did you know? haha"),
-    answer("형은요? 저는 그랬어요 ㅎㅎ", "哥呢？我是有想的ㅎㅎ", "What about you? Because I did haha"),
   ]);
 
   // Acknowledge what was said without defaulting to the same follow-up question.
