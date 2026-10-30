@@ -4,145 +4,153 @@ import { sortMessages } from "./chronology";
 type Text = { ko: string; zh: string; en: string };
 const answer = (ko: string, zh: string, en: string): Text => ({ ko, zh, en });
 const contains = (text: string, expression: RegExp) => expression.test(text);
+const textOf = (m: Msg) => m.originalText ?? `${m.ko} ${m.zh} ${m.en ?? ""}`;
 
-// Stable variation: the same message keeps its reply, but different messages
-// don't all sound as if they came from one template.
 function choose<T>(items: T[], seed: string): T {
   let hash = 0;
   for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
   return items[hash % items.length];
 }
-const textOf = (m: Msg) => m.originalText ?? `${m.ko} ${m.zh} ${m.en ?? ""}`;
 
+const tired = /피곤|힘들|지쳤|累|疲惫|tired|exhausted|rough day/i;
+const food = /먹|밥|식사|吃|饭|饿|\beat\b|eaten|dinner|lunch|hungry|food/i;
+const music = /연습|베이스|첼로|음악|노래|练|贝斯|大提琴|音乐|歌|practice|practicing|bass|cello|music|song/i;
+const school = /수업|과제|시험|교수|학교|作业|上课|考试|学校|assignment|class|exam|lecture/i;
+const plan = /만나|약속|정문|见面|约好|正门|meet|plan|date|tomorrow|내일|明天/i;
+
+/** Shared lightweight local fallback for Instagram. */
 export function replyFromContext(thread: Msg[], source: Msg): Text {
+  return contextualReply(thread, source, "ig");
+}
+
+/** KKT-specific conversational fallback. Uses recent turns to avoid repeating itself. */
+export function replyFromKktContext(thread: Msg[], source: Msg): Text {
+  return contextualReply(thread, source, "kkt");
+}
+
+function contextualReply(thread: Msg[], source: Msg, channel: "ig" | "kkt"): Text {
   const ordered = sortMessages(thread);
   const index = ordered.findIndex((m) => m.id === source.id);
-  const recent = ordered
-    .slice(0, index < 0 ? ordered.length : index)
-    .filter((m) => m.type === "text" || m.type === "image")
-    .slice(-16);
+  const history = ordered.slice(0, index < 0 ? ordered.length : index)
+    .filter((m) => m.type === "text" || m.type === "image").slice(-18);
   const current = textOf(source).trim();
-  const previous = recent.filter((m) => m.sender === "them").at(-1);
-  const previousText = previous ? textOf(previous) : "";
+  const playerTurns = history.filter((m) => m.sender === "me");
+  const antonTurns = history.filter((m) => m.sender === "them");
+  const lastAnton = antonTurns.at(-1);
+  const lastAntonText = lastAnton ? textOf(lastAnton) : "";
+  const lastPlayer = playerTurns.at(-1);
+  const lastPlayerText = lastPlayer ? textOf(lastPlayer) : "";
   const seed = source.id || current;
-  const food = /먹|밥|식사|吃|饭|饿|\beat\b|eaten|dinner|lunch|hungry|food/i;
-  const music = /연습|베이스|첼로|음악|노래|练|贝斯|大提琴|音乐|歌|practice|practicing|bass|cello|music|song/i;
-  const tired = /피곤|힘들|지쳤|累|疲惫|tired|exhausted|rough day/i;
-  const plan = /만나|목요일|약속|정문|见面|周四|约好|正门|meet|Thursday|main gate/i;
-  const acknowledgment = /^(好[的呀啊吧]?|嗯+|知道了|行|可以|ok(ay)?|yes|sure|got it|응+|네|알겠어|좋아)[.!。！\s]*$/i;
+  const priorReplies = antonTurns.slice(-4).map(textOf).join(" ");
+  const fresh = <T,>(items: T[], signatures: RegExp[]): T[] => {
+    const filtered = items.filter((_, i) => !signatures[i] || !signatures[i]!.test(priorReplies));
+    return filtered.length ? filtered : items;
+  };
 
   if (source.type === "image") return choose([
-    answer("오 사진ㅋㅋ 이거 어디야?", "哦照片哈哈，这是哪里？", "Oh, a photo haha. Where's this?"),
-    answer("이거 분위기 좋다. 직접 찍은 거야?", "这张氛围不错，是你拍的吗？", "This has a nice vibe. Did you take it?"),
-    answer("ㅋㅋ 갑자기 사진 보내네. 뭐 보여주고 싶었어?", "哈哈突然发照片，是想给我看什么？", "A photo out of nowhere haha. What did you want to show me?"),
+    answer("오 이거 언제 찍었어ㅋㅋ", "哦，这是什么时候拍的ㅋㅋ", "Oh, when did you take this? haha"),
+    answer("사진 보니까 나도 거기 가고 싶네", "看了照片我也想去那里了", "This makes me want to go there too"),
   ], seed);
 
-  if (contains(current, tired)) return choose([
-    answer("오늘 좀 빡셌나 보네. 무슨 일 있었어?", "今天好像挺不容易的，发生什么了？", "Sounds like it's been a rough day. What happened?"),
-    answer("에고 고생했네. 지금은 좀 괜찮아?", "哎，辛苦了。现在好一点了吗？", "Ah, that's a lot. Feeling a bit better now?"),
-    answer("그럴 땐 아무것도 하지 말고 좀 쉬어ㅋㅋ", "这种时候就先什么都别管，休息一下吧哈哈", "Then don't worry about anything for a bit. Just rest haha"),
-  ], seed);
-
-  if (/^(哈+|ㅎ+|ㅋ+|lol|lmao|haha+|😂+)[!。\s]*$/i.test(current)) {
-    if (contains(previousText, /ㅋㅋ|lol|哈哈|웃|funny/i)) {
-      return answer("ㅋㅋㅋㅋ 그러니까", "哈哈哈哈就是啊", "Lmao exactly");
-    }
+  // Answer the question Anton actually asked, instead of restarting the topic.
+  if (contains(lastAntonText, /무슨 일|发生什么|what happened|괜찮아\?/i) && contains(current, tired)) {
     return choose([
-      answer("왜 웃어ㅋㅋ 나도 궁금하잖아", "笑什么啦哈哈，我也好奇了", "What's so funny haha now I'm curious"),
-      answer("ㅋㅋㅋ 아 진짜", "哈哈哈，真的服了", "Hahaha, seriously"),
-      answer("형 웃는 거 여기까지 들리는 것 같아ㅋㅋ", "感觉隔着屏幕都听到哥在笑了哈哈", "I can practically hear you laughing through the screen haha"),
+      answer("아 그랬구나. 그건 형 입장에서도 신경 쓰였겠다", "啊，原来是这样。站在哥的角度，确实会很在意吧", "Ah, I see. I can understand why that got to you"),
+      answer("그 얘기 들으니까 왜 힘들었는지 알 것 같아. 지금은 좀 풀렸어?", "听你这么说，我大概明白为什么这么累了。现在好些了吗？", "Hearing that, I get why it was tiring. Has it eased up now?"),
     ], seed);
   }
-
-  if (acknowledgment.test(current)) {
-    if (contains(previousText, plan)) return answer("ㅇㅋ 그때 봐ㅋㅋ", "好，那到时候见哈哈", "Okay, see you then haha");
-    if (contains(previousText, /잘 자|sleep|bed|晚安|睡/i)) return answer("응 형도 잘 자", "嗯，哥也晚安", "You too, get some sleep");
-    if (contains(previousText, food)) return answer("ㅋㅋ 그래 꼭 챙겨 먹어", "哈哈好，记得吃饭", "Haha, okay. Make sure you eat");
-    if (contains(previousText, tired)) return answer("응 푹 쉬어", "嗯，好好休息", "Yeah, get some proper rest");
+  if (contains(lastAntonText, /뭐 먹|吃什么|what.*eat/i) && contains(current, food)) {
     return choose([
-      answer("ㅇㅋㅋㅋ", "好哈哈", "Okay haha"),
-      answer("웅 알겠어", "嗯嗯知道啦", "Yeah, got it"),
-      answer("그래그래", "好啦好啦", "Alright, alright"),
+      answer("ㅋㅋ 그거 괜찮겠다. 나도 다음에 먹어봐야지", "哈哈，那个听起来不错，我下次也去试试", "Haha, that sounds good. I should try it next time"),
+      answer("거기 맛있어? 사진 보니까 괜찮아 보이던데", "那家好吃吗？看照片感觉还不错", "Is it good there? It looked pretty decent in the photo"),
     ], seed);
   }
+  if (contains(lastAntonText, /어디|장소|where/i) && contains(current, /집|학교|카페|圣水|学校|家|cafe|home|campus/i)) {
+    return answer("아 거기구나ㅋㅋ 나도 위치 알아. 거기 분위기 괜찮지", "啊，原来是那里哈哈。我知道那个地方，氛围不错", "Oh, that place haha. I know it. The atmosphere's nice there");
+  }
+
+  if (contains(current, tired)) return choose(fresh([
+    answer("오늘 무슨 일 있었어? 평소보다 좀 지쳐 보이네", "今天发生什么了吗？感觉你比平时累一点", "Did something happen today? You sound more tired than usual"),
+    answer("아이고… 오늘은 좀 쉬어야겠다. 누구 때문에 그런 거야?", "哎……今天得好好休息了。是遇到什么事了吗？", "Ah… sounds like you need a break. Was it something that happened?"),
+    answer("오늘 꽤 길었나 보네ㅋㅋ 지금은 집이야?", "今天好像过得挺漫长的ㅋㅋ 现在到家了吗？", "Sounds like a long day haha. Are you home now?"),
+  ], [ /무슨 일|发生什么|what happened/i, /쉬어|休息|rest/i, /집이야|到家|home/i ]), seed);
 
   if (contains(current, food)) {
-    if (/먹었|吃.*了吗|吃过|eaten|had.*dinner/i.test(current)) {
-      return choose([
-        answer("아직ㅋㅋ 뭐 먹을지 고민 중이야", "还没哈哈，正在想吃什么", "Not yet haha. Still figuring out what to eat"),
-        answer("응 먹었어. 형은? 뭐 먹었는데?", "嗯，吃过了。哥呢，吃了什么？", "Yeah, I did. What about you? What did you have?"),
-        answer("방금 먹고 왔어ㅋㅋ 형은 이제 먹어?", "刚吃完回来哈哈。哥现在才去吃吗？", "Just ate haha. Are you going to eat now?"),
-      ], seed);
-    }
-    if (/배고|饿|hungry/i.test(current)) return choose([
-      answer("뭐라도 먹어ㅋㅋ 나중에 더 배고파져", "先随便吃点吧哈哈，不然等下更饿", "Get something in you haha. You'll only get hungrier later"),
-      answer("나도 갑자기 배고파졌어", "你这么一说我也突然饿了", "Now you've made me hungry too"),
-    ], seed);
-    if (/뭐.*연|什么.*吃|what.*eat/i.test(current)) return answer("아직 못 정했어. 형 추천해 봐ㅋㅋ", "还没想好，哥推荐一个哈哈", "Haven't decided. Give me a recommendation haha");
+    if (/먹었|吃.*了吗|吃过|eaten|had.*dinner/i.test(current)) return choose(fresh([
+      answer("아직 못 먹었어. 뭐 먹을지 정하는 게 제일 귀찮아ㅋㅋ", "还没吃。最麻烦的就是想吃什么ㅋㅋ", "Not yet. Deciding what to eat is the hardest part haha"),
+      answer("응 먹었어. 형은 뭐 먹었어?", "嗯，吃过了。哥吃了什么？", "Yeah, I did. What did you have?"),
+      answer("방금 먹었지. 오늘은 그냥 간단하게 먹었어", "刚吃完，今天就简单吃了点", "Just ate. Kept it simple today"),
+    ], [ /아직 못 먹|还没吃|not yet/i, /뭐 먹었|吃了什么|what did you have/i, /방금 먹|刚吃完|just ate/i ]), seed);
+    if (/배고|饿|hungry/i.test(current)) return answer("그럼 뭐라도 먹어ㅋㅋ 나중에 배고프다고 하지 말고", "那就先吃点东西ㅋㅋ 别等下又说饿", "Then grab something haha. Don't tell me you're starving later");
     return choose([
-      answer("아 맞다 밥 먹어야 되는데ㅋㅋ", "啊对，我也该吃饭了哈哈", "Oh right, I should eat too haha"),
-      answer("형은 먹었어? 난 아직 고민 중", "哥吃了吗？我还在纠结吃什么", "Have you eaten? I'm still deciding"),
+      answer("나도 뭐 좀 먹어야겠다. 갑자기 생각났어ㅋㅋ", "我也该去吃点东西了，你这么一说我才想起来ㅋㅋ", "I should get something too. You just reminded me haha"),
+      answer("오늘은 뭐 먹었는데? 맛있는 거 먹었어?", "今天吃了什么？有吃到好吃的吗？", "What did you have today? Anything good?"),
     ], seed);
   }
 
-  if (contains(current, music)) {
-    if (/뭐.*연습|练什么|what.*(practice|practicing)/i.test(current)) return choose([
-      answer("베이스 만지고 있었어. 아직 제대로 된 건 아니고ㅋㅋ", "刚在弄贝斯，还没练出什么成果哈哈", "Was messing around on the bass. Nothing decent yet haha"),
-      answer("오늘은 베이스. 같은 부분만 계속 치는 중이야", "今天练贝斯，一直在重复同一段", "Bass today. Been going over the same bit again and again"),
+  if (contains(current, music)) return choose([
+    answer("그거 완성되면 들려줘. 전에 말한 것도 아직 기억하고 있어ㅋㅋ", "弄好了记得给我听。我还记得你之前说的那个ㅋㅋ", "Let me hear it when it's ready. I still remember the one you mentioned before haha"),
+    answer("요즘 음악 얘기 자주 하네ㅋㅋ 새로 꽂힌 거 있어?", "最近经常聊音乐嘛ㅋㅋ 最近又迷上什么了？", "We've been talking about music a lot lately haha. Found anything new?"),
+    answer("아 그 곡? 나도 다시 들어봐야겠다", "啊那首吗？我也得再听一遍", "Oh, that track? I should give it another listen"),
+  ], seed);
+
+  if (contains(current, school)) {
+    if (/끝났|마쳤|finished|done|끝남/i.test(current)) return choose([
+      answer("드디어 끝났네ㅋㅋ 이제 좀 살겠다", "终于结束了ㅋㅋ 这下能喘口气了", "Finally done haha. You can breathe now"),
+      answer("수고했어. 오늘은 그 얘기 그만하고 쉬자ㅋㅋ", "辛苦了。今天先别想那些了，休息吧ㅋㅋ", "Good job. No more thinking about it today, get some rest haha"),
     ], seed);
-    if (/노래.*뭐|무슨 노래|什么歌|what.*song/i.test(current)) return answer("아직 딱 정한 건 없어. 몇 개 들어보는 중ㅋㅋ", "还没决定具体哪首，正在听几首比较一下哈哈", "Haven't settled on one yet. Listening to a few haha");
     return choose([
-      answer("그치ㅋㅋ 요즘 이런 분위기 좋더라", "对吧哈哈，最近挺喜欢这种感觉的", "Right? I've been into this kind of sound lately"),
-      answer("나중에 같이 들을래? 이어폰 한 쪽 줄게ㅋㅋ", "下次一起听？分你一只耳机哈哈", "Want to listen together sometime? I'll share an earbud haha"),
-      answer("그 부분 계속 맴돌아. 자꾸 생각나", "那一段一直在脑子里转，停不下来", "That part's been stuck in my head"),
+      answer("아직 그거 하고 있어? 생각보다 오래 걸리네", "还在弄那个吗？比想象中花时间啊", "Still working on that? Taking longer than expected"),
+      answer("학교 일은 끝이 없네 진짜ㅋㅋ", "学校的事情真的没完没了ㅋㅋ", "Uni stuff never ends, honestly haha"),
     ], seed);
   }
 
-  if (/잘 자|졸려|자러|晚安|睡觉|困|good night|sleep|bed/i.test(current)) {
-    return choose([
-      answer("벌써 자게?ㅋㅋ 잘 자 형", "这么快就睡啦？哈哈，晚安哥", "Heading to bed already? haha. Night, hyung"),
-      answer("응 오늘은 일찍 자자. 잘 자", "嗯，今天早点睡吧。晚安", "Yeah, let's get an early night. Sleep well"),
-    ], seed);
-  }
-
-  if (contains(current, plan)) {
-    const agreed = recent.some((m) => m.sender === "them" && contains(textOf(m), plan));
-    if (agreed) return choose([
-      answer("응 기억하고 있어ㅋㅋ 그날 보자", "嗯，记着呢哈哈。那天见", "Yeah, I remember haha. See you then"),
-      answer("좋아. 시간 가까워지면 다시 얘기하자", "好啊，快到时间了再确认一下", "Sounds good. We'll check in closer to the day"),
-    ], seed);
-    return choose([
-      answer("나 시간 괜찮아. 형은 언제가 편해?", "我有空，哥什么时候方便？", "I'm free. When works for you?"),
-      answer("오 어디 가려고?ㅋㅋ", "哦，打算去哪儿？哈哈", "Oh, where are we thinking of going? haha"),
-    ], seed);
-  }
+  if (contains(current, plan)) return choose([
+    answer("좋아ㅋㅋ 그날은 나도 시간 비워둘게", "好啊ㅋㅋ 那天我也把时间空出来", "Sounds good haha. I'll keep that time free"),
+    answer("오 진짜 가는 거야? 그럼 뭐 할지 생각해보자", "哦，真的要去吗？那想想我们到时候做什么", "Oh, we're actually going? Let's think what we should do"),
+  ], seed);
 
   if (/뭐해|在干嘛|what.*doing/i.test(current)) return choose([
-    answer("그냥 누워 있어ㅋㅋ 형은?", "在躺着哈哈，哥呢？", "Just lying around haha. You?"),
-    answer("과제 조금 하다가 쉬는 중. 형 뭐 해?", "刚写了会儿作业，现在休息。哥在干嘛？", "Was doing a bit of coursework, taking a break now. What about you?"),
-    answer("유튜브 보고 있었어. 별거 안 해ㅋㅋ", "刚在看 YouTube，没干嘛哈哈", "Was watching YouTube. Nothing much haha"),
-    answer("방금 씻고 나왔어", "刚洗完澡出来", "Just got out of the shower"),
+    answer("그냥 집에서 쉬는 중. 아까 기타 좀 치다가ㅋㅋ", "在家休息。刚才弹了一会儿吉他ㅋㅋ", "Just chilling at home. Was playing guitar a bit earlier haha"),
+    answer("유튜브 보다가 형 메시지 봤어ㅋㅋ", "刚在看 YouTube，看到哥发消息了ㅋㅋ", "Was watching YouTube and saw your message haha"),
+    answer("별거 안 해. 씻고 나와서 누워 있어", "没干嘛，洗完澡出来躺着", "Nothing much. Just showered and lying down"),
   ], seed);
 
   if (/안녕|你好|\bhello\b|\bhey\b|\bhi\b/i.test(current)) return choose([
-    answer("형 안 자고 뭐 해ㅋㅋ", "哥还没睡啊，在干嘛哈哈", "You're still up? What are you doing haha"),
-    answer("오 형ㅋㅋ 무슨 일이야", "哦，哥哈哈，怎么啦", "Oh, hyung haha. What's up?"),
-    answer("왔어? 나 방금 폰 보고 있었어", "来啦？我刚好在看手机", "Hey, you're here. I was just on my phone"),
+    answer("형 아직 안 잤네ㅋㅋ", "哥还没睡啊ㅋㅋ", "You're still awake haha"),
+    answer("오 형. 오늘은 뭐 했어?", "哦哥，今天干嘛了？", "Hey, hyung. What did you get up to today?"),
   ], seed);
 
-  if (/[?？]|왜|어디|언제|뭐|为什么|哪里|什么时候|什么|\b(why|where|when|what|how)\b/i.test(current)) {
+  if (/^(哈+|ㅎ+|ㅋ+|lol|lmao|haha+|😂+)[!。\s]*$/i.test(current)) return choose([
+    answer("ㅋㅋㅋㅋ 왜 이렇게 웃겨", "哈哈哈哈怎么这么好笑", "Hahaha, why is that so funny"),
+    answer("아 형 진짜ㅋㅋ", "啊哥真的ㅋㅋ", "Hyung, seriously haha"),
+  ], seed);
+
+  if (/잘 자|졸려|자러|晚安|睡觉|困|good night|sleep|bed/i.test(current)) return answer("응 형도 잘 자. 내일 봐ㅋㅋ", "嗯，哥也早点睡。明天见ㅋㅋ", "You too, get some sleep. See you tomorrow haha");
+
+  if (/^(好[的呀啊吧]?|嗯+|知道了|行|可以|ok(ay)?|yes|sure|got it|응+|네|알겠어|좋아)[.!。！\s]*$/i.test(current)) {
     return choose([
-      answer("음 잠깐만ㅋㅋ 무슨 뜻인지 알 것 같기도 하고", "嗯等一下哈哈，我好像懂你的意思了", "Wait a sec haha. I think I get what you mean"),
-      answer("아 그 얘기구나ㅋㅋ", "啊，原来你说的是那个哈哈", "Ohh, that's what you mean haha"),
-      answer("그건 좀 더 얘기해 봐. 궁금한데", "这个再说说，我有点好奇", "Tell me a bit more about that. I'm curious"),
+      answer("ㅇㅋㅋㅋ", "好ㅋㅋ", "Okay haha"),
+      answer("웅 그럼 그렇게 하자", "嗯，那就这样吧", "Yeah, let's do that"),
+      answer("ㅋㅋ 알았어", "哈哈知道啦", "Haha, got it"),
     ], seed);
   }
 
-  return choose([
-    answer("아 진짜?ㅋㅋ 그건 좀 의외다", "啊真的？哈哈，这倒有点意外", "Oh really? haha. Didn't expect that"),
-    answer("ㅋㅋ 그래서 어떻게 됐어?", "哈哈，然后呢？后来怎么样了？", "Haha, what happened after that?"),
-    answer("아 뭔지 알 것 같아", "啊，我好像懂你的意思", "Ah, I think I know what you mean"),
-    answer("그 얘기 처음 듣는데ㅋㅋ", "这事我还是第一次听说哈哈", "That's the first I've heard of that haha"),
-    answer("음 그건 좀 궁금하다", "嗯，这个我倒有点好奇", "Hmm, now I'm curious about that"),
-  ], seed);
+  // Avoid recycling the same generic line when the player continues a topic.
+  const generic = [
+    answer("아 그랬어? 그 뒤에는 어떻게 됐는데ㅋㅋ", "啊这样啊？那之后呢ㅋㅋ", "Oh really? What happened after that? haha"),
+    answer("ㅋㅋ 형 얘기 듣다 보니까 시간 금방 가네", "哈哈，听哥说话时间过得真快", "Time goes by quickly when I'm listening to you haha"),
+    answer("그건 좀 더 듣고 싶은데. 무슨 일이 있었어?", "这个我还想多听一点，后来发生什么了？", "I want to hear more about that. What happened next?"),
+    answer("아 그럴 수도 있겠다. 형은 어떻게 생각해?", "啊，也有这种可能。哥是怎么想的？", "Yeah, I can see that. What do you think?"),
+    answer("잠깐ㅋㅋ 그 얘기 재밌는데 조금만 더 해봐", "等一下ㅋㅋ 这个话题挺有意思的，再说一点", "Wait haha, that's interesting. Tell me a bit more"),
+  ];
+  const recentGeneric = antonTurns.slice(-5).map(textOf).join(" ");
+  const alternatives = generic.filter((_, i) => ![
+    /그 뒤에는|之后呢|what happened after/i,
+    /시간 금방|时间过得|time goes/i,
+    /더 듣고|多听|hear more/i,
+    /어떻게 생각|怎么想|what do you think/i,
+    /조금만 더|再说一点|bit more/i,
+  ][i]?.test(recentGeneric));
+  return choose(alternatives.length ? alternatives : generic, seed);
 }
