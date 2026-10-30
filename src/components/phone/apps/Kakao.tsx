@@ -36,46 +36,40 @@ const fmt12 = (t: string, lang: AppProps["lang"]) => {
 export default function Kakao({ lang, onHome, initialChat }: AppProps & { initialChat?: string | null }) {
   const [contacts, setContacts] = usePersist<Contact[]>("kkt-contacts-v1", CONTACTS);
   const [msgs, setMsgs] = usePersist<Msg[]>("kkt-msgs-v1", MESSAGES, completeTranslations);
-  // Add newly authored story records to existing saves without replacing player edits.
-  // This is an additive migration: existing messages, photos, and other app data stay intact.
-  useEffect(() => {
+  // Merge bundled story additions after both local and shared saves hydrate.
+  // Shared snapshots can arrive after mount, so rerun only on that explicit refresh.
+  const mergeStorySeeds = () => {
     setContacts((current) => {
       const byId = new Map(current.map((contact) => [contact.id, contact]));
       for (const seed of CONTACTS) {
         const existing = byId.get(seed.id);
         if (!existing) byId.set(seed.id, seed);
-        else if (seed.id === "anton") {
-          // Keep the requested Anton display name and pinned position,
-          // while preserving all other existing contact fields.
-          byId.set(seed.id, { ...existing, name: seed.name, pinned: true });
-        }
+        else if (seed.id === "anton") byId.set(seed.id, { ...existing, name: seed.name, pinned: true });
       }
       return [...byId.values()];
     });
     setMsgs((current) => {
       const familySeed = MESSAGES.filter((message) => message.contactId === "group-family");
       const familyIds = new Set(familySeed.map((message) => message.id));
-      // Replace only the old built-in family-chat seed rows; keep player-authored/live rows.
-      const kept = current.filter((message) => message.contactId !== "group-family" || (!/^m\\d+$/.test(message.id) && !familyIds.has(message.id)));
+      const kept = current.filter((message) => message.contactId !== "group-family" || (!/^m\d+$/.test(message.id) && !familyIds.has(message.id)));
       const existingIds = new Set(kept.map((message) => message.id));
       const additions = MESSAGES.filter((message) => message.contactId !== "group-family" && !existingIds.has(message.id));
       const merged = [...kept, ...additions, ...familySeed];
-
-      // Deduplicate only identical messages in the individual parent chats.
-      // Different edits, wording, dates, times, and player-authored messages remain intact.
       const seenParentMessages = new Set<string>();
       return merged.filter((message) => {
         if (message.contactId !== "mom" && message.contactId !== "dad") return true;
-        const signature = JSON.stringify([
-          message.contactId, message.date, message.time, message.sender,
-          message.type, message.ko, message.zh, message.en ?? "", message.image ?? "",
-        ]);
+        const signature = JSON.stringify([message.contactId, message.date, message.time, message.sender, message.type, message.ko, message.zh, message.en ?? "", message.image ?? ""]);
         if (seenParentMessages.has(signature)) return false;
         seenParentMessages.add(signature);
         return true;
       });
-    });;
-  // Run once after persisted state has hydrated; the setters merge against the latest stored value.
+    });
+  };
+  useEffect(() => {
+    mergeStorySeeds();
+    window.addEventListener("phone-shared-refresh", mergeStorySeeds);
+    return () => window.removeEventListener("phone-shared-refresh", mergeStorySeeds);
+  // The migration intentionally uses the latest persisted value through usePersist setters.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [openId, setOpenId] = useState<string | null>(initialChat ?? null);
