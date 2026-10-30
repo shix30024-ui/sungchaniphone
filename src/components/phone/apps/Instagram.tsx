@@ -13,6 +13,7 @@ import { STORY_DATE } from "../chronology";
 import { BackBtn, EditBar, Field, ImageField, TopBar, resolveImg } from "../ui";
 import { useOwner } from "../owner";
 import { withLocalInteraction } from "../shared-state";
+import { instagramCaption, editInstagramCaption } from "../instagram-language";
 
 export default function Instagram({ lang, onHome }: AppProps) {
   const owner = useOwner();
@@ -76,7 +77,7 @@ export default function Instagram({ lang, onHome }: AppProps) {
             <Button variant="ghost" size="icon" aria-label={label(lang, "delete")} onClick={() => { if (!confirmDelete(lang)) return; const images = postImages(draft).filter((_, index) => index !== i); set({ images, image: images[0] ?? "" }); }}><Trash2 /></Button>
           </div>)}
           <Button variant="secondary" onClick={() => set({ images: [...postImages(draft), ""] })}><Plus />{label(lang, "photo")}</Button>
-          <Field label={label(lang, "caption")}><textarea className="sheet-input" rows={3} value={draft.caption} onChange={(e) => set({ caption: e.target.value })} /></Field>
+          <Field label={label(lang, "caption")}><textarea className="sheet-input" rows={3} value={instagramCaption(draft, lang)} onChange={(e) => setDraft(editInstagramCaption(draft, lang, e.target.value))} /></Field>
           <div className="flex gap-2">
             <Field label={tr(lang, { en: "Date", ko: "날짜", zh: "发布时间" })}><input type="date" className="sheet-input" value={draft.date} onChange={(e) => set({ date: e.target.value })} /></Field>
             <Field label={label(lang, "time")}><input type="time" className="sheet-input" value={draft.time ?? ""} onChange={(e) => set({ time: e.target.value })} /></Field>
@@ -126,7 +127,7 @@ export default function Instagram({ lang, onHome }: AppProps) {
   if (post && commentsOpen) return <div className="app-page bg-background">
     <TopBar title={tr(lang, { en: "Comments", ko: "댓글", zh: "评论" })} left={<BackBtn onClick={() => { setCommentsOpen(false); setCommentDraft(null); }} />} />
     <div className="flex-1 overflow-y-auto p-3 space-y-4">
-      <p className="border-b pb-3 text-sm"><b>{postAuthor.username}</b> {post.caption}</p>
+      <p className="border-b pb-3 text-sm"><b>{postAuthor.username}</b> {instagramCaption(post, lang)}</p>
       {post.comments.map((c) => <div key={c.id} className="flex gap-2 items-start"><span className="ig-comment-avatar"><User size={18} /></span><div className="flex-1 min-w-0 text-sm"><b>{c.user}</b><p className="whitespace-pre-wrap break-words">{c.text}</p>{c.date && <span className="text-xs text-muted-foreground">{c.date} {c.time}</span>}<div className="flex gap-3">{owner && <Button variant="ghost" size="sm" onClick={() => setCommentDraft({ id: c.id, text: c.text })}>{label(lang, "edit")}</Button>}<Button variant="ghost" size="sm" onClick={() => setComment(`@${c.user} `)}>{label(lang, "reply")}</Button>{owner && <Button variant="ghost" size="icon" aria-label={label(lang, "delete")} onClick={() => { if (confirmDelete(lang)) updatePost(post.id, (p) => ({ ...p, comments: p.comments.filter((x) => x.id !== c.id) })); }}><Trash2 size={14} /></Button>}</div></div></div>)}
       {commentDraft && <div className="space-y-2"><input className="sheet-input" aria-label={tr(lang, { en: "Edit comment", ko: "댓글 수정", zh: "编辑评论" })} value={commentDraft.text} onChange={(e) => setCommentDraft({ ...commentDraft, text: e.target.value })} /><Button onClick={() => { updatePost(post.id, (p) => ({ ...p, comments: p.comments.map((c) => c.id === commentDraft.id ? { ...c, text: commentDraft.text } : c) })); setCommentDraft(null); }}>{S}</Button><Button variant="ghost" onClick={() => setCommentDraft(null)}>{C}</Button></div>}
     </div>
@@ -149,7 +150,7 @@ export default function Instagram({ lang, onHome }: AppProps) {
           <div className="px-3 py-2 space-y-1.5 text-sm">
             {interactions(post)}
             <b>{post.likes.toLocaleString()} {tr(lang, { en: "likes", ko: "좋아요", zh: "次赞" })}</b>
-            <p><b>{postAuthor.username}</b> {post.caption}</p>
+            <p><b>{postAuthor.username}</b> {instagramCaption(post, lang)}</p>
             <Button variant="ghost" className="px-0 h-auto text-muted-foreground" onClick={() => setCommentsOpen(true)}>{tr(lang, { en: `View all ${post.comments.length} comments`, ko: `댓글 ${post.comments.length}개 모두 보기`, zh: `查看全部 ${post.comments.length} 条评论` })}</Button>
             {post.comments.slice(0, 2).map((c) => <p key={c.id}><b>{c.user}</b> {c.text}</p>)}
             <p className="text-xs text-muted-foreground">{post.date.replaceAll("-", ".")} {post.time}</p>

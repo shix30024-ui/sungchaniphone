@@ -4,6 +4,14 @@ import { localClock } from "@/components/phone/clock";
 import type { Msg } from "@/components/phone/story";
 const msg = (id: string, order: number, text: string, contactId = "anton"): Msg => ({ id, order, originalText: text, contactId, sender: "me", type: "text", date: "2026-10-26", time: "20:26", ko: "", zh: "" });
 describe("Context and player clock", () => {
+  it("keeps Anton visible order and prior session answers despite earlier device times", () => {
+    const rows = [msg("fixed", 90, "哥今天在忙什么？"), msg("player", 90, "我吃了番茄面"), { ...msg("ai", 90, "听起来不错"), sender: "them" as const }, msg("followup", 90, "我刚才吃的是什么？")];
+    rows[0].time = "23:59";
+    const source = rows[3];
+    const before = JSON.stringify(rows);
+    expect(buildReplyContext(rows, source, true).history.map((m) => m.text)).toEqual(["哥今天在忙什么？", "我吃了番茄面", "听起来不错", "我刚才吃的是什么？"]);
+    expect(JSON.stringify(rows)).toBe(before);
+  });
   it("reads preceding statements and source but never future or other-contact messages", () => {
     const source = msg("source", 2, "好");
     expect(buildReplyContext([msg("prior", 1, "在正门见"), source, msg("future", 3, "future secret"), msg("other", 0, "private", "mom")], source).history.map((m) => m.text)).toEqual(["在正门见", "好"]);
