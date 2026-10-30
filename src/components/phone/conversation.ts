@@ -31,7 +31,7 @@ export function sendChat(channel: "kkt" | "ig", contactId: string, text: string,
   return msg;
 }
 
-export async function tickReplies(now = Date.now(), activeKkt: string | null = null, generate: Generator = (context) => generatePhoneReply({ data: context })) {
+export async function tickReplies(now = Date.now(), activeKkt: string | null = null, generate: Generator = (context) => generatePhoneReply(context)) {
   if (busy) return null;
   busy = true;
   try {
