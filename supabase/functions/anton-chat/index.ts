@@ -3,7 +3,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 const ALLOWED_ORIGIN = "https://sungchaniphone.lovable.app";
 const corsHeaders = {
   "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-chat-secret",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Vary": "Origin",
 };
@@ -17,6 +17,32 @@ function json(body: unknown, status = 200, extraHeaders: Record<string, string> 
   });
 }
 
+type RateEntry = { minute: number[]; hour: number[] };
+const rateByIp = new Map<string, RateEntry>();
+
+function allowRequest(ip: string, now = Date.now()): boolean {
+  const minuteAgo = now - 60_000;
+  const hourAgo = now - 60 * 60_000;
+  const entry = rateByIp.get(ip) ?? { minute: [], hour: [] };
+  entry.minute = entry.minute.filter((time) => time > minuteAgo);
+  entry.hour = entry.hour.filter((time) => time > hourAgo);
+  if (entry.minute.length >= 10 || entry.hour.length >= 50) {
+    rateByIp.set(ip, entry);
+    return false;
+  }
+  entry.minute.push(now);
+  entry.hour.push(now);
+  rateByIp.set(ip, entry);
+
+  // Keep the isolate-local map bounded.
+  if (rateByIp.size > 2000) {
+    for (const [key, value] of rateByIp) {
+      if (!value.hour.length || value.hour[value.hour.length - 1] <= hourAgo) rateByIp.delete(key);
+    }
+  }
+  return true;
+}
+
 Deno.serve(async (req) => {
   const origin = req.headers.get("origin");
   if (origin && origin !== ALLOWED_ORIGIN) return json({ error: "Origin not allowed." }, 403);
@@ -26,10 +52,14 @@ Deno.serve(async (req) => {
   }
   if (req.method !== "POST") return json({ error: "Method not allowed." }, 405);
 
-  const expectedSecret = Deno.env.get("ANTON_CHAT_SHARED_SECRET");
-  const suppliedSecret = req.headers.get("x-chat-secret");
-  if (!expectedSecret || !suppliedSecret || suppliedSecret !== expectedSecret) {
-    return json({ error: "Unauthorized." }, 401);
+  // This endpoint is intentionally available to visitors without accounts.
+  // CORS is a browser restriction, not authentication; apply a best-effort
+  // per-IP throttle at the edge. The limit is isolate-local, not global.
+  const ip = req.headers.get("cf-connecting-ip") ?? "unknown";
+  if (!allowRequest(ip)) {
+    return json({ error: "Too many messages. Please wait a little before trying again." }, 429, {
+      "Retry-After": "60",
+    });
   }
 
   try {
