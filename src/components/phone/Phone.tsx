@@ -1,23 +1,26 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import wallpaper from "@/assets/wallpaper.jpg.asset.json";
 import { type App, DEFAULT_APPS, SETTINGS_ICON, PASSCODE, loadApps, saveApps } from "./apps";
 import { LANGS, type Lang, fmtDate, fmtTime, t } from "./i18n";
-import Kakao from "./apps/Kakao";
 import { PhotoImg } from "./photo-db";
-import Instagram from "./apps/Instagram";
-import XApp from "./apps/XApp";
-import Photos from "./apps/Photos";
-import Notes from "./apps/Notes";
-import Safari from "./apps/Safari";
-import Messages from "./apps/Messages";
-import Camera from "./apps/Camera";
 import HomeWidgets from "./HomeWidgets";
 import { useDeviceNow } from "./clock";
-import PhoneApp from "./apps/PhoneApp";
-import Calendar from "./apps/Calendar";
-import Music from "./apps/Music";
-import Weather from "./apps/Weather";
-import Settings from "./apps/Settings";
+
+// Load each app only when the user opens it, rather than downloading every app
+// while the lock screen and home screen are being displayed.
+const Kakao = lazy(() => import("./apps/Kakao"));
+const Instagram = lazy(() => import("./apps/Instagram"));
+const XApp = lazy(() => import("./apps/XApp"));
+const Photos = lazy(() => import("./apps/Photos"));
+const Notes = lazy(() => import("./apps/Notes"));
+const Safari = lazy(() => import("./apps/Safari"));
+const Messages = lazy(() => import("./apps/Messages"));
+const Camera = lazy(() => import("./apps/Camera"));
+const PhoneApp = lazy(() => import("./apps/PhoneApp"));
+const Calendar = lazy(() => import("./apps/Calendar"));
+const Music = lazy(() => import("./apps/Music"));
+const Weather = lazy(() => import("./apps/Weather"));
+const Settings = lazy(() => import("./apps/Settings"));
 import { backupPhoneData, readStored } from "./store";
 import { useOwner } from "./owner";
 import { label as appLabel } from "./labels";
@@ -232,7 +235,7 @@ function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initia
     : app.id === "weather" ? <Weather lang={lang} onHome={onClose} />
     : app.id === "phone" ? <PhoneApp lang={lang} onHome={onClose} />
     : app.id === "settings" ? <Settings lang={lang} setLang={setLang} live={live} setLive={setLive} apps={apps} onHome={onClose} onLock={onLock} onEditApps={onEditApps} /> : null;
-  if (builtIn) return <div className="phone-app-container app-open">{builtIn}</div>;
+  if (builtIn) return <div className="phone-app-container app-open"><Suspense fallback={<div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading…</div>}>{builtIn}</Suspense></div>;
   return (
     <div className="absolute inset-0 z-20 bg-background text-foreground flex flex-col app-open">
       <div className="pt-12 px-4 pb-3 flex items-center gap-3 border-b">
