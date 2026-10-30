@@ -17,7 +17,14 @@ type ReplyResult = { ok: true; reply: { ko: string; zh: string; en: string }; ru
 type Generator = (context: ReplyContext) => Promise<ReplyResult>;
 let busy = false;
 
-export function pendingReplies(): PendingReply[] { return readStored<PendingReply[]>(QUEUE_KEY, []); }
+// Remove obsolete failed Instagram jobs left by earlier API-based builds.
+// Keep all message history; only the stale queue entries are discarded.
+export function pendingReplies(): PendingReply[] {
+  const stored = readStored<PendingReply[]>(QUEUE_KEY, []);
+  const cleaned = stored.filter((item) => !(item.channel === "ig" && item.failed));
+  if (cleaned.length !== stored.length) updateStored<PendingReply[]>(QUEUE_KEY, [], () => cleaned);
+  return cleaned;
+}
 export function sendChat(channel: "kkt" | "ig", contactId: string, text: string, lang: Lang, now = Date.now(), image?: string) {
   // Defensive boundary: Anton player text must never reach storage or the AI queue.
   if (channel === "kkt" && contactId === "anton") return temporaryReply(text, lang, undefined, image).message;
@@ -27,7 +34,7 @@ export function sendChat(channel: "kkt" | "ig", contactId: string, text: string,
   const msg: Msg = { id: uid(), contactId, sender: "me", type: image ? "image" : "text", image: image ?? "", ko: lang === "ko" ? text : "", zh: lang === "zh" ? text : "", en: lang === "en" ? text : "", originalText: text, date: STORY_DATE, time: nextMessageTime(existing), order: Math.max(0, ...existing.map((m) => m.order)) + 1, read: false, createdAt: new Date(now).toISOString() };
   updateStored<Msg[]>(key, fallback, (rows) => [...rows, msg]);
   if (channel === "ig" || contactId === "anton") {
-    updateStored<PendingReply[]>(QUEUE_KEY, [], (q) => [...q, { channel, contactId, sourceId: msg.id, dueAt: now + 2400 + Math.min(text.length * 20, 1600) }]);
+    updateStored<PendingReply[]>(QUEUE_KEY, [], (q) => [...q.filter((item) => !(item.channel === "ig" && item.failed)), { channel, contactId, sourceId: msg.id, dueAt: now + 2400 + Math.min(text.length * 20, 1600) }]);
   }
   return msg;
 }
@@ -64,7 +71,8 @@ async function processReply(now: number, activeKkt: string | null, generate: Gen
     catch { result = { ok: false, status: 503, error: "AI reply connection interrupted. Your message is saved. / AI 回复连接中断，消息已保留。 / AI 연결이 끊겼습니다. 메시지는 저장됐습니다." }; }
   }
   if (!result.ok) {
-    updateStored<PendingReply[]>(QUEUE_KEY, [], (q) => q.map((p) => p.sourceId === item.sourceId || result.status === 402 || result.status === 403 ? { ...p, failed: true, error: result.error } : p));
+    // A failure belongs only to the job that actually called the API.
+    updateStored<PendingReply[]>(QUEUE_KEY, [], (q) => q.map((p) => p.sourceId === item.sourceId ? { ...p, failed: true, error: result.error } : p));
     window.dispatchEvent(new CustomEvent(REPLY_ERROR_EVENT, { detail: result.error }));
     return null;
   }
