@@ -11,7 +11,7 @@ import campus from "@/assets/story/campus.jpg";
 export const IMG: Record<string, string> = { football, hanriver, cinema, bbq, practice, cafe, moving, campus };
 
 /* ---------- KakaoTalk ---------- */
-export type MsgType = "text" | "image" | "system" | "date";
+export type MsgType = "text" | "image" | "music" | "system" | "date";
 export type Msg = {
   id: string; contactId: string; sender: "me" | "them"; type: MsgType;
   ko: string; zh: string; en?: string; date: string; time: string; image?: string | undefined; order: number;
@@ -162,7 +162,7 @@ export const MESSAGES: Msg[] = [
   ]),
   ...day("anton", "2026-10-24", [
     ["them", "형 이 노래 들어봐요", "哥听听这首歌", "08:16"],
-    ["them", "Lost Stars - Adam Levine", "Lost Stars - Adam Levine", "08:17"],
+    ["them", "Lost Stars · Adam Levine", "Lost Stars · Adam Levine", "08:17", "music"],
     ["me", "요즘 이런 스타일 좋아해?", "最近喜欢这种风格？", "08:24"],
     ["them", "yep", "yep", "08:26"],
     ["them", "첼로로 편곡해보고 싶어요ㅋㅋ", "想用大提琴改编哈哈", "08:27"],
