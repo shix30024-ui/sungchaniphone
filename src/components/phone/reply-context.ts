@@ -63,8 +63,8 @@ export function replyFromContext(thread: Msg[], source: Msg): Text {
     if (agreed) return answer("응, 아까 얘기한 약속 기억해. 변경되면 알려줘", "嗯，记得刚才说好的安排，有变化告诉我", "Yeah, I remember what we just agreed. Let me know if it changes");
     return answer("아직 시간은 안 정했지. 언제 생각하고 있어?", "时间还没定吧，你想着什么时候？", "We haven't settled a time yet. When were you thinking?");
   }
-  if (/뭐해|在干嘛|what.*doing/i.test(current)) return answer("지금 잠깐 쉬면서 형 메시지 보고 있어", "现在休息一会儿，在看哥的消息", "Taking a short break and reading your messages");
-  if (/안녕|你好|\bhello\b|\bhey\b|\bhi\b/i.test(current)) return answer("형 왔네. 나 지금 잠깐 쉬는 중", "哥来啦，我正在歇一会儿", "Hey hyung. Taking a little break");
+  if (/뭐해|在干嘛|what.*doing/i.test(current)) return answer("지금 잠깐 쉬는 중이야. 마침 형한테 연락 와서 좋네ㅋㅋ 형은 뭐 해?", "刚好在休息呢，正好收到哥的消息，还挺开心的哈哈。哥在干嘛？", "Just taking a little break. Nice timing, I was glad to see your message haha. What are you up to?");
+  if (/안녕|你好|\bhello\b|\bhey\b|\bhi\b/i.test(current)) return answer("형 왔네ㅋㅋ 연락 기다린 건 아닌데, 오니까 좋다. 뭐 해?", "哥来啦哈哈。倒也不是在等消息，不过你来了还是挺开心的。你在干嘛？", "There you are haha. Nice to hear from you. What are you doing?");
   if (/[?？]|왜|어디|언제|뭐|为什么|哪里|什么时候|什么|\b(why|where|when|what|how)\b/i.test(current)) return answer("그건 내가 아직 잘 모르겠어. 어느 얘기인지 조금만 더 알려줘", "这个我还不太清楚，能再说具体一点吗？", "I'm not sure about that yet. Can you tell me a little more specifically?");
-  return answer("응, 듣고 있어. 계속 얘기해도 돼", "嗯，我在听，可以接着说", "Yeah, I'm listening. You can keep going");
+  return answer("응, 듣고 있어. 형 얘기 더 해 줘. 나 이런 얘기 듣는 거 좋아해", "嗯，我在听。哥再多说一点吧，我挺喜欢听你讲这些的", "I'm listening. Tell me more, hyung. I like hearing you talk about these things.");
 }
