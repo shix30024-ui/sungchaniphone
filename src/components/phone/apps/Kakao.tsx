@@ -44,7 +44,11 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       for (const seed of CONTACTS) {
         const existing = byId.get(seed.id);
         if (!existing) byId.set(seed.id, seed);
-        // Existing contact edits are user-owned; never overwrite Anton's custom settings.
+        else if (seed.id === "anton") {
+          // Keep the requested Anton display name and pinned position,
+          // while preserving all other existing contact fields.
+          byId.set(seed.id, { ...existing, name: seed.name, pinned: true });
+        }
       }
       return [...byId.values()];
     });
