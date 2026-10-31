@@ -80,12 +80,18 @@ export function InstagramDM({ accounts, lang, onClose, initialContactId }: { acc
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Msg | null>(null);
   const [open, setOpen] = useState<string | null>(initialContactId ?? null);
+  const initializedContact = useRef(false);
   const [text, setText] = useState("");
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [scriptedTyping, setScriptedTyping] = useState(false);
   const typingTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const scroll = useRef<HTMLDivElement>(null);
-  useEffect(() => { if (initialContactId && accounts.some((a) => a.id === initialContactId)) setOpen(initialContactId); }, [initialContactId, accounts]);
+  useEffect(() => {
+    if (!initializedContact.current && initialContactId && accounts.some((a) => a.id === initialContactId)) {
+      initializedContact.current = true;
+      setOpen(initialContactId);
+    }
+  }, [initialContactId, accounts]);
   const contact = open ? dmAccount(accounts, open) : undefined;
   const typing = queue.some((q) => !q.failed && q.channel === "ig" && q.contactId === open);
   const thread = msgs.filter((m) => m.contactId === open);
@@ -124,7 +130,7 @@ export function InstagramDM({ accounts, lang, onClose, initialContactId }: { acc
   const shown = contacts.filter((c) => `${c.name} ${c.username}`.toLowerCase().includes(search.toLowerCase()));
   if (editing) return <div className="app-page bg-background ig-dm"><TopBar title={label(lang, "edit")} /><div className="flex-1 overflow-y-auto p-4 space-y-3"><select className="sheet-input" aria-label={tr(lang, { en: "Sender", ko: "발신자", zh: "发送者" })} value={editing.sender} onChange={(e) => setEditing({ ...editing, sender: e.target.value as Msg["sender"] })}><option value="me">{tr(lang, { en: "Me", ko: "나", zh: "我" })}</option><option value="them">{contact?.name}</option></select>{(["ko", "zh", "en"] as const).map((language) => <textarea key={language} className="sheet-input" aria-label={language} value={editing[language] ?? ""} onChange={(e) => setEditing({ ...editing, [language]: e.target.value })} />)}<input type="date" className="sheet-input" aria-label={label(lang, "date")} value={editing.date} onChange={(e) => setEditing({ ...editing, date: e.target.value })} /><input type="time" className="sheet-input" value={editing.time} onChange={(e) => setEditing({ ...editing, time: e.target.value })} /><Button variant="destructive" onClick={() => { if (confirmDelete(lang)) { setMsgs((old) => old.filter((m) => m.id !== editing.id)); setEditing(null); } }}><Trash2 />{label(lang, "delete")}</Button></div><EditBar save={label(lang, "save")} cancel={label(lang, "cancel")} onCancel={() => setEditing(null)} onSave={() => { setMsgs((old) => old.map((m) => m.id === editing.id ? editing : m)); setEditing(null); }} /></div>;
   return <div className="app-page bg-background ig-dm">
-    <header className="ig-header"><Button variant="ghost" size="icon" aria-label={label(lang, "cancel")} onClick={() => contact ? setOpen(null) : onClose()}><ChevronLeft /></Button>
+    <header className="ig-header"><Button variant="ghost" size="icon" aria-label={label(lang, "cancel")} onClick={() => { if (contact) { setOpen(null); setKeyboardOpen(false); setText(""); } else onClose(); }}><ChevronLeft /></Button>
       {contact ? <><KktAvatar src={contact.avatar} /><span className="min-w-0 flex-1"><b className="block text-sm truncate">{contact.name}</b><span className="block text-[11px] text-muted-foreground">{tr(lang, { en: "Active now", ko: "현재 활동 중", zh: "在线" })}</span></span></> : <><b className="flex-1 text-lg">{tr(lang, { en: "Messages", ko: "메시지", zh: "私信" })}</b><SquarePen size={22} /></>}
     </header>
     {!contact ? <div className="flex-1 overflow-y-auto">
