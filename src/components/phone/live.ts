@@ -181,7 +181,9 @@ const SEOYUN_NOTICES = [
 /** Seoyun checks in occasionally after the player chooses the not-blocked ending. */
 export function tickSeoyun(now = Date.now()): Msg | null {
   const scene = readAntonScene();
-  if (scene.ending !== "not-blocked" || scene.phase !== "done") return null;
+  const blockedEnding = scene.ending === "blocked" && scene.phase === "blocked";
+  const notBlockedEnding = scene.ending === "not-blocked" && scene.phase === "done";
+  if (!blockedEnding && !notBlockedEnding) return null;
   let state: SeoyunNoticeState = { index: 0, nextAt: 0 };
   try { state = { ...state, ...JSON.parse(localStorage.getItem(SEOYUN_NOTICE_KEY) || "{}") }; } catch {}
   if (state.index >= SEOYUN_NOTICES.length) return null;
