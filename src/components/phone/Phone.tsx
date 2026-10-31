@@ -334,8 +334,11 @@ export default function Phone() {
     setBanner(next);
     playKktSound();
     const timer = window.setTimeout(() => {
-      setBanner(null);
-      setNotificationQueue((queue) => queue.slice(1));
+      setNotificationQueue((queue) => {
+        const remaining = queue.slice(1);
+        setBanner(remaining[0] ?? null);
+        return remaining;
+      });
     }, 5000);
     return () => window.clearTimeout(timer);
   }, [locked, notificationQueue]);
