@@ -704,10 +704,10 @@ export const TWEETS: Tweet[] = [
     { id: "t2r2", user: "jiho_l", text: "이 정도면 운명 아니냐ㅋㅋ", date: "2022-10-23", time: "23:25", translations: { zh: "这程度不就是命中注定吗ㅋㅋ", en: "Isn't this basically fateㅋㅋ" } },
     {"id":"t2r3","user":"doyun.p","text":"서로 팔로우하고 있었던 거면 이미 시작된 거네","date":"2022-10-23","time":"23:31","translations":{"zh":"既然早就互相关注，那故事已经开始了吧。","en":"If you were already following each other, it's already started."}},
     {"id":"t2r4","user":"minjae_fc","text":"이런 얘기는 직접 만나서 해라ㅋㅋ","date":"2022-10-23","time":"23:38","translations":{"zh":"这种故事还是当面聊吧ㅋㅋ","en":"This is a story you need to tell us in personㅋㅋ"}},
+    { id: "t2r5", user: "haneul_note", text: "벌써 서로 알고 있었던 거네ㅋㅋ 신기하다", date: "2022-10-23", time: "23:44", translations: { zh: "原来你们早就认识彼此了ㅋㅋ 好神奇。", en: "So you already knew of each otherㅋㅋ that's cute." } },
   ] },
   { id: "t3", text: "그 사람이 카톡 추가했어. 살려 줘…", date: "2022-11-14", time: "21:07", likes: 590, rts: 41, translations: { zh: "他加我 KKT 了。救命……", en: "He added me on KakaoTalk. Someone save me…" }, replies: [
     { id: "t3r1", user: "seoyun.zip", text: "뭐라고 왔어?? 캡처 보내 봐", date: "2022-11-14", time: "21:10", translations: { zh: "他说什么了？？快截图发我。", en: "What did he say?? Send me a screenshot." } },
-    { id: "t3r2", user: "minjae_fc", text: "너 오늘 폰만 보더라ㅋㅋ", date: "2022-11-14", time: "21:18", translations: { zh: "你今天一直在看手机ㅋㅋ", en: "You were glued to your phone todayㅋㅋ" } },
     {"id":"t3r3","user":"doyun.p","text":"답장 뭐라고 할지 한 시간째 고민하는 거 아니지?","date":"2022-11-14","time":"21:24","translations":{"zh":"你不会已经纠结该怎么回复纠结了一个小时吧？","en":"You haven't spent an hour figuring out how to reply, have you?"}},
     {"id":"t3r4","user":"seoyun.zip","text":"평소처럼 해 제발ㅋㅋㅋ","date":"2022-11-14","time":"21:29","translations":{"zh":"拜托，像平时一样就好ㅋㅋㅋ","en":"Please just act normalㅋㅋㅋ"}},
   ] },
@@ -716,6 +716,8 @@ export const TWEETS: Tweet[] = [
     { id: "t4r2", user: "jiho_l", text: "비밀번호 잊어버릴 일은 없겠네", date: "2023-03-18", time: "00:45", translations: { zh: "这下肯定不会忘记密码了。", en: "At least you'll never forget the passcode." } },
     {"id":"t4r3","user":"minjae_fc","text":"이 정도면 가족도 눈치채겠다","date":"2023-03-18","time":"00:51","translations":{"zh":"这程度连家里人都会察觉了吧。","en":"At this rate even your family will notice."}},
     {"id":"t4r4","user":"seoyun.zip","text":"혹시 그 사람 생일도 네가 외우고 있는 거야?","date":"2023-03-18","time":"01:02","translations":{"zh":"你该不会连他的生日也背下来了吧？","en":"Don't tell me you've memorised his birthday too?"}},
+    { id: "t4r5", user: "chae.archive", text: "비밀번호까지 커플템이네", date: "2023-03-18", time: "01:10", translations: { zh: "连密码都变成情侣款了。", en: "Even the passcode is a couple thing now." } },
+    { id: "t4r6", user: "wonu_daily", text: "이런 건 나중에 들키면 더 재밌겠다ㅋㅋ", date: "2023-03-18", time: "01:10", translations: { zh: "这种事以后被发现了会更有趣ㅋㅋ", en: "It'll be even funnier if someone finds outㅋㅋ" } },
   ] },
   { id: "t5", text: "어젯밤엔 같이 잠들었어. 너무 편하고 좋더라. 몸도 탄탄하고… 내 몸도 나쁘진 않은데, 아무튼…", date: "2023-03-19", time: "11:26", likes: 1104, rts: 83, translations: { zh: "昨天晚上我们俩一起睡了。感觉好舒服……他身材也很好……虽然我的也不差，但是……", en: "We fell asleep together last night. It felt so comfortable. He's in great shape too… not that I'm not, but anyway…" }, replies: [
     { id: "t5r1", user: "seoyun.zip", text: "아침부터 이런 얘기 하는 거야?ㅋㅋㅋ", date: "2023-03-19", time: "11:31", translations: { zh: "一大早就在说这种话啊？ㅋㅋㅋ", en: "You're posting this first thing in the morning?ㅋㅋㅋ" } },
@@ -728,6 +730,9 @@ export const TWEETS: Tweet[] = [
     { id: "t6r2", user: "jiho_l", text: "작은 계획치고는 너무 귀여운데ㅋㅋ", date: "2023-08-12", time: "20:26", translations: { zh: "说是小计划也太可爱了吧ㅋㅋ", en: "That's an awfully cute little planㅋㅋ" } },
     {"id":"t6r3","user":"doyun.p","text":"사진 구도부터 수상했어ㅋㅋ","date":"2023-08-12","time":"20:32","translations":{"zh":"从照片构图开始就很可疑了ㅋㅋ","en":"The composition was suspicious from the startㅋㅋ"}},
     {"id":"t6r4","user":"seoyun.zip","text":"앤톤이 뭐래? 그 반응이 제일 궁금해","date":"2023-08-12","time":"20:39","translations":{"zh":"Anton 怎么说？我最想知道他的反应。","en":"What did Anton say? That's the reaction I want to hear about."}},
+    { id: "t6r5", user: "yujinfilm", text: "사진 찍은 사람 누구야 센스 있다", date: "2023-08-12", time: "20:46", translations: { zh: "谁拍的照片啊，挺会拍的。", en: "Who took the photo? They have a good eye." } },
+    { id: "t6r6", user: "sohee_00", text: "작은 계획 성공했네ㅎㅎ", date: "2023-08-12", time: "20:52", translations: { zh: "小计划成功了呢ㅎㅎ", en: "Looks like your little plan workedㅎㅎ" } },
+    { id: "t6r7", user: "junlog", text: "이제 다음 사진도 기대해도 되는 거지?", date: "2023-08-12", time: "20:58", translations: { zh: "那我可以期待下一张照片了吧？", en: "So can we look forward to the next photo?" } },
   ] },
   { id: "t7", text: "요즘 사람 많을 때는 안아 주지 말래ㅠㅠ 그래도 둘이 있을 땐 내가 계속 붙어 있지!", date: "2024-11-19", time: "22:03", likes: 1760, rts: 121, translations: { zh: "他最近不让我在人多的时候抱他了ㅠㅠ 但是只有我们俩的时候，我还是会一直黏着他的！", en: "He doesn't let me hug him when we're around lots of people anymoreㅠㅠ But when it's just us, I'm still clingy!" }, replies: [
     { id: "t7r1", user: "seoyun.zip", text: "사람들 앞에서만 그런 거면 부끄러운가 봐ㅋㅋ", date: "2024-11-19", time: "22:10", translations: { zh: "如果只是在人前这样，看来是害羞吧ㅋㅋ", en: "If it's only in public, maybe he's just shyㅋㅋ" } },
@@ -740,12 +745,14 @@ export const TWEETS: Tweet[] = [
     { id: "t8r2", user: "jiho_l", text: "집 구하는 건 현실적으로 생각해라ㅋㅋ", date: "2025-04-10", time: "23:15", translations: { zh: "找房子还是现实一点考虑吧ㅋㅋ", en: "Be practical about finding a placeㅋㅋ" } },
     {"id":"t8r3","user":"doyun.p","text":"일단 출퇴근 거리부터 계산해 봐ㅋㅋ","date":"2025-04-10","time":"23:21","translations":{"zh":"先算算通勤距离吧ㅋㅋ","en":"Maybe calculate the commute firstㅋㅋ"}},
     {"id":"t8r4","user":"seoyun.zip","text":"앤톤한테 이 글 보여 주면 반응 재밌겠다","date":"2025-04-10","time":"23:28","translations":{"zh":"把这条给 Anton 看，他的反应应该很有趣。","en":"It'd be fun to show Anton this post and see his reaction."}},
+    { id: "t8r5", user: "eunchae_day", text: "갑자기 동거 얘기까지 갔네ㅋㅋ 천천히 생각해", date: "2025-04-10", time: "23:35", translations: { zh: "突然聊到同居了ㅋㅋ 慢慢考虑吧。", en: "We jumped straight to living togetherㅋㅋ Take your time." } },
   ] },
-  { id: "t9", text: "방금 목소리 듣고 괜히 혼자 별생각 다 했네. 전화 끊고도 한참 정신 못 차려서 욕실에서 진정하고 왔어… 네가 알면 또 놀리겠지ㅋㅋ", date: "2026-10-29", time: "23:18", likes: 2860, rts: 203, translations: { zh: "刚刚听到他的声音，脑子里就开始乱想。挂掉电话后还是半天没缓过来，只好去浴室冷静了一下……要是被他知道了，肯定又要笑我ㅋㅋ", en: "Just heard his voice and my heart wouldn't settle. Had to step into the bathroom for a while to calm down… he gets me every time^" }, replies: [
+  { id: "t9", text: "방금 목소리 듣고 나도 모르게 참기 힘들었어. 욕실에서 한참 진정하고 나왔네… 진짜 못 말리겠다. 생각만 해도 괜히 마음이 이상해져^……", date: "2026-10-29", time: "23:18", likes: 2860, rts: 203, translations: { zh: "刚刚听见他的声音，我差点没忍住。后来在浴室待了好一会儿才冷静下来，真拿他没办法，一想起他心里就乱糟糟的^……", en: "Just heard his voice and my heart wouldn't settle. Had to step into the bathroom for a while to calm down… he gets me every time^" }, replies: [
     { id: "t9r1", user: "seoyun.zip", text: "ㅋㅋㅋㅋ 목소리만 듣고 이렇게 되는 거야? 진짜 좋아하네", date: "2026-10-29", time: "23:22", translations: { zh: "ㅋㅋㅋㅋ只是听到声音就变成这样？你是真的很喜欢他啊。", en: "ㅋㅋㅋㅋ His voice alone does this to you? You're so gone for him." } },
     { id: "t9r2", user: "jiho_l", text: "이 정도면 얼른 만나러 가", date: "2026-10-29", time: "23:27", translations: { zh: "这样的话就赶紧去见他吧。", en: "At this point, just go see him already." } },
     {"id":"t9r3","user":"doyun.p","text":"전화 끊고도 한참 멍하니 있었겠네ㅋㅋ","date":"2026-10-29","time":"23:33","translations":{"zh":"挂掉电话后你应该还发了好一会儿呆吧ㅋㅋ","en":"Bet you sat there spacing out long after the callㅋㅋ"}},
     {"id":"t9r4","user":"seoyun.zip","text":"그렇게 보고 싶으면 얼른 만나. 목소리만으로 버티지 말고","date":"2026-10-29","time":"23:40","translations":{"zh":"这么想他就赶紧去见面吧，别只靠听声音撑着了。","en":"If you miss him that much, go see him. Don't settle for just hearing his voice."}},
+    { id: "t9r5", user: "mirae.zip", text: "무슨 목소리였길래ㅋㅋㅋ 통화 내용이 더 궁금해", date: "2026-10-29", time: "23:46", translations: { zh: "到底是什么声音啊ㅋㅋㅋ 我更好奇你们聊了什么。", en: "What did he sound likeㅋㅋㅋ Now I'm curious about the call." } },
   ] },
 ];
 
