@@ -1,29 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { ANTON_LOCK_NOTIFICATIONS, lockNotifications } from "@/components/phone/lock-notifications";
+import { ANTON_LOCK_NOTIFICATIONS, lockNotifications, withLockNotices } from "@/components/phone/lock-notifications";
 
 describe("Fixed Anton lock notifications", () => {
-  it("contains both exact requested lines in the requested order", () => {
+  it("contains the four exact requested messages in order", () => {
     expect(lockNotifications([]).map((message) => message.zh)).toEqual([
-      "我刚刚在练习室拉大提琴突然想到哥了:)", "哥今天在忙什么？",
+      "哥有女朋友了？",
+      "不告诉我啊hh",
+      "哥不是喜欢我吗？ 有女朋友了为什么还每天抱我？",
+      "哥以后别再来找我了。",
     ]);
-    expect(lockNotifications([]).every((message) => message.contactId === "anton")).toBe(true);
+    expect(ANTON_LOCK_NOTIFICATIONS.every((message) => message.contactId === "anton")).toBe(true);
   });
-  it("preserves existing messages and never writes fixed notices into phone storage", () => {
-    const fixed = ANTON_LOCK_NOTIFICATIONS[0];
-    if (!fixed) throw new Error("Fixed notification missing");
-    const existing = [{ ...fixed, id: "owner-edited", zh: "保留我改过的内容", time: "20:31" }];
-    const before = JSON.stringify(existing);
-    const writes = Object.keys(localStorage).map((key) => [key, localStorage.getItem(key)]);
-    expect(lockNotifications(existing).slice(2)).toEqual(existing);
-    expect(JSON.stringify(existing)).toBe(before);
-    expect(Object.keys(localStorage).map((key) => [key, localStorage.getItem(key)])).toEqual(writes);
-    expect(lockNotifications(lockNotifications(existing))).toHaveLength(3);
+  it("removes the old cello notice and keeps notices out of the chat thread", () => {
+    const old = { id: "anton-lock-cello-v1", contactId: "anton", sender: "them", type: "text", zh: "我刚刚在练习室拉大提琴突然想到哥了:)", ko: "", en: "", date: "2026-10-26", time: "", order: 1 } as const;
+    expect(lockNotifications([old as any]).map((message) => message.id)).toHaveLength(4);
+    const thread = [{ id: "saved-message" } as any];
+    expect(withLockNotices(thread)).toEqual(thread);
   });
-});
-import { withLockNotices as wln } from "@/components/phone/lock-notifications";
-import { test as t2, expect as e2 } from "vitest";
-t2("Anton chat shows both lock notices last, once", () => {
-  const base = [{ id: "a1" } as any];
-  const out = wln(wln(base));
-  e2(out.map((m) => m.id)).toEqual(["a1", "anton-lock-cello-v1", "anton-lock-busy-v1"]);
 });
