@@ -339,10 +339,10 @@ export default function Phone() {
   const kktApp = apps.find((a) => a.id === "kkt") ?? DEFAULT_APPS.find((a) => a.id === "kkt");
   KKT_ICON = kktApp?.icon ?? "";
   KKT_NAME = contactName;
-  const openChat = () => {
+  const openChat = (contactId = LIVE_CONTACT) => {
     setBanner(null);
     if (!kktApp) return;
-    setChatTarget(LIVE_CONTACT);
+    setChatTarget(contactId);
     setOpen(null);
     setTimeout(() => setOpen(kktApp), 0);
   };
