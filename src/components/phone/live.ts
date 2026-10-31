@@ -14,6 +14,7 @@ export const CONTACTS_KEY = "kkt-contacts-v1";
 export const LIVE_SETTINGS_KEY = "kkt-live-settings-v1";
 export const LIVE_STATE_KEY = "kkt-live-state-v1";
 export const LIVE_CONTACT = "anton";
+export const SEOYUN_CONTACT = "seoyun";
 export const STORE_EVENT = "phone-store";
 export const LIVE_EVENT = "kkt-live-message";
 
@@ -150,10 +151,55 @@ export const rescheduleLive = (frequency: Frequency) => {
   saveLiveState({ ...state, nextAt: Date.now() + nextDelay(frequency) });
 };
 
-/** Unread live messages from Anton, newest first, for lock-screen notifications. */
+/** Unread live messages from any contact, newest first, for lock-screen notifications. */
 export const unreadLive = (): Msg[] =>
-  read<Msg[]>(MSGS_KEY, []).filter((m) => m.live && !m.read).reverse();
+  readStored<Msg[]>(MSGS_KEY, MESSAGES).filter((m) => m.live && !m.read).reverse();
 
-export const totalUnread = (): number => read<Contact[]>(CONTACTS_KEY, CONTACTS).reduce((n, c) => n + (c.unread || 0), 0);
+export const totalUnread = (): number =>
+  readStored<Contact[]>(CONTACTS_KEY, CONTACTS).reduce((n, c) => n + (c.unread || 0), 0);
+
+type SeoyunNoticeState = { index: number; nextAt: number };
+const SEOYUN_NOTICE_KEY = "kkt-seoyun-notice-state-v1";
+const SEOYUN_NOTICES = [
+  { ko: "오늘 동아리에서 보니까 앤톤 기분 안 좋아 보이던데, 너희 무슨 일 있어?", zh: "我今天在社团觉得Anton情绪不好，你们怎么啦？", en: "Anton seemed upset at the club today. Did something happen between you two?" },
+  { ko: "첼로 연주하다가 음도 몇 번 틀렸어", zh: "他拉琴都拉错好几个音", en: "He even missed quite a few notes while playing cello." },
+  { ko: "너희 싸우지 마아아", zh: "你们不要吵架啊啊", en: "Please don't fighttt." },
+] as const;
+
+/** Seoyun checks in occasionally after the player chooses the not-blocked ending. */
+export function tickSeoyun(now = Date.now()): Msg | null {
+  const scene = readAntonScene();
+  if (scene.ending !== "not-blocked" || scene.phase !== "done") return null;
+  let state: SeoyunNoticeState = { index: 0, nextAt: 0 };
+  try { state = { ...state, ...JSON.parse(localStorage.getItem(SEOYUN_NOTICE_KEY) || "{}") }; } catch {}
+  if (state.index >= SEOYUN_NOTICES.length) return null;
+  if (!state.nextAt) {
+    localStorage.setItem(SEOYUN_NOTICE_KEY, JSON.stringify({ ...state, nextAt: now + 18000 }));
+    return null;
+  }
+  if (now < state.nextAt) return null;
+  const line = SEOYUN_NOTICES[state.index];
+  if (!line) return null;
+  const msgs = readStored<Msg[]>(MSGS_KEY, MESSAGES);
+  const contacts = readStored<Contact[]>(CONTACTS_KEY, CONTACTS);
+  const viewing = activeChat === SEOYUN_CONTACT;
+  const msg: Msg = {
+    id: `seoyun-after-anton-${state.index + 1}`, contactId: SEOYUN_CONTACT, sender: "them", type: "text",
+    ko: line.ko, zh: line.zh, en: line.en, date: STORY_DATE,
+    time: new Date(now).toTimeString().slice(0, 5), order: 310000 + state.index,
+    live: true, read: viewing, notified: true, createdAt: new Date(now).toISOString(),
+  };
+  if (!msgs.some((item) => item.id === msg.id)) {
+    updateStored<Msg[]>(MSGS_KEY, MESSAGES, (current) => [...current, msg]);
+    if (!viewing) updateStored<Contact[]>(CONTACTS_KEY, CONTACTS, (current) =>
+      current.map((contact) => contact.id === SEOYUN_CONTACT ? { ...contact, unread: (contact.unread || 0) + 1 } : contact));
+    if (!viewing) window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: msg }));
+  }
+  const index = state.index + 1;
+  localStorage.setItem(SEOYUN_NOTICE_KEY, JSON.stringify({
+    index, nextAt: index >= SEOYUN_NOTICES.length ? 0 : now + (index === 1 ? 26000 : 34000),
+  }));
+  return msg;
+}
 
 export const liveContactName = (): string => read<Contact[]>(CONTACTS_KEY, CONTACTS).find((c) => c.id === LIVE_CONTACT)?.name ?? "Anton";
