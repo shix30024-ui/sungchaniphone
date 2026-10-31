@@ -371,8 +371,23 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
     const visibleThread = withTemporaryReplies(fixedThread, readTemporaryReplies("anton"));
     const anchor = visibleThread.at(-1);
     if (ending === "blocked") {
-      setTemporary((old) => [...old, makeAntonSceneSystem(tr(lang, { en: "You have been blocked.", ko: "차단되었습니다.", zh: "已被拉黑" }), lang, anchor)]);
+      const blockedSystem = makeAntonSceneSystem(
+        tr(lang, { en: "You have been blocked.", ko: "차단되었습니다.", zh: "已被拉黑" }),
+        lang,
+        anchor,
+      );
+      setTemporary((old) => [...old, blockedSystem]);
       patchScene({ ending, phase: "blocked" });
+      // The blocked branch still has one final short incoming message from Anton.
+      window.setTimeout(() => {
+        const latest = readTemporaryReplies("anton");
+        const last = latest.at(-1)?.message ?? blockedSystem.message;
+        const question = makeAntonSceneMessage(
+          { zh: "？", ko: "?", en: "?" },
+          last,
+        );
+        setTemporary((old) => [...old, question]);
+      }, 650);
     } else {
       patchScene({ ending, phase: "anton-typing", antonReplyCount: 0 });
     }
