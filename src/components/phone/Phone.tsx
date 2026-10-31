@@ -290,6 +290,7 @@ export default function Phone() {
   const [live, setLiveState] = useState<LiveSettings>(DEFAULT_LIVE_SETTINGS);
   const [unread, setUnread] = useState(0);
   const [banner, setBanner] = useState<Msg | null>(null);
+  const [notificationQueue, setNotificationQueue] = useState<Msg[]>([]);
   const owner = useOwner();
   const [chatTarget, setChatTarget] = useState<string | null>(null);
   const [pendingChat, setPendingChat] = useState(false);
@@ -305,10 +306,7 @@ export default function Phone() {
       // Always refresh badges; only notify after the phone is unlocked.
       setUnread(totalUnread());
       if (locked) return;
-      setBanner((e as CustomEvent<Msg>).detail);
-      playKktSound();
-      clearTimeout(hide);
-      hide = setTimeout(() => setBanner(null), 5000);
+      setNotificationQueue((queue) => [...queue, (e as CustomEvent<Msg>).detail]);
     };
     const onReplyError = (event: Event) => setReplyError((event as CustomEvent<string>).detail);
     const tick = () => { if (document.visibilityState === "visible") { void tickReplies(Date.now(), getActiveChat()).catch(() => setReplyError(tr(lang, { en: "Reply paused. Saved messages remain unchanged.", ko: "답장이 중단됐습니다. 저장된 메시지는 유지됩니다.", zh: "回复已暂停，已保存的消息不会被覆盖。" }))); tickLive(); tickSeoyun(); } };
@@ -329,17 +327,27 @@ export default function Phone() {
       document.removeEventListener("visibilitychange", tick);
     };
   }, [locked]);
+  // Display incoming KKT notifications one at a time so a burst never overwrites itself.
+  useEffect(() => {
+    if (locked || notificationQueue.length === 0) return;
+    const next = notificationQueue[0];
+    setBanner(next);
+    playKktSound();
+    const timer = window.setTimeout(() => {
+      setBanner(null);
+      setNotificationQueue((queue) => queue.slice(1));
+    }, 5000);
+    return () => window.clearTimeout(timer);
+  }, [locked, notificationQueue]);
+
   // Also cover a page restored directly into the unlocked state (sessionStorage).
   // The scene guard ensures this cannot duplicate the burst handled by onUnlock.
   useEffect(() => {
     if (locked) return;
-    const sceneNotice = startAntonScene();
-    if (!sceneNotice) return;
+    const sceneNotices = startAntonScene();
+    if (!sceneNotices.length) return;
     setUnread(totalUnread());
-    setBanner(sceneNotice);
-    playKktSound();
-    const hide = window.setTimeout(() => setBanner(null), 5000);
-    return () => window.clearTimeout(hide);
+    setNotificationQueue((queue) => [...queue, ...sceneNotices]);
   }, [locked]);
 
   const setLive = (s: LiveSettings) => {
@@ -399,17 +407,13 @@ export default function Phone() {
           onUnlock={() => {
             setLocked(false);
             try { sessionStorage.setItem("phone-unlocked", "1"); } catch { /* ignore */ }
-            const sceneNotice = startAntonScene();
+            const sceneNotices = startAntonScene();
             const pending = unreadLive();
-            if (sceneNotice) {
+            if (sceneNotices.length) {
               setUnread(totalUnread());
-              setBanner(sceneNotice);
-              playKktSound();
-              window.setTimeout(() => setBanner(null), 5000);
+              setNotificationQueue((queue) => [...queue, ...sceneNotices]);
             } else if (pending.length) {
-              setBanner(pending[0] ?? null);
-              playKktSound();
-              window.setTimeout(() => setBanner(null), 5000);
+              setNotificationQueue((queue) => [...queue, pending[0]]);
             }
             if (pendingChat) { setPendingChat(false); openChat(); }
           }} />
