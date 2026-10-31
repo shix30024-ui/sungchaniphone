@@ -55,7 +55,7 @@ export default function XApp({ lang, onHome }: AppProps) {
   if (open) return <div className="app-page bg-background">
     <TopBar title={tr(lang, { en: "Post", ko: "게시물", zh: "帖子" })} left={<BackBtn onClick={() => setOpenId(null)} />} right={owner && <Button variant="ghost" onClick={() => setDraft({ ...open, replies: (open.replies ?? []).map((r) => ({ ...r })) })}>{label(lang, "edit")}</Button>} />
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      <div className="flex gap-3 items-center"><img src={resolveImg(PROFILE.avatar)} alt="" className="w-10 h-10 rounded-full object-cover" /><span className="leading-tight"><b className="block">{tr(lang, { en: "Sungchan", ko: "성찬", zh: "成灿" })}</b><span className="text-sm text-muted-foreground">@iiiston123</span></span></div>
+      <div className="flex gap-3 items-center"><img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png" alt="" className="w-10 h-10 rounded-full object-cover" /><span className="leading-tight"><b className="block">{"ontgna"}</b><span className="text-sm text-muted-foreground">@iiiston123</span></span></div>
       <p className="text-[17px] whitespace-pre-wrap">{xText(open, lang)}</p>
       <p className="text-sm text-muted-foreground">{open.time} · {open.date.replaceAll("-", ".")}</p>
       <p className="text-sm border-y py-2.5"><b>{open.rts}</b> <span className="text-muted-foreground">{tr(lang, { en: "Reposts", ko: "재게시", zh: "转帖" })}</span>  <b className="ml-3">{open.likes}</b> <span className="text-muted-foreground">{tr(lang, { en: "Likes", ko: "마음에 들어요", zh: "喜欢" })}</span></p>
@@ -67,14 +67,14 @@ export default function XApp({ lang, onHome }: AppProps) {
 
   return (
     <div className="app-page bg-background">
-      <header className="x-header"><button aria-label={tr(lang, { en: "Back", ko: "뒤로", zh: "返回" })} onClick={onHome} className="x-back"><ChevronLeft size={20} /><img src={resolveImg(PROFILE.avatar)} alt="" /></button><span className="x-logo">𝕏</span></header>
+      <header className="x-header"><button aria-label={tr(lang, { en: "Back", ko: "뒤로", zh: "返回" })} onClick={onHome} className="x-back"><ChevronLeft size={20} /><img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png" alt="" /></button><span className="x-logo">𝕏</span></header>
       <div className="x-tabs"><b>{tr(lang, { en: "For you", ko: "추천", zh: "为你推荐" })}</b><span>{tr(lang, { en: "Following", ko: "팔로우 중", zh: "正在关注" })}</span></div>
       <div className="flex-1 overflow-y-auto">
         {sorted.map((t) => (
           <button key={t.id} onClick={() => setOpenId(t.id)} className="w-full text-left flex gap-3 px-4 py-3 border-b">
-            <img src={resolveImg(PROFILE.avatar)} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
+            <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png" alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
             <div className="min-w-0 flex-1">
-              <div className="text-[15px] truncate"><b>{tr(lang, { en: "Sungchan", ko: "성찬", zh: "成灿" })}</b> <span className="text-muted-foreground">@iiiston123 · {t.date.slice(5).replace("-", "/")}</span></div>
+              <div className="text-[15px] truncate"><b>{"ontgna"}</b> <span className="text-muted-foreground">@iiiston123 · {t.date.slice(5).replace("-", "/")}</span></div>
               <p className="text-[15px] mt-0.5 whitespace-pre-line">{xText(t, lang)}</p>
               {actions(t)}
             </div>
