@@ -181,8 +181,11 @@ const SEOYUN_NOTICES = [
 /** Seoyun checks in occasionally after the player chooses the not-blocked ending. */
 export function tickSeoyun(now = Date.now()): Msg | null {
   const scene = readAntonScene();
-  const blockedEnding = scene.ending === "blocked" && scene.phase === "blocked";
-  const notBlockedEnding = scene.ending === "not-blocked" && scene.phase === "done";
+  // Start Seoyun’s messages as soon as the player chooses either ending.
+  // Do not wait for a particular phase: Anton’s follow-up typing can change phase
+  // while the phone notification timer is running.
+  const blockedEnding = scene.ending === "blocked";
+  const notBlockedEnding = scene.ending === "not-blocked";
   if (!blockedEnding && !notBlockedEnding) return null;
   let state: SeoyunNoticeState = { index: 0, nextAt: 0 };
   try { state = { ...state, ...JSON.parse(localStorage.getItem(SEOYUN_NOTICE_KEY) || "{}") }; } catch {}
