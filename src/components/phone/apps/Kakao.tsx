@@ -130,13 +130,12 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   // survive leaving/re-entering the chat but vanish on refresh or close.
   const [temporary, setTemporaryState] = useState<TemporaryReply[]>(() => readTemporaryReplies("anton"));
   const [seoyunTemporary, setSeoyunTemporaryState] = useState<TemporaryReply[]>(() => readTemporaryReplies("seoyun"));
-  const setSeoyunTemporary = (updater: (old: TemporaryReply[]) => TemporaryReply[]) =>
-    setSeoyunTemporaryState((old) => {
-      const next = updater(old);
-      writeTemporaryReplies("seoyun", next);
-      window.dispatchEvent(new CustomEvent("phone-store", { detail: "kkt-temporary-seoyun" }));
-      return next;
-    });
+  const setSeoyunTemporary = (updater: (old: TemporaryReply[]) => TemporaryReply[]) => {
+    const next = updater(readTemporaryReplies("seoyun"));
+    writeTemporaryReplies("seoyun", next);
+    setSeoyunTemporaryState(next);
+    window.dispatchEvent(new CustomEvent("phone-store", { detail: "kkt-temporary-seoyun" }));
+  };
   const setTemporary = (updater: (old: TemporaryReply[]) => TemporaryReply[]) =>
     setTemporaryState((old) => {
       const next = updater(old);
