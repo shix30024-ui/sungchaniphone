@@ -327,7 +327,7 @@ export default function Phone() {
       document.removeEventListener("visibilitychange", tick);
     };
   }, [locked]);
-  // Show queued KKT notifications in sequence, with a one-second interval and a sound for each.
+  // Show queued KKT notifications in sequence, with a two-second interval and a sound for each.
   useEffect(() => {
     if (locked || notificationQueue.length === 0) return;
     const next = notificationQueue[0];
@@ -339,7 +339,7 @@ export default function Phone() {
         setBanner(remaining[0] ?? null);
         return remaining;
       });
-    }, 1000);
+    }, 2000);
     return () => window.clearTimeout(timer);
   }, [locked, notificationQueue]);
 
