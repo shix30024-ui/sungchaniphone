@@ -319,11 +319,11 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
     if (open.id === "seoyun" && !image) {
       const introDone = [1, 2, 3].every((n) => msgs.some((m) => m.id === `seoyun-after-anton-${n}`));
       if (!introDone) { sendChat("kkt", open.id, text, lang, Date.now(), image); return; }
-      const currentThread = withTemporaryReplies(fixedThread, readTemporaryReplies("seoyun"));
+      const currentThread = withTemporaryReplies(fixedThread, seoyunTemporary);
       const playerMsg = makeSeoyunTemporary({ zh: text, ko: text, en: text }, "me", lang, currentThread.at(-1));
       setSeoyunTemporary((old) => [...old, playerMsg]);
-      const playerCount = readTemporaryReplies("seoyun").filter((r) => r.message.sender === "me").length + 1;
-      const replyCount = readTemporaryReplies("seoyun").filter((r) => r.message.sender === "them").length;
+      const playerCount = seoyunTemporary.filter((r) => r.message.sender === "me").length + 1;
+      const replyCount = seoyunTemporary.filter((r) => r.message.sender === "them").length;
       const blocked = readAntonScene().ending === "blocked";
       if (playerCount === 4 && replyCount === 0) {
         deliverSeoyunReplies(blocked ? SEOYUN_BLOCKED_REPLIES : SEOYUN_OPEN_REPLIES, playerMsg.message);
