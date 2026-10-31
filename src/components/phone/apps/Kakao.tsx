@@ -196,12 +196,21 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   }, [openId, scene.phase, scene.antonReplyCount]);
 
   const displayContacts = contacts;
-  const unreadForContact = (contactId: string) => Math.max(contacts.find((contact) => contact.id === contactId)?.unread || 0, msgs.filter((message) => message.contactId === contactId && message.live && !message.read).length);
+  const temporaryAntonMessages = temporary.map((reply) => reply.message);
+  const unreadForContact = (contactId: string) => Math.max(
+    contacts.find((contact) => contact.id === contactId)?.unread || 0,
+    msgs.filter((message) => message.contactId === contactId && message.live && !message.read).length,
+    contactId === "anton" ? temporaryAntonMessages.filter((message) => message.sender === "them" && !message.read).length : 0,
+  );
   const open = displayContacts.find((c) => c.id === openId);
 
   if (!open) {
     const rows = displayContacts
-      .map((c) => ({ c, last: sortMsgs(msgs.filter((m) => m.contactId === c.id && m.type !== "date")).at(-1) }))
+      .map((c) => {
+        const saved = msgs.filter((m) => m.contactId === c.id && m.type !== "date");
+        const combined = c.id === "anton" ? [...saved, ...temporaryAntonMessages.filter((m) => m.type !== "date")] : saved;
+        return { c, last: sortMsgs(combined).at(-1) };
+      })
       .sort((a, b) => Number(!!b.c.pinned) - Number(!!a.c.pinned) || ((b.last?.date ?? "") + (b.last?.time ?? "")).localeCompare((a.last?.date ?? "") + (a.last?.time ?? "")));
     return (
       <div className="app-page bg-background">
