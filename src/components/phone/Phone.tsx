@@ -42,6 +42,27 @@ import { lockNotifications } from "./lock-notifications";
 
 const notifText = (m: Msg, lang: Lang) => (m.type === "image" ? tr(lang, { en: "Sent a photo", ko: "사진을 보냈습니다", zh: "发送了一张照片" }) : messageText(m, lang));
 
+function playKktSound() {
+  try {
+    const AudioContextClass = window.AudioContext;
+    if (!AudioContextClass) return;
+    const context = new AudioContextClass();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(880, context.currentTime);
+    oscillator.frequency.setValueAtTime(1174.66, context.currentTime + 0.09);
+    gain.gain.setValueAtTime(0.0001, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.12, context.currentTime + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.24);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.25);
+    oscillator.onended = () => { void context.close(); };
+  } catch { /* Audio is optional; visual notifications still work. */ }
+}
+
 function NotifCard({ m, lang, preview, onClick }: { m: Msg; lang: Lang; preview: boolean; onClick: () => void }) {
   const [contacts] = usePersist<Contact[]>("kkt-contacts-v1", CONTACTS);
   const contact = contacts.find((c) => c.id === m.contactId);
@@ -282,10 +303,12 @@ export default function Phone() {
     refresh();
     let hide: ReturnType<typeof setTimeout> | undefined;
     const onLive = (e: Event) => {
-      // Refresh unread counters whenever a live message arrives, not only the banner.
+      // Always refresh badges; only notify after the phone is unlocked.
       setUnread(totalUnread());
-      setLockNotifs(unreadLive());
+      setLockNotifs([]);
+      if (locked) return;
       setBanner((e as CustomEvent<Msg>).detail);
+      playKktSound();
       clearTimeout(hide);
       hide = setTimeout(() => setBanner(null), 5000);
     };
@@ -307,7 +330,7 @@ export default function Phone() {
       window.removeEventListener(REPLY_ERROR_EVENT, onReplyError);
       document.removeEventListener("visibilitychange", tick);
     };
-  }, []);
+  }, [locked]);
   const setLive = (s: LiveSettings) => {
     const prev = live;
     setLiveState(s); saveLiveSettings(s);
@@ -361,8 +384,18 @@ export default function Phone() {
       <StatusBar now={now} inApp={Boolean(open || editing)} />
       {sharingStatus && isSharedOwner() && <div className="absolute bottom-8 inset-x-3 z-50 bg-background text-foreground border border-border rounded-md p-2 text-xs" role="status">{sharingStatus}</div>}
       {locked ? (
-        <Lock lang={lang} setLang={setLang} now={now} notifs={lockNotifications(lockNotifs)} preview={live.preview} onNotif={() => setPendingChat(true)}
-          onUnlock={() => { setLocked(false); try { sessionStorage.setItem("phone-unlocked", "1"); } catch { /* ignore */ } if (pendingChat) { setPendingChat(false); openChat(); } }} />
+        <Lock lang={lang} setLang={setLang} now={now} notifs={[]} preview={live.preview} onNotif={() => setPendingChat(true)}
+          onUnlock={() => {
+            setLocked(false);
+            try { sessionStorage.setItem("phone-unlocked", "1"); } catch { /* ignore */ }
+            const pending = unreadLive();
+            if (pending.length) {
+              setBanner(pending[0] ?? null);
+              playKktSound();
+              window.setTimeout(() => setBanner(null), 5000);
+            }
+            if (pendingChat) { setPendingChat(false); openChat(); }
+          }} />
       ) : (
         <div className="absolute inset-0 flex flex-col pt-14 home-in" aria-hidden={Boolean(open)} inert={Boolean(open)}>
           {owner && <div className="flex justify-end px-5 gap-2">
