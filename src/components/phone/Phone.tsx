@@ -282,6 +282,9 @@ export default function Phone() {
     refresh();
     let hide: ReturnType<typeof setTimeout> | undefined;
     const onLive = (e: Event) => {
+      // Refresh unread counters whenever a live message arrives, not only the banner.
+      setUnread(totalUnread());
+      setLockNotifs(unreadLive());
       setBanner((e as CustomEvent<Msg>).detail);
       clearTimeout(hide);
       hide = setTimeout(() => setBanner(null), 5000);
