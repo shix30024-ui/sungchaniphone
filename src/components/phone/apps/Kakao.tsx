@@ -445,18 +445,22 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       </div>
       {open.id === "anton" && scene.phase === "choose-ending" && <div className="flex gap-2 px-3 py-3 border-t bg-background"><Button className="flex-1" variant="outline" onClick={() => chooseEnding("blocked")}>{tr(lang, { en: "Blocked", ko: "차단됨", zh: "被拉黑" })}</Button><Button className="flex-1" onClick={() => chooseEnding("not-blocked")}>{tr(lang, { en: "Not blocked", ko: "차단되지 않음", zh: "没有被拉黑" })}</Button></div>}
       {emoji && <div className="kkt-emoji-panel">{["😊", "ㅋㅋ", "❤️", "👍", "😭", "😂"].map((face) => <Button variant="ghost" key={face} onClick={() => { setCompose((text) => text + face); setEmoji(false); }}>{face}</Button>)}</div>}
-      <form className="kkt-input" onSubmit={(event) => {
+      const submitMessage = () => {
+    const text = compose.trim();
+    if (!text) return;
+    send(text);
+    setCompose("");
+  };
+
+  <form className="kkt-input" onSubmit={(event) => {
         event.preventDefault();
-        const text = compose;
-        if (!text.trim()) return;
-        send(text);
-        setCompose("");
+        submitMessage();
       }}>
         <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Send photo", ko: "사진 보내기", zh: "发送图片" })} onClick={() => upload.current?.click()}><SquarePlus /></Button>
         <input ref={upload} type="file" accept="image/*" className="hidden" onChange={async (e) => { const input = e.currentTarget; const file = input.files?.[0]; try { if (file) { const image = await fileToDataUrl(file); send(compose, image); setCompose(""); } } catch { alert(tr(lang, { en: "Could not send photo", ko: "사진을 보낼 수 없습니다", zh: "图片未发送，请重试" })); } finally { input.value = ""; } }} />
         <input aria-label={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} placeholder={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} disabled={open.id === "anton" && ["choose-ending", "anton-typing", "blocked"].includes(scene.phase)} className="kkt-compose" value={compose} onFocus={() => { if (open.id !== "anton" || compose.trim()) return; const suggested = scene.phase === "first-replies" ? FIRST_PLAYER_REPLIES[scene.firstReplyCount]?.[lang] : scene.phase === "final-replies" ? FINAL_PLAYER_REPLIES[scene.finalReplyCount]?.[lang] : undefined; if (suggested) setCompose(suggested); }} onChange={(event) => setCompose(event.target.value)} />
         <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Emoji", ko: "이모티콘", zh: "表情" })} aria-expanded={emoji} onClick={() => setEmoji(!emoji)}><Smile size={21} /></Button>
-        <Button type="submit" size="icon" aria-label={tr(lang, { en: "Send message", ko: "메시지 보내기", zh: "发送消息" })} className="kkt-send" disabled={!compose.trim() || (open.id === "anton" && ["choose-ending", "anton-typing", "blocked", "done"].includes(scene.phase))}><Send size={17} /></Button>
+        <Button type="button" size="icon" aria-label={tr(lang, { en: "Send message", ko: "메시지 보내기", zh: "发送消息" })} className="kkt-send" onClick={submitMessage} disabled={!compose.trim() || (open.id === "anton" && ["choose-ending", "anton-typing", "blocked", "done"].includes(scene.phase))}><Send size={17} /></Button>
       </form>
     </div>
   );
