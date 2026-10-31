@@ -16,7 +16,7 @@ import { STORY_DATE, messageText, sortMessages } from "../chronology";
 import { confirmDelete, label, localeFor } from "../labels";
 import { completeTranslations } from "../translations";
 import { ANTON_PROGRESS_KEY, EMPTY_PROGRESS, fixedFlow, acknowledgeFixedNode, temporaryReply, withTemporaryReplies, readTemporaryReplies, writeTemporaryReplies, temporaryIncoming, type FixedProgress, type TemporaryReply } from "../fixed-conversation";
-import { ANTON_OPENING, ANTON_AFTER_REASSURANCE, FIRST_PLAYER_REPLIES, FINAL_PLAYER_REPLIES, makeAntonSceneMessage, makeAntonSceneSystem, readAntonScene, updateAntonScene, type AntonSceneState } from "../anton-scene";
+import { ANTON_AFTER_REASSURANCE, FIRST_PLAYER_REPLIES, FINAL_PLAYER_REPLIES, makeAntonSceneMessage, makeAntonSceneSystem, readAntonScene, updateAntonScene, type AntonSceneState } from "../anton-scene";
 
 const TODAY = STORY_DATE;
 const sortMsgs = sortMessages<Msg>;
