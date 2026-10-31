@@ -151,7 +151,7 @@ export const rescheduleLive = (frequency: Frequency) => {
   saveLiveState({ ...state, nextAt: Date.now() + nextDelay(frequency) });
 };
 
-/** Unread live messages from any contact, newest first, for lock-screen notifications. */
+/** Unread live messages from Anton, newest first, for lock-screen notifications. */
 export const unreadLive = (): Msg[] =>
   readStored<Msg[]>(MSGS_KEY, MESSAGES).filter((m) => m.contactId === LIVE_CONTACT && m.live && !m.read).reverse();
 
@@ -187,7 +187,6 @@ export function tickSeoyun(now = Date.now()): Msg | null {
   const line = SEOYUN_NOTICES[state.index];
   if (!line) return null;
   const msgs = readStored<Msg[]>(MSGS_KEY, MESSAGES);
-  const contacts = readStored<Contact[]>(CONTACTS_KEY, CONTACTS);
   const viewing = activeChat === SEOYUN_CONTACT;
   const msg: Msg = {
     id: `seoyun-after-anton-${state.index + 1}`, contactId: SEOYUN_CONTACT, sender: "them", type: "text",
