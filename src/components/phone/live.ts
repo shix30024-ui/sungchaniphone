@@ -170,7 +170,7 @@ export const totalUnread = (): number => {
   return savedUnread + temporaryAntonUnread;
 };
 
-type SeoyunNoticeState = { index: number; nextAt: number };
+type SeoyunNoticeState = { index: number; nextAt: number; runId?: string };
 const SEOYUN_NOTICE_KEY = "kkt-seoyun-notice-state-v1";
 const SEOYUN_NOTICES = [
   { ko: "오늘 동아리에서 보니까 앤톤 기분 안 좋아 보이던데, 너희 무슨 일 있어?", zh: "我今天在社团觉得Anton情绪不好，你们怎么啦？", en: "Anton seemed upset at the club today. Did something happen between you two?" },
@@ -188,7 +188,10 @@ export function tickSeoyun(now = Date.now()): Msg | null {
   try { state = { ...state, ...JSON.parse(localStorage.getItem(SEOYUN_NOTICE_KEY) || "{}") }; } catch {}
   if (state.index >= SEOYUN_NOTICES.length) return null;
   if (!state.nextAt) {
-    localStorage.setItem(SEOYUN_NOTICE_KEY, JSON.stringify({ ...state, nextAt: now + 3000 }));
+    // A fresh Anton scene gets a fresh notice run, so old Seoyun records
+    // cannot suppress the notifications in a later replay.
+    const runId = state.runId || `seoyun-${now}`;
+    localStorage.setItem(SEOYUN_NOTICE_KEY, JSON.stringify({ ...state, runId, nextAt: now + 3000 }));
     return null;
   }
   if (now < state.nextAt) return null;
@@ -197,7 +200,7 @@ export function tickSeoyun(now = Date.now()): Msg | null {
   const msgs = readStored<Msg[]>(MSGS_KEY, MESSAGES);
   const viewing = activeChat === SEOYUN_CONTACT;
   const msg: Msg = {
-    id: `seoyun-after-anton-${state.index + 1}`, contactId: SEOYUN_CONTACT, sender: "them", type: "text",
+    id: `seoyun-after-anton-${state.runId || "run"}-${state.index + 1}`, contactId: SEOYUN_CONTACT, sender: "them", type: "text",
     ko: line.ko, zh: line.zh, en: line.en, date: STORY_DATE,
     time: new Date(now).toTimeString().slice(0, 5), order: 310000 + state.index,
     live: true, read: viewing, notified: true, createdAt: new Date(now).toISOString(),
