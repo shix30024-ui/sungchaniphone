@@ -347,8 +347,8 @@ export default function Phone() {
         setNotificationQueue((queue) =>
           queue[0]?.id === next.id ? queue.slice(1) : queue
         );
-      }, 500);
-    }, 2000);
+      }, 120);
+    }, 850);
     return () => {
       window.clearTimeout(hideTimer);
       if (advanceTimer !== undefined) window.clearTimeout(advanceTimer);
