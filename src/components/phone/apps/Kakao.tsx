@@ -32,6 +32,37 @@ const fmt12 = (t: string, lang: AppProps["lang"]) => {
   return `${lang === "zh" ? (pm ? "下午" : "上午") : lang === "en" ? (pm ? "PM" : "AM") : pm ? "오후" : "오전"} ${h % 12 || 12}:${String(mm).padStart(2, "0")}`;
 };
 
+const SEOYUN_PLAYER_OPENING = [
+  { zh: "都怪那个学妹", ko: "그 후배 때문이야", en: "It's all that junior's fault." },
+  { zh: "发了ig帖子是我的背影", ko: "내 뒷모습 나온 인스타 게시물을 올렸어", en: "She posted an Instagram photo showing my back." },
+  { zh: "anton以为她是我女朋友", ko: "앤톤은 그 애가 내 여자친구인 줄 알았어", en: "Anton thought she was my girlfriend." },
+  { zh: "现在已经被拉黑了^", ko: "지금은 차단당했어^", en: "And now he's blocked me^" },
+] as const;
+const SEOYUN_PLAYER_BLOCKED_END = { zh: "不会be的", ko: "해피엔딩일 거야", en: "It won't be a bad ending." };
+const SEOYUN_PLAYER_OPEN_END = { zh: "我去找他解释", ko: "내가 가서 설명할게", en: "I'll go explain it to him." };
+const SEOYUN_BLOCKED_REPLIES = [
+  { zh: "？？", ko: "??", en: "??" },
+  { zh: "啊西八", ko: "아 씨", en: "Oh, damn." },
+  { zh: "我的cp难道要be了？", ko: "내 최애 커플 설마 새드엔딩이야?", en: "Is my favorite couple really going to have a bad ending?" },
+] as const;
+const SEOYUN_OPEN_REPLIES = [
+  { zh: "？？", ko: "??", en: "??" },
+  { zh: "怎么会…", ko: "어떻게 그런 일이…", en: "How could that happen..." },
+  { zh: "那现在怎么办", ko: "그럼 이제 어떡해?", en: "Then what do we do now?" },
+] as const;
+const SEOYUN_BLOCKED_LAST = { zh: "这次得he才行", ko: "이번엔 꼭 해피엔딩이어야 해", en: "This one has to have a happy ending." };
+const SEOYUN_OPEN_LAST = { zh: "你也 吹吹耳边风吧", ko: "너도 옆에서 잘 얘기해 줘", en: "You should put in a good word too." };
+
+function makeSeoyunTemporary(text: { zh: string; ko: string; en: string }, sender: "me" | "them", lang: AppProps["lang"], after?: Msg): TemporaryReply {
+  const now = new Date();
+  return { afterId: after?.id, message: {
+    id: `seoyun-script-${uid()}`, contactId: "seoyun", sender, type: "text",
+    ko: text.ko, zh: text.zh, en: text.en, date: after?.date ?? TODAY,
+    time: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
+    order: (after?.order ?? 0) + 1, read: true,
+  } };
+}
+
 const FREE_CHAT_REPLIES = [
   { ko: "그래. 마음대로 해.", zh: "行啊，随你。", en: "Fine. Do whatever you want." },
   { ko: "굳이 나한테 설명 안 해도 돼.", zh: "不用特意跟我解释。", en: "You don't have to explain it to me." },
@@ -97,6 +128,14 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   // Temporary replies live in page memory (fixed-conversation module), so they
   // survive leaving/re-entering the chat but vanish on refresh or close.
   const [temporary, setTemporaryState] = useState<TemporaryReply[]>(() => readTemporaryReplies("anton"));
+  const [seoyunTemporary, setSeoyunTemporaryState] = useState<TemporaryReply[]>(() => readTemporaryReplies("seoyun"));
+  const setSeoyunTemporary = (updater: (old: TemporaryReply[]) => TemporaryReply[]) =>
+    setSeoyunTemporaryState((old) => {
+      const next = updater(old);
+      writeTemporaryReplies("seoyun", next);
+      window.dispatchEvent(new CustomEvent("phone-store", { detail: "kkt-temporary-seoyun" }));
+      return next;
+    });
   const setTemporary = (updater: (old: TemporaryReply[]) => TemporaryReply[]) =>
     setTemporaryState((old) => {
       const next = updater(old);
@@ -203,7 +242,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
     const rows = displayContacts
       .map((c) => {
         const saved = msgs.filter((m) => m.contactId === c.id && m.type !== "date");
-        const combined = c.id === "anton" ? [...saved, ...temporaryAntonMessages.filter((m) => m.type !== "date")] : saved;
+        const combined = c.id === "anton" ? [...saved, ...temporaryAntonMessages.filter((m) => m.type !== "date")] : c.id === "seoyun" ? [...saved, ...readTemporaryReplies("seoyun").map((r) => r.message).filter((m) => m.type !== "date")] : saved;
         return { c, last: sortMsgs(combined).at(-1) };
       })
       .sort((a, b) => Number(!!b.c.pinned) - Number(!!a.c.pinned) || ((b.last?.date ?? "") + (b.last?.time ?? "")).localeCompare((a.last?.date ?? "") + (a.last?.time ?? "")));
@@ -260,8 +299,39 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const savedThread = sortMsgs(msgs.filter((m) => m.contactId === open.id));
   const flow = fixedFlow(savedThread, progress);
   const fixedThread = flow.visible;
-  const thread = open.id === "anton" ? withTemporaryReplies(fixedThread, temporary) : fixedThread;
+  const thread = open.id === "anton" ? withTemporaryReplies(fixedThread, temporary) : open.id === "seoyun" ? withTemporaryReplies(fixedThread, seoyunTemporary) : fixedThread;
+  const deliverSeoyunReplies = (lines: readonly { zh: string; ko: string; en: string }[], anchor: Msg | undefined) => {
+    lines.forEach((line, index) => {
+      window.setTimeout(() => {
+        setAntonTyping(true);
+        window.setTimeout(() => {
+          const latest = readTemporaryReplies("seoyun");
+          const previous = latest.at(-1)?.message ?? anchor;
+          const incoming = makeSeoyunTemporary(line, "them", lang, previous);
+          setSeoyunTemporary((old) => [...old, incoming]);
+          setAntonTyping(false);
+        }, 850);
+      }, index * 1500);
+    });
+  };
+
   const send = (text: string, image?: string) => {
+    if (open.id === "seoyun" && !image) {
+      const introDone = [1, 2, 3].every((n) => msgs.some((m) => m.id === `seoyun-after-anton-${n}`));
+      if (!introDone) { sendChat("kkt", open.id, text, lang, Date.now(), image); return; }
+      const currentThread = withTemporaryReplies(fixedThread, readTemporaryReplies("seoyun"));
+      const playerMsg = makeSeoyunTemporary({ zh: text, ko: text, en: text }, "me", lang, currentThread.at(-1));
+      setSeoyunTemporary((old) => [...old, playerMsg]);
+      const playerCount = readTemporaryReplies("seoyun").filter((r) => r.message.sender === "me").length + 1;
+      const replyCount = readTemporaryReplies("seoyun").filter((r) => r.message.sender === "them").length;
+      const blocked = readAntonScene().ending === "blocked";
+      if (playerCount === 4 && replyCount === 0) {
+        deliverSeoyunReplies(blocked ? SEOYUN_BLOCKED_REPLIES : SEOYUN_OPEN_REPLIES, playerMsg.message);
+      } else if (playerCount === 5 && replyCount >= 3) {
+        deliverSeoyunReplies([blocked ? SEOYUN_BLOCKED_LAST : SEOYUN_OPEN_LAST], playerMsg.message);
+      }
+      return;
+    }
     if (open.id !== "anton") { sendChat("kkt", open.id, text, lang, Date.now(), image); return; }
     const visibleThread = withTemporaryReplies(fixedThread, readTemporaryReplies("anton"));
     const playerMsg = temporaryReply(text, lang, visibleThread.at(-1), image);
@@ -397,6 +467,16 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
 
   const suggestedReply = () => {
     const current = readAntonScene();
+    if (open.id === "seoyun") {
+      const introDone = [1, 2, 3].every((n) => msgs.some((m) => m.id === `seoyun-after-anton-${n}`));
+      if (!introDone) return undefined;
+      const replies = readTemporaryReplies("seoyun");
+      const playerCount = replies.filter((r) => r.message.sender === "me").length;
+      const replyCount = replies.filter((r) => r.message.sender === "them").length;
+      if (playerCount < 4) return SEOYUN_PLAYER_OPENING[playerCount]?.[lang];
+      if (playerCount === 4 && replyCount >= 3) return (current.ending === "blocked" ? SEOYUN_PLAYER_BLOCKED_END : SEOYUN_PLAYER_OPEN_END)[lang];
+      return undefined;
+    }
     if (open.id !== "anton") return undefined;
     if (current.phase === "first-replies") return FIRST_PLAYER_REPLIES[current.firstReplyCount]?.[lang];
     if (current.phase === "final-replies") return FINAL_PLAYER_REPLIES[current.finalReplyCount]?.[lang];
