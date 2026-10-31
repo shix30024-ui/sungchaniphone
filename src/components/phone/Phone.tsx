@@ -38,7 +38,6 @@ import { SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from "./syst
 import { weatherAppName } from "./x-language";
 import { useSharedPhone, useSharingStatus } from "./shared";
 import { isSharedOwner, queueSharedSave } from "./shared-state";
-import { lockNotifications } from "./lock-notifications";
 
 const notifText = (m: Msg, lang: Lang) => (m.type === "image" ? tr(lang, { en: "Sent a photo", ko: "사진을 보냈습니다", zh: "发送了一张照片" }) : messageText(m, lang));
 
@@ -289,7 +288,6 @@ export default function Phone() {
   const [open, setOpen] = useState<App | null>(null);
   const [live, setLiveState] = useState<LiveSettings>(DEFAULT_LIVE_SETTINGS);
   const [unread, setUnread] = useState(0);
-  const [lockNotifs, setLockNotifs] = useState<Msg[]>([]);
   const [banner, setBanner] = useState<Msg | null>(null);
   const owner = useOwner();
   const [chatTarget, setChatTarget] = useState<string | null>(null);
@@ -299,13 +297,12 @@ export default function Phone() {
   const [replyError, setReplyError] = useState<string | null>(null);
 
   useEffect(() => {
-    const refresh = () => { setContactName(liveContactName()); setUnread(totalUnread()); setLockNotifs(unreadLive()); setLiveState(loadLiveSettings()); };
+    const refresh = () => { setContactName(liveContactName()); setUnread(totalUnread()); setLiveState(loadLiveSettings()); };
     refresh();
     let hide: ReturnType<typeof setTimeout> | undefined;
     const onLive = (e: Event) => {
       // Always refresh badges; only notify after the phone is unlocked.
       setUnread(totalUnread());
-      setLockNotifs([]);
       if (locked) return;
       setBanner((e as CustomEvent<Msg>).detail);
       playKktSound();
