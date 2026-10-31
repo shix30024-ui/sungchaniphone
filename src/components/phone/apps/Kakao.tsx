@@ -95,11 +95,8 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       // from the current story data while preserving player-authored custom IDs.
       const kept = current.filter((message) => {
         if (/^m\d+$/.test(message.id)) return false;
-        if (message.date === "2024-03-20" || message.date === "2026-10-26" || message.date === "2026-10-27") return false;
         // Remove obsolete 2023-09-13 birthday reply copies from older saved snapshots.
         if (message.contactId === "anton" && message.date === "2023-09-13" && message.sender === "me" && message.time === "00:09") return false;
-        // Move non-Anton, non-Seoyun everyday chats off Anton’s birthday date in older saves.
-        if (message.date === "2026-03-21" && !["anton", "seoyun"].includes(message.contactId)) return false;
         return true;
       });
       const merged = [...kept, ...MESSAGES];
@@ -328,6 +325,9 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       const blocked = readAntonScene().ending === "blocked";
       if (playerCount === 4 && replyCount === 0) {
         deliverSeoyunReplies(blocked ? SEOYUN_BLOCKED_REPLIES : SEOYUN_OPEN_REPLIES, playerMsg.message);
+      } else if (blocked && playerCount === 5 && replyCount >= 3) {
+        // After Sungchan says "不会be的", Seoyun sends her final line.
+        deliverSeoyunReplies([SEOYUN_BLOCKED_LAST], playerMsg.message);
       }
       return;
     }
