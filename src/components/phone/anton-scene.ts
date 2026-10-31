@@ -86,8 +86,8 @@ export function makeAntonSceneMessage(
 }
 
 /** Deliver Anton’s opening burst while the player is on the unlocked home screen. */
-export function startAntonScene(): Msg | null {
-  if (scene.started) return null;
+export function startAntonScene(): Msg[] {
+  if (scene.started) return [];
   const saved = readStored<Msg[]>("kkt-msgs-v1", MESSAGES).filter((m) => m.contactId === "anton");
   let anchor = [...saved].sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`) || (a.order ?? 0) - (b.order ?? 0)).at(-1);
   const additions: TemporaryReply[] = [];
@@ -98,7 +98,7 @@ export function startAntonScene(): Msg | null {
   }
   writeTemporaryReplies("anton", [...readTemporaryReplies("anton"), ...additions]);
   updateAntonScene({ started: true, phase: "first-replies", firstReplyCount: 0, finalReplyCount: 0, antonReplyCount: 0, ending: null });
-  return additions.at(-1)?.message ?? null;
+  return additions.map((item) => item.message);
 }
 
 export function makeAntonSceneSystem(text: string, lang: Lang, after?: Msg): TemporaryReply {
