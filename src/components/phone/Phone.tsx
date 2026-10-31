@@ -28,7 +28,7 @@ import { usePersist } from "./store";
 import { Button } from "@/components/ui/button";
 import {
   LIVE_CONTACT, LIVE_EVENT, STORE_EVENT, type LiveSettings, DEFAULT_LIVE_SETTINGS,
-  liveContactName, loadLiveSettings, rescheduleLive, saveLiveSettings, tickLive, totalUnread, unreadLive,
+  liveContactName, loadLiveSettings, rescheduleLive, saveLiveSettings, tickLive, tickSeoyun, totalUnread, unreadLive,
 } from "./live";
 import { messageText } from "./chronology";
 import { tickReplies, REPLY_ERROR_EVENT } from "./conversation";
@@ -287,7 +287,7 @@ export default function Phone() {
       hide = setTimeout(() => setBanner(null), 5000);
     };
     const onReplyError = (event: Event) => setReplyError((event as CustomEvent<string>).detail);
-    const tick = () => { if (document.visibilityState === "visible") { void tickReplies(Date.now(), getActiveChat()).catch(() => setReplyError(tr(lang, { en: "Reply paused. Saved messages remain unchanged.", ko: "답장이 중단됐습니다. 저장된 메시지는 유지됩니다.", zh: "回复已暂停，已保存的消息不会被覆盖。" }))); tickLive(); } };
+    const tick = () => { if (document.visibilityState === "visible") { void tickReplies(Date.now(), getActiveChat()).catch(() => setReplyError(tr(lang, { en: "Reply paused. Saved messages remain unchanged.", ko: "답장이 중단됐습니다. 저장된 메시지는 유지됩니다.", zh: "回复已暂停，已保存的消息不会被覆盖。" }))); tickLive(); tickSeoyun(); } };
     const timer = setInterval(tick, 500);
     window.addEventListener(STORE_EVENT, refresh);
     window.addEventListener("storage", refresh);
@@ -384,7 +384,7 @@ export default function Phone() {
       )}
       {!locked && banner && (
         <div className="notif-banner">
-          <NotifCard m={banner} lang={lang} preview={live.preview} onClick={openChat} />
+          <NotifCard m={banner} lang={lang} preview={live.preview} onClick={() => openChat(banner.contactId)} />
         </div>
       )}
       {!locked && replyError && <div className="reply-error" role="alert"><span>{replyError}</span><Button variant="ghost" size="icon" aria-label={t(lang, "cancel")} onClick={() => setReplyError(null)}><X /></Button></div>}
