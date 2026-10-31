@@ -324,10 +324,8 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       const replyCount = seoyunTemporary.filter((r) => r.message.sender === "them").length;
       const blocked = readAntonScene().ending === "blocked";
       if (playerCount === 4 && replyCount === 0) {
+        // "Blocked" refers to Anton blocking Sungchan, not Seoyun.
         deliverSeoyunReplies(blocked ? SEOYUN_BLOCKED_REPLIES : SEOYUN_OPEN_REPLIES, playerMsg.message);
-      } else if (blocked && playerCount === 5 && replyCount >= 3) {
-        // After Sungchan says "不会be的", Seoyun sends her final line.
-        deliverSeoyunReplies([SEOYUN_BLOCKED_LAST], playerMsg.message);
       }
       return;
     }
@@ -490,6 +488,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       if (playerCount < 3) return SEOYUN_PLAYER_OPENING[playerCount]?.[lang];
       if (playerCount === 3) return (current.ending === "blocked" ? SEOYUN_PLAYER_LAST_BLOCKED : SEOYUN_PLAYER_LAST_OPEN)[lang];
       if (playerCount === 4 && replyCount >= 3) return (current.ending === "blocked" ? SEOYUN_PLAYER_BLOCKED_END : SEOYUN_PLAYER_OPEN_END)[lang];
+      if (playerCount === 5 && replyCount >= 3 && current.ending === "blocked") return SEOYUN_BLOCKED_LAST[lang];
       if (playerCount === 5 && replyCount >= 3 && current.ending !== "blocked") return SEOYUN_OPEN_LAST[lang];
       return undefined;
     }
