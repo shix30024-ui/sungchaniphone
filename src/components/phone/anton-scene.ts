@@ -18,6 +18,7 @@ export type AntonSceneState = {
   finalReplyCount: number;
   antonReplyCount: number;
   ending: "blocked" | "not-blocked" | null;
+  freeMessageCount: number;
 };
 
 const INITIAL: AntonSceneState = {
@@ -27,6 +28,7 @@ const INITIAL: AntonSceneState = {
   finalReplyCount: 0,
   antonReplyCount: 0,
   ending: null,
+  freeMessageCount: 0,
 };
 
 // Module memory only: progress survives switching apps, but a page refresh restarts this scene.
