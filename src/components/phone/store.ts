@@ -26,8 +26,13 @@ export function readStored<T>(key: string, fallback: T): T {
 }
 
 export function updateStored<T>(key: string, fallback: T, update: (current: T) => T): T {
+  const current = readStored(key, fallback);
+  const next = update(current);
+  // Opening an app can run hydration/merge effects that produce an unchanged
+  // array. Do not rewrite large localStorage records (or create a backup copy)
+  // unless the stored content actually changed.
+  if (JSON.stringify(current) === JSON.stringify(next)) return current;
   backupPhoneData();
-  const next = update(readStored(key, fallback));
   if (sharedWrite(key, next)) return next;
   localStorage.setItem(key, JSON.stringify(next));
   window.dispatchEvent(new CustomEvent("phone-store", { detail: key }));
