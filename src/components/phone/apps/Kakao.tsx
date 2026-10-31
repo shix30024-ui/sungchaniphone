@@ -105,6 +105,13 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   // One-time: move large chat images out of the small browser storage. Text and order are untouched.
   useEffect(() => { void moveKktImagesToDb(); }, []);
   useEffect(() => { setActiveChat(openId); return () => setActiveChat(null); }, [openId]);
+  // Opening Anton’s chat clears the temporary scripted-message unread state too.
+  useEffect(() => {
+    if (openId === "anton" && temporary.some((reply) => reply.message.sender === "them" && !reply.message.read)) {
+      setTemporary((old) => old.map((reply) => reply.message.sender === "them" ? { ...reply, message: { ...reply.message, read: true } } : reply));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId]);
   // Opening a chat marks it read. Works on the saved copy directly so defaults never overwrite saved edits.
   useEffect(() => {
     if (!openId) return;
@@ -158,23 +165,6 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
     cancel: tr(lang, { en: "Cancel", ko: "취소", zh: "取消" }),
     photo: label(lang, "photo"),
   };
-
-  // Start the fixed argument scene once, anchored after the existing Anton history.
-  useEffect(() => {
-    if (openId !== "anton" || scene.started) return;
-    const base = sortMsgs(msgs.filter((m) => m.contactId === "anton"));
-    let anchor = withTemporaryReplies(base, readTemporaryReplies("anton")).at(-1);
-    const additions: TemporaryReply[] = [];
-    for (const line of ANTON_OPENING) {
-      const item = makeAntonSceneMessage(line, anchor);
-      additions.push(item);
-      anchor = item.message;
-    }
-    setTemporary((old) => [...old, ...additions]);
-    patchScene({ started: true, phase: "first-replies", firstReplyCount: 0, finalReplyCount: 0, antonReplyCount: 0, ending: null });
-  // The scene is module-memory only and starts once per page session.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openId, scene.started]);
 
   // Anton's second set of fixed messages arrives one at a time with a typing indicator.
   useEffect(() => {
