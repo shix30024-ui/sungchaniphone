@@ -38,6 +38,8 @@ const SEOYUN_PLAYER_OPENING = [
   { zh: "anton以为她是我女朋友", ko: "앤톤은 그 애가 내 여자친구인 줄 알았어", en: "Anton thought she was my girlfriend." },
   { zh: "现在已经被拉黑了^", ko: "지금은 차단당했어^", en: "And now he's blocked me^" },
 ] as const;
+const SEOYUN_PLAYER_LAST_BLOCKED = { zh: "现在已经被拉黑了^", ko: "지금은 차단당했어^", en: "And now he's blocked me^" };
+const SEOYUN_PLAYER_LAST_OPEN = { zh: "现在也不回我信息了", ko: "이제 내 메시지에도 답이 없어", en: "He isn't replying to my messages now either." };
 const SEOYUN_PLAYER_BLOCKED_END = { zh: "不会be的", ko: "해피엔딩일 거야", en: "It won't be a bad ending." };
 const SEOYUN_PLAYER_OPEN_END = { zh: "我去找他解释", ko: "내가 가서 설명할게", en: "I'll go explain it to him." };
 const SEOYUN_BLOCKED_REPLIES = [
@@ -473,7 +475,8 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       const replies = readTemporaryReplies("seoyun");
       const playerCount = replies.filter((r) => r.message.sender === "me").length;
       const replyCount = replies.filter((r) => r.message.sender === "them").length;
-      if (playerCount < 4) return SEOYUN_PLAYER_OPENING[playerCount]?.[lang];
+      if (playerCount < 3) return SEOYUN_PLAYER_OPENING[playerCount]?.[lang];
+      if (playerCount === 3) return (current.ending === "blocked" ? SEOYUN_PLAYER_LAST_BLOCKED : SEOYUN_PLAYER_LAST_OPEN)[lang];
       if (playerCount === 4 && replyCount >= 3) return (current.ending === "blocked" ? SEOYUN_PLAYER_BLOCKED_END : SEOYUN_PLAYER_OPEN_END)[lang];
       return undefined;
     }
