@@ -58,6 +58,8 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
         if (message.date === "2026-10-26" || message.date === "2026-10-27") return false;
         // Remove obsolete 2023-09-13 birthday reply copies from older saved snapshots.
         if (message.contactId === "anton" && message.date === "2023-09-13" && message.sender === "me" && message.time === "00:09") return false;
+        // Move non-Anton, non-Seoyun everyday chats off Anton’s birthday date in older saves.
+        if (message.date === "2026-03-21" && !["anton", "seoyun"].includes(message.contactId)) return false;
         return true;
       });
       const merged = [...kept, ...MESSAGES];
