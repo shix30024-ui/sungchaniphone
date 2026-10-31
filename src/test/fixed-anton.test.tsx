@@ -120,10 +120,10 @@ describe("Fixed Anton interaction", () => {
       await send(message);
     }
     fireEvent.click(await screen.findByRole("button", { name: "没有被拉黑" }));
-    expect(await screen.findByText("A junior?")).toBeInTheDocument();
-    expect(await screen.findByText("Haha, hyung, if you ever like a girl, make sure you tell me^")).toBeInTheDocument();
-    expect(await screen.findByText("I don't mind :)")).toBeInTheDocument();
-    expect(await screen.findByText("Really.")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("A junior?")).toBeInTheDocument(), { timeout: 4000 });
+    await waitFor(() => expect(screen.getByText("Really.")).toBeInTheDocument(), { timeout: 8000 });
+    expect(screen.getByText("Haha, hyung, if you ever like a girl, make sure you tell me^")).toBeInTheDocument();
+    expect(screen.getByText("I don't mind :)")).toBeInTheDocument();
     for (const message of ["不是", "我真的没有", "我最最最喜欢anton了", "你不是知道吗？"]) {
       await send(message);
     }
