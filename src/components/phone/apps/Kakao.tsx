@@ -108,25 +108,15 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   // Opening a chat marks it read. Works on the saved copy directly so defaults never overwrite saved edits.
   useEffect(() => {
     if (!openId) return;
-    try {
-      const ms = localStorage.getItem("kkt-msgs-v1");
-      if (ms) {
-        const list = JSON.parse(ms) as Msg[];
-        if (list.some((m) => m.contactId === openId && m.live && !m.read)) {
-          localStorage.setItem("kkt-msgs-v1", JSON.stringify(list.map((m) => (m.contactId === openId && m.live && !m.read ? { ...m, read: true } : m))));
-          window.dispatchEvent(new CustomEvent("phone-store", { detail: "kkt-msgs-v1" }));
-        }
-      }
-      const cs = localStorage.getItem("kkt-contacts-v1");
-      if (cs) {
-        const list = JSON.parse(cs) as Contact[];
-        if (list.some((c) => c.id === openId && c.unread > 0)) {
-          localStorage.setItem("kkt-contacts-v1", JSON.stringify(list.map((c) => (c.id === openId ? { ...c, unread: 0 } : c))));
-          window.dispatchEvent(new CustomEvent("phone-store", { detail: "kkt-contacts-v1" }));
-        }
-      }
-    } catch { /* keep chat usable even if storage is unavailable */ }
-  }, [openId, msgs, contacts]);
+    if (msgs.some((message) => message.contactId === openId && message.live && !message.read)) {
+      setMsgs((current) => current.map((message) =>
+        message.contactId === openId && message.live && !message.read ? { ...message, read: true } : message));
+    }
+    if (contacts.some((contact) => contact.id === openId && contact.unread > 0)) {
+      setContacts((current) => current.map((contact) =>
+        contact.id === openId ? { ...contact, unread: 0 } : contact));
+    }
+  }, [openId, msgs, contacts, setMsgs, setContacts]);
   const [editing, setEditing] = useState(false);
   const owner = useOwner();
   const [draft, setDraft] = useState<Msg[]>([]);
@@ -206,6 +196,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   }, [openId, scene.phase, scene.antonReplyCount]);
 
   const displayContacts = contacts;
+  const unreadForContact = (contactId: string) => Math.max(contacts.find((contact) => contact.id === contactId)?.unread || 0, msgs.filter((message) => message.contactId === contactId && message.live && !message.read).length);
   const open = displayContacts.find((c) => c.id === openId);
 
   if (!open) {
@@ -231,7 +222,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
               </div>
               {listTab === "chats" && <div className="flex flex-col items-end gap-1 self-start pt-1">
                 <span className="text-[11px] text-muted-foreground">{listTime(last)}</span>
-                {c.unread > 0 && <span className="kkt-badge">{c.unread}</span>}
+                {unreadForContact(c.id) > 0 && <span className="kkt-badge">{unreadForContact(c.id)}</span>}
               </div>}
             </Button>
           ))}
