@@ -208,7 +208,7 @@ export function tickSeoyun(now = Date.now()): Msg | null {
   }
   const index = state.index + 1;
   localStorage.setItem(SEOYUN_NOTICE_KEY, JSON.stringify({
-    index, nextAt: index >= SEOYUN_NOTICES.length ? 0 : now + (index === 1 ? 26000 : 34000),
+    index, nextAt: index >= SEOYUN_NOTICES.length ? 0 : now + 2500,
   }));
   return msg;
 }
