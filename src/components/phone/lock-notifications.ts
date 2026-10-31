@@ -27,7 +27,7 @@ export const ANTON_LOCK_NOTIFICATIONS: Msg[] = [
 ];
 
 export function lockNotifications(existing: Msg[]): Msg[] {
-  const fixedIds = new Set(ANTON_LOCK_NOTIFICATIONS.map((message) => message.id));
+  const fixedIds = new Set([...ANTON_LOCK_NOTIFICATIONS.map((message) => message.id), "anton-lock-cello-v1", "anton-lock-busy-v1"]);
   return [...ANTON_LOCK_NOTIFICATIONS, ...existing.filter((message) => !fixedIds.has(message.id))];
 }
 
