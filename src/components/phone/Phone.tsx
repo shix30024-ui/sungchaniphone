@@ -36,6 +36,7 @@ import { getActiveChat } from "./live";
 import { Wifi, ChevronUp, ChevronDown, X, Search, Plane } from "lucide-react";
 import { SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from "./system";
 import { weatherAppName } from "./x-language";
+import { startAntonScene } from "./anton-scene";
 import { useSharedPhone, useSharingStatus } from "./shared";
 import { isSharedOwner, queueSharedSave } from "./shared-state";
 
@@ -385,8 +386,14 @@ export default function Phone() {
           onUnlock={() => {
             setLocked(false);
             try { sessionStorage.setItem("phone-unlocked", "1"); } catch { /* ignore */ }
+            const sceneNotice = startAntonScene();
             const pending = unreadLive();
-            if (pending.length) {
+            if (sceneNotice) {
+              setUnread(totalUnread());
+              setBanner(sceneNotice);
+              playKktSound();
+              window.setTimeout(() => setBanner(null), 5000);
+            } else if (pending.length) {
               setBanner(pending[0] ?? null);
               playKktSound();
               window.setTimeout(() => setBanner(null), 5000);
