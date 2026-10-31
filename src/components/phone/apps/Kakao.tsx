@@ -98,7 +98,12 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   // survive leaving/re-entering the chat but vanish on refresh or close.
   const [temporary, setTemporaryState] = useState<TemporaryReply[]>(() => readTemporaryReplies("anton"));
   const setTemporary = (updater: (old: TemporaryReply[]) => TemporaryReply[]) =>
-    setTemporaryState((old) => { const next = updater(old); writeTemporaryReplies("anton", next); return next; });
+    setTemporaryState((old) => {
+      const next = updater(old);
+      writeTemporaryReplies("anton", next);
+      window.dispatchEvent(new CustomEvent("phone-store", { detail: "kkt-temporary" }));
+      return next;
+    });
   const [scene, setScene] = useState<AntonSceneState>(() => readAntonScene());
   const patchScene = (patch: Partial<AntonSceneState>) => setScene(updateAntonScene(patch));
   const [progress] = usePersist<FixedProgress>(ANTON_PROGRESS_KEY, EMPTY_PROGRESS);
