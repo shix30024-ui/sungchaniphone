@@ -11,7 +11,7 @@ import { useOwner } from "../owner";
 
 export default function XApp({ lang, onHome }: AppProps) {
   const owner = useOwner();
-  const [tweets, setTweets] = usePersist<Tweet[]>("x-tweets-v1", TWEETS);
+  const [tweets, setTweets] = usePersist<Tweet[]>("x-tweets-v2", TWEETS);
   const [draft, setDraft] = useState<Tweet | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const open = tweets.find((tweet) => tweet.id === openId);
@@ -55,7 +55,7 @@ export default function XApp({ lang, onHome }: AppProps) {
   if (open) return <div className="app-page bg-background">
     <TopBar title={tr(lang, { en: "Post", ko: "게시물", zh: "帖子" })} left={<BackBtn onClick={() => setOpenId(null)} />} right={owner && <Button variant="ghost" onClick={() => setDraft({ ...open, replies: (open.replies ?? []).map((r) => ({ ...r })) })}>{label(lang, "edit")}</Button>} />
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      <div className="flex gap-3 items-center"><img src={resolveImg(PROFILE.avatar)} alt="" className="w-10 h-10 rounded-full object-cover" /><span className="leading-tight"><b className="block">{tr(lang, { en: "Sungchan", ko: "성찬", zh: "成灿" })}</b><span className="text-sm text-muted-foreground">@zcc_daily</span></span></div>
+      <div className="flex gap-3 items-center"><img src={resolveImg(PROFILE.avatar)} alt="" className="w-10 h-10 rounded-full object-cover" /><span className="leading-tight"><b className="block">{tr(lang, { en: "Sungchan", ko: "성찬", zh: "成灿" })}</b><span className="text-sm text-muted-foreground">@iiiston123</span></span></div>
       <p className="text-[17px] whitespace-pre-wrap">{xText(open, lang)}</p>
       <p className="text-sm text-muted-foreground">{open.time} · {open.date.replaceAll("-", ".")}</p>
       <p className="text-sm border-y py-2.5"><b>{open.rts}</b> <span className="text-muted-foreground">{tr(lang, { en: "Reposts", ko: "재게시", zh: "转帖" })}</span>  <b className="ml-3">{open.likes}</b> <span className="text-muted-foreground">{tr(lang, { en: "Likes", ko: "마음에 들어요", zh: "喜欢" })}</span></p>
@@ -74,7 +74,7 @@ export default function XApp({ lang, onHome }: AppProps) {
           <button key={t.id} onClick={() => setOpenId(t.id)} className="w-full text-left flex gap-3 px-4 py-3 border-b">
             <img src={resolveImg(PROFILE.avatar)} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
             <div className="min-w-0 flex-1">
-              <div className="text-[15px] truncate"><b>{tr(lang, { en: "Sungchan", ko: "성찬", zh: "成灿" })}</b> <span className="text-muted-foreground">@zcc_daily · {t.date.slice(5).replace("-", "/")}</span></div>
+              <div className="text-[15px] truncate"><b>{tr(lang, { en: "Sungchan", ko: "성찬", zh: "成灿" })}</b> <span className="text-muted-foreground">@iiiston123 · {t.date.slice(5).replace("-", "/")}</span></div>
               <p className="text-[15px] mt-0.5 whitespace-pre-line">{xText(t, lang)}</p>
               {actions(t)}
             </div>
