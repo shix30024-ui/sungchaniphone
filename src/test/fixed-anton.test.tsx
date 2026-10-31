@@ -112,6 +112,7 @@ describe("Fixed Anton interaction", () => {
     const before = localStorage.getItem("kkt-msgs-v1");
     render(<Kakao lang="en" onHome={() => {}} initialChat="anton" />);
     await screen.findByText("Hyung, do you have a girlfriend?");
+    expect(tickLive(999999)).toBeNull();
     const send = async (message: string) => {
       fireEvent.change(screen.getByRole("textbox", { name: "Message" }), { target: { value: message } });
       fireEvent.click(screen.getByRole("button", { name: "Send message" }));
