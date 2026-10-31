@@ -315,7 +315,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
 
   const send = (text: string, image?: string) => {
     if (open.id === "seoyun" && !image) {
-      const introDone = [1, 2, 3].every((n) => msgs.some((m) => m.id === `seoyun-after-anton-${n}`));
+      const introDone = msgs.filter((m) => m.contactId === "seoyun" && m.live && m.notified && m.id.startsWith("seoyun-after-anton-")).length >= 3;
       if (!introDone) { sendChat("kkt", open.id, text, lang, Date.now(), image); return; }
       const currentThread = withTemporaryReplies(fixedThread, seoyunTemporary);
       const playerMsg = makeSeoyunTemporary({ zh: text, ko: text, en: text }, "me", currentThread.at(-1));
@@ -480,7 +480,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const suggestedReply = () => {
     const current = readAntonScene();
     if (open.id === "seoyun") {
-      const introDone = [1, 2, 3].every((n) => msgs.some((m) => m.id === `seoyun-after-anton-${n}`));
+      const introDone = msgs.filter((m) => m.contactId === "seoyun" && m.live && m.notified && m.id.startsWith("seoyun-after-anton-")).length >= 3;
       if (!introDone) return undefined;
       const replies = readTemporaryReplies("seoyun");
       const playerCount = replies.filter((r) => r.message.sender === "me").length;
