@@ -71,6 +71,7 @@ export const FINAL_PLAYER_REPLIES = [
 export function makeAntonSceneMessage(
   text: { zh: string; ko: string; en: string },
   after?: Msg,
+  read = true,
 ): TemporaryReply {
   const now = new Date();
   return {
@@ -79,7 +80,7 @@ export function makeAntonSceneMessage(
       id: `anton-scene-${uid()}`, contactId: "anton", sender: "them", type: "text",
       ko: text.ko, zh: text.zh, en: text.en, date: "2026-10-31",
       time: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
-      order: (after?.order ?? 0) + 1, read: false,
+      order: (after?.order ?? 0) + 1, read,
     },
   };
 }
@@ -91,7 +92,7 @@ export function startAntonScene(): Msg | null {
   let anchor = [...saved].sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`) || (a.order ?? 0) - (b.order ?? 0)).at(-1);
   const additions: TemporaryReply[] = [];
   for (const line of ANTON_OPENING) {
-    const item = makeAntonSceneMessage(line, anchor);
+    const item = makeAntonSceneMessage(line, anchor, false);
     additions.push(item);
     anchor = item.message;
   }
