@@ -291,6 +291,7 @@ export default function Phone() {
     const timer = setInterval(tick, 500);
     window.addEventListener(STORE_EVENT, refresh);
     window.addEventListener("storage", refresh);
+    window.addEventListener("phone-shared-refresh", refresh);
     window.addEventListener(LIVE_EVENT, onLive);
     window.addEventListener(REPLY_ERROR_EVENT, onReplyError);
     document.addEventListener("visibilitychange", tick);
@@ -298,6 +299,7 @@ export default function Phone() {
       clearInterval(timer); clearTimeout(hide);
       window.removeEventListener(STORE_EVENT, refresh);
       window.removeEventListener("storage", refresh);
+      window.removeEventListener("phone-shared-refresh", refresh);
       window.removeEventListener(LIVE_EVENT, onLive);
       window.removeEventListener(REPLY_ERROR_EVENT, onReplyError);
       document.removeEventListener("visibilitychange", tick);
