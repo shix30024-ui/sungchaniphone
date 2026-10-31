@@ -328,8 +328,6 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       const blocked = readAntonScene().ending === "blocked";
       if (playerCount === 4 && replyCount === 0) {
         deliverSeoyunReplies(blocked ? SEOYUN_BLOCKED_REPLIES : SEOYUN_OPEN_REPLIES, playerMsg.message);
-      } else if (playerCount === 5 && replyCount >= 3) {
-        deliverSeoyunReplies([blocked ? SEOYUN_BLOCKED_LAST : SEOYUN_OPEN_LAST], playerMsg.message);
       }
       return;
     }
@@ -477,6 +475,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       if (playerCount < 3) return SEOYUN_PLAYER_OPENING[playerCount]?.[lang];
       if (playerCount === 3) return (current.ending === "blocked" ? SEOYUN_PLAYER_LAST_BLOCKED : SEOYUN_PLAYER_LAST_OPEN)[lang];
       if (playerCount === 4 && replyCount >= 3) return (current.ending === "blocked" ? SEOYUN_PLAYER_BLOCKED_END : SEOYUN_PLAYER_OPEN_END)[lang];
+      if (playerCount === 5 && replyCount >= 3 && current.ending !== "blocked") return SEOYUN_OPEN_LAST[lang];
       return undefined;
     }
     if (open.id !== "anton") return undefined;
