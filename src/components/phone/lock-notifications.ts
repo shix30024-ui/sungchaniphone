@@ -26,9 +26,9 @@ export const ANTON_LOCK_NOTIFICATIONS: Msg[] = [
   },
 ];
 
-export function lockNotifications(existing: Msg[]): Msg[] {
-  const fixedIds = new Set([...ANTON_LOCK_NOTIFICATIONS.map((message) => message.id), "anton-lock-cello-v1", "anton-lock-busy-v1"]);
-  return [...ANTON_LOCK_NOTIFICATIONS, ...existing.filter((message) => !fixedIds.has(message.id))];
+export function lockNotifications(_existing: Msg[]): Msg[] {
+  // This story beat replaces all live Anton previews: exactly these four notices appear.
+  return ANTON_LOCK_NOTIFICATIONS;
 }
 
 /** These notices belong to the lock screen only, not the conversation history. */
