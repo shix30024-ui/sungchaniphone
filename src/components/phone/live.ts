@@ -99,7 +99,9 @@ export function nextLine(msgs: Msg[], delivered: string[]): LiveLine | undefined
  * there is nothing new to send. Never rewrites existing messages.
  */
 export function deliverLiveMessage(opts: { test?: boolean } = {}): Msg | null {
-  if (readAntonScene().started) return null;
+  const scene = readAntonScene();
+  // Pause automatic chat drops during the scripted argument, then resume after its ending.
+  if (scene.started && scene.phase !== "done") return null;
   backupPhoneData();
   const msgs = readStored<Msg[]>(MSGS_KEY, MESSAGES);
   const contacts = readStored<Contact[]>(CONTACTS_KEY, CONTACTS);
@@ -130,8 +132,9 @@ export function deliverLiveMessage(opts: { test?: boolean } = {}): Msg | null {
 
 /** Called on a timer: sends at most one message when due, then schedules the next. */
 export function tickLive(now = Date.now()): Msg | null {
-  // Once the player-driven Anton scene begins, pause unsolicited live story drops.
-  if (readAntonScene().started) return null;
+  // Keep the scripted argument uninterrupted; resume ordinary messages after the scene ends.
+  const scene = readAntonScene();
+  if (scene.started && scene.phase !== "done") return null;
   const settings = loadLiveSettings();
   if (!settings.enabled) return null;
   // Let the current conversation finish instead of interrupting with an unrelated story node.
