@@ -15,9 +15,8 @@ import { type PendingReply, QUEUE_KEY, sendChat } from "../conversation";
 import { STORY_DATE, messageText, sortMessages } from "../chronology";
 import { confirmDelete, label, localeFor } from "../labels";
 import { completeTranslations } from "../translations";
-import { ANTON_PROGRESS_KEY, EMPTY_PROGRESS, fixedFlow, acknowledgeFixedNode, temporaryReply, temporaryIncoming, withTemporaryReplies, readTemporaryReplies, writeTemporaryReplies, type FixedProgress, type TemporaryReply } from "../fixed-conversation";
-import { withLockNotices } from "../lock-notifications";
-import { generateAntonReply } from "../local-anton-model";
+import { ANTON_PROGRESS_KEY, EMPTY_PROGRESS, fixedFlow, acknowledgeFixedNode, temporaryReply, withTemporaryReplies, readTemporaryReplies, writeTemporaryReplies, type FixedProgress, type TemporaryReply } from "../fixed-conversation";
+import { ANTON_OPENING, ANTON_AFTER_REASSURANCE, FIRST_PLAYER_REPLIES, FINAL_PLAYER_REPLIES, makeAntonSceneMessage, makeAntonSceneSystem, readAntonScene, updateAntonScene, type AntonSceneState } from "../anton-scene";
 
 const TODAY = STORY_DATE;
 const sortMsgs = sortMessages<Msg>;
@@ -91,6 +90,8 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const [temporary, setTemporaryState] = useState<TemporaryReply[]>(() => readTemporaryReplies("anton"));
   const setTemporary = (updater: (old: TemporaryReply[]) => TemporaryReply[]) =>
     setTemporaryState((old) => { const next = updater(old); writeTemporaryReplies("anton", next); return next; });
+  const [scene, setScene] = useState<AntonSceneState>(() => readAntonScene());
+  const patchScene = (patch: Partial<AntonSceneState>) => setScene(updateAntonScene(patch));
   const [progress] = usePersist<FixedProgress>(ANTON_PROGRESS_KEY, EMPTY_PROGRESS);
   // One-time: move large chat images out of the small browser storage. Text and order are untouched.
   useEffect(() => { void moveKktImagesToDb(); }, []);
@@ -142,7 +143,6 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const scroll = useRef<HTMLDivElement>(null);
   const editIds = useRef(new Set<string>());
   const [antonTyping, setAntonTyping] = useState(false);
-  const [antonError, setAntonError] = useState<string | null>(null);
   const typing = antonTyping || (openId !== "anton" && queue.some((q) => !q.failed && q.channel === "kkt" && q.contactId === openId));
   // Auto-scroll only when opening a chat or when the player is already near
   // the bottom, so scrolling up to read history is never yanked back down.
@@ -159,6 +159,42 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
     cancel: tr(lang, { en: "Cancel", ko: "취소", zh: "取消" }),
     photo: label(lang, "photo"),
   };
+
+  // Start the fixed argument scene once, anchored after the existing Anton history.
+  useEffect(() => {
+    if (openId !== "anton" || scene.started) return;
+    const base = sortMsgs(msgs.filter((m) => m.contactId === "anton"));
+    let anchor = withTemporaryReplies(base, readTemporaryReplies("anton")).at(-1);
+    const additions: TemporaryReply[] = [];
+    for (const line of ANTON_OPENING) {
+      const item = makeAntonSceneMessage(line, anchor);
+      additions.push(item);
+      anchor = item.message;
+    }
+    setTemporary((old) => [...old, ...additions]);
+    patchScene({ started: true, phase: "first-replies", firstReplyCount: 0, finalReplyCount: 0, antonReplyCount: 0, ending: null });
+  // The scene is module-memory only and starts once per page session.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, scene.started]);
+
+  // Anton's second set of fixed messages arrives one at a time with a typing indicator.
+  useEffect(() => {
+    if (openId !== "anton" || scene.phase !== "anton-typing") { setAntonTyping(false); return; }
+    const line = ANTON_AFTER_REASSURANCE[scene.antonReplyCount];
+    if (!line) { patchScene({ phase: "final-replies" }); setAntonTyping(false); return; }
+    setAntonTyping(true);
+    const timer = window.setTimeout(() => {
+      const base = sortMsgs(msgs.filter((m) => m.contactId === "anton"));
+      const anchor = withTemporaryReplies(base, readTemporaryReplies("anton")).at(-1);
+      const incoming = makeAntonSceneMessage(line, anchor);
+      setTemporary((old) => [...old, incoming]);
+      const nextCount = scene.antonReplyCount + 1;
+      patchScene({ antonReplyCount: nextCount, phase: nextCount >= ANTON_AFTER_REASSURANCE.length ? "final-replies" : "anton-typing" });
+      setAntonTyping(false);
+    }, 1100);
+    return () => window.clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, scene.phase, scene.antonReplyCount]);
 
   const displayContacts = contacts;
   const open = displayContacts.find((c) => c.id === openId);
@@ -219,30 +255,34 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
 
   const savedThread = sortMsgs(msgs.filter((m) => m.contactId === open.id));
   const flow = fixedFlow(savedThread, progress);
-  const fixedThread = open.id === "anton" ? withLockNotices(flow.visible) : savedThread;
+  const fixedThread = flow.visible;
   const thread = open.id === "anton" ? withTemporaryReplies(fixedThread, temporary) : fixedThread;
   const send = (text: string, image?: string) => {
     if (open.id !== "anton") { sendChat("kkt", open.id, text, lang, Date.now(), image); return; }
     const visibleThread = withTemporaryReplies(fixedThread, readTemporaryReplies("anton"));
     const playerMsg = temporaryReply(text, lang, visibleThread.at(-1), image);
     setTemporary((old) => [...old, playerMsg]);
-    // Player content stays in React state; only an existing gate ID may advance.
-    // Sending never creates or delivers an Anton story message.
     if (flow.waiting) acknowledgeFixedNode(flow.waiting.id);
-    // Anton generates a new, context-aware reply with a language model running
-    // in this browser. No OpenAI API key, paid endpoint, or server request is used.
-    const source = playerMsg.message;
-    setAntonError(null);
-    setAntonTyping(true);
-    void generateAntonReply([...visibleThread, source], source)
-      .then((reply) => {
-        setTemporary((old) => old.some((r) => r.message.id === source.id) ? [...old, temporaryIncoming(reply, source)] : old);
-      })
-      .catch((error: unknown) => {
-        const message = error instanceof Error ? error.message : "本地模型暂时无法运行，请检查浏览器是否支持 WebGPU。";
-        setAntonError(message);
-      })
-      .finally(() => setAntonTyping(false));
+    const current = readAntonScene();
+    if (current.phase === "first-replies") {
+      const count = current.firstReplyCount + 1;
+      patchScene({ firstReplyCount: count, phase: count >= FIRST_PLAYER_REPLIES.length ? "choose-ending" : "first-replies" });
+    } else if (current.phase === "final-replies") {
+      const count = current.finalReplyCount + 1;
+      patchScene({ finalReplyCount: count, phase: count >= FINAL_PLAYER_REPLIES.length ? "done" : "final-replies" });
+    }
+    // Anton's fixed scene has no AI fallback or unsolicited generated replies.
+  };
+
+  const chooseEnding = (ending: "blocked" | "not-blocked") => {
+    const visibleThread = withTemporaryReplies(fixedThread, readTemporaryReplies("anton"));
+    const anchor = visibleThread.at(-1);
+    if (ending === "blocked") {
+      setTemporary((old) => [...old, makeAntonSceneSystem("已被拉黑", lang, anchor)]);
+      patchScene({ ending, phase: "blocked" });
+    } else {
+      patchScene({ ending, phase: "anton-typing", antonReplyCount: 0 });
+    }
   };
   if (call) return <Call contact={open} lang={lang} incoming={call === "incoming"} onClose={() => setCall(null)} />;
   const startEdit = () => { editIds.current = new Set(savedThread.map((m) => m.id)); setDraft(savedThread.map((m) => ({ ...m }))); setDraftC({ ...open }); setEditing(true); };
@@ -401,8 +441,9 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
           return parts;
         })}
         {typing && <div className="flex gap-2 items-center py-2" role="status" aria-label={tr(lang, { en: "Typing", ko: "입력 중", zh: "正在输入" })}><KktAvatar src={open.avatar} size={28} /><span className="typing-dots"><i /><i /><i /></span></div>}
-        {open.id === "anton" && antonError && <p role="alert" className="px-3 py-2 text-sm text-destructive whitespace-pre-wrap break-words">{antonError}</p>}
+
       </div>
+      {open.id === "anton" && scene.phase === "choose-ending" && <div className="flex gap-2 px-3 py-3 border-t bg-background"><Button className="flex-1" variant="outline" onClick={() => chooseEnding("blocked")}>被拉黑</Button><Button className="flex-1" onClick={() => chooseEnding("not-blocked")}>没有被拉黑</Button></div>}
       {emoji && <div className="kkt-emoji-panel">{["😊", "ㅋㅋ", "❤️", "👍", "😭", "😂"].map((face) => <Button variant="ghost" key={face} onClick={() => { setCompose((text) => text + face); setEmoji(false); }}>{face}</Button>)}</div>}
       <form className="kkt-input" onSubmit={(event) => {
         event.preventDefault();
@@ -413,7 +454,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       }}>
         <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Send photo", ko: "사진 보내기", zh: "发送图片" })} onClick={() => upload.current?.click()}><SquarePlus /></Button>
         <input ref={upload} type="file" accept="image/*" className="hidden" onChange={async (e) => { const input = e.currentTarget; const file = input.files?.[0]; try { if (file) { const image = await fileToDataUrl(file); send(compose, image); setCompose(""); } } catch { alert(tr(lang, { en: "Could not send photo", ko: "사진을 보낼 수 없습니다", zh: "图片未发送，请重试" })); } finally { input.value = ""; } }} />
-        <input aria-label={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} placeholder={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} className="kkt-compose" value={compose} onChange={(event) => setCompose(event.target.value)} />
+        <input aria-label={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} placeholder={open.id === "anton" && scene.phase === "first-replies" ? FIRST_PLAYER_REPLIES[scene.firstReplyCount] ?? "Message" : open.id === "anton" && scene.phase === "final-replies" ? FINAL_PLAYER_REPLIES[scene.finalReplyCount] ?? "Message" : tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} disabled={open.id === "anton" && ["choose-ending", "anton-typing", "blocked"].includes(scene.phase)} className="kkt-compose" value={compose} onChange={(event) => setCompose(event.target.value)} />
         <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Emoji", ko: "이모티콘", zh: "表情" })} aria-expanded={emoji} onClick={() => setEmoji(!emoji)}><Smile size={21} /></Button>
         {compose.trim() && <Button type="submit" size="icon" aria-label={tr(lang, { en: "Send message", ko: "메시지 보내기", zh: "发送消息" })} className="kkt-send"><Send size={17} /></Button>}
       </form>
