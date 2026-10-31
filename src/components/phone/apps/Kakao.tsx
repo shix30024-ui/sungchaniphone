@@ -15,7 +15,7 @@ import { type PendingReply, QUEUE_KEY, sendChat } from "../conversation";
 import { STORY_DATE, messageText, sortMessages } from "../chronology";
 import { confirmDelete, label, localeFor } from "../labels";
 import { completeTranslations } from "../translations";
-import { ANTON_PROGRESS_KEY, EMPTY_PROGRESS, fixedFlow, acknowledgeFixedNode, temporaryReply, withTemporaryReplies, readTemporaryReplies, writeTemporaryReplies, type FixedProgress, type TemporaryReply } from "../fixed-conversation";
+import { ANTON_PROGRESS_KEY, EMPTY_PROGRESS, fixedFlow, acknowledgeFixedNode, temporaryReply, withTemporaryReplies, readTemporaryReplies, writeTemporaryReplies, temporaryIncoming, type FixedProgress, type TemporaryReply } from "../fixed-conversation";
 import { ANTON_OPENING, ANTON_AFTER_REASSURANCE, FIRST_PLAYER_REPLIES, FINAL_PLAYER_REPLIES, makeAntonSceneMessage, makeAntonSceneSystem, readAntonScene, updateAntonScene, type AntonSceneState } from "../anton-scene";
 
 const TODAY = STORY_DATE;
@@ -31,6 +31,15 @@ const fmt12 = (t: string, lang: AppProps["lang"]) => {
   const pm = h >= 12;
   return `${lang === "zh" ? (pm ? "下午" : "上午") : lang === "en" ? (pm ? "PM" : "AM") : pm ? "오후" : "오전"} ${h % 12 || 12}:${String(mm).padStart(2, "0")}`;
 };
+
+const FREE_CHAT_REPLIES = [
+  { ko: "그래. 마음대로 해.", zh: "行啊，随你。", en: "Fine. Do whatever you want." },
+  { ko: "굳이 나한테 설명 안 해도 돼.", zh: "不用特意跟我解释。", en: "You don't have to explain it to me." },
+  { ko: "아까는 아니라며.", zh: "你刚刚不是还说不是吗？", en: "You said that wasn't the case earlier." },
+  { ko: "됐어. 나 지금 연습해야 돼.", zh: "算了，我现在要练习。", en: "Whatever. I have practice now." },
+  { ko: "형은 진짜 아무렇지도 않나 봐.", zh: "哥看起来是真的一点都不在意啊。", en: "You really don't seem bothered at all." },
+  { ko: "나중에 얘기해.", zh: "之后再说吧。", en: "We'll talk later." },
+] as const;
 
 export default function Kakao({ lang, onHome, initialChat }: AppProps & { initialChat?: string | null }) {
   const [contacts, setContacts] = usePersist<Contact[]>("kkt-contacts-v1", CONTACTS);
@@ -270,8 +279,28 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
     } else if (current.phase === "final-replies") {
       const count = current.finalReplyCount + 1;
       patchScene({ finalReplyCount: count, phase: count >= FINAL_PLAYER_REPLIES.length ? "done" : "final-replies" });
+    } else if (current.phase === "done" && current.ending === "not-blocked") {
+      const count = current.freeMessageCount + 1;
+      patchScene({ freeMessageCount: count });
+      // Keep Anton's replies sparse: one delayed, restrained response for every
+      // three messages the player sends in the free-chat phase.
+      if (count % 3 === 0) {
+        const reply = FREE_CHAT_REPLIES[(Math.floor(count / 3) - 1) % FREE_CHAT_REPLIES.length];
+        const delay = 18000 + Math.floor(Math.random() * 10000);
+        window.setTimeout(() => {
+          setAntonTyping(true);
+          window.setTimeout(() => {
+            const latest = readTemporaryReplies("anton");
+            const anchor = latest.at(-1)?.message ?? playerMsg.message;
+            const incoming = temporaryIncoming(reply, anchor);
+            const next = [...latest, incoming];
+            writeTemporaryReplies("anton", next);
+            setTemporaryState(next);
+            setAntonTyping(false);
+          }, 1300);
+        }, delay);
+      }
     }
-    // Anton's fixed scene has no AI fallback or unsolicited generated replies.
   };
 
   const chooseEnding = (ending: "blocked" | "not-blocked") => {
@@ -474,7 +503,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
         <input ref={upload} type="file" accept="image/*" className="hidden" onChange={async (e) => { const input = e.currentTarget; const file = input.files?.[0]; try { if (file) { const image = await fileToDataUrl(file); send(compose, image); setCompose(""); } } catch { alert(tr(lang, { en: "Could not send photo", ko: "사진을 보낼 수 없습니다", zh: "图片未发送，请重试" })); } finally { input.value = ""; } }} />
         <input aria-label={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} placeholder={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} disabled={open.id === "anton" && ["choose-ending", "anton-typing", "blocked"].includes(scene.phase)} className="kkt-compose" value={compose} onPointerDown={fillSuggestedReply} onFocus={fillSuggestedReply} onChange={(event) => setCompose(event.target.value)} />
         <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Emoji", ko: "이모티콘", zh: "表情" })} aria-expanded={emoji} onClick={() => setEmoji(!emoji)}><Smile size={21} /></Button>
-        <Button type="button" size="icon" aria-label={tr(lang, { en: "Send message", ko: "메시지 보내기", zh: "发送消息" })} className="kkt-send" onClick={submitMessage} disabled={!compose.trim() || (open.id === "anton" && ["choose-ending", "anton-typing", "blocked", "done"].includes(scene.phase))}><Send size={17} /></Button>
+        <Button type="button" size="icon" aria-label={tr(lang, { en: "Send message", ko: "메시지 보내기", zh: "发送消息" })} className="kkt-send" onClick={submitMessage} disabled={!compose.trim() || (open.id === "anton" && ["choose-ending", "anton-typing", "blocked"].includes(scene.phase))}><Send size={17} /></Button>
       </form>
     </div>
   );
