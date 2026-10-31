@@ -4,6 +4,7 @@ import Kakao from "@/components/phone/apps/Kakao";
 import { CONTACTS, type Msg } from "@/components/phone/story";
 import { sendChat, tickReplies, QUEUE_KEY } from "@/components/phone/conversation";
 import { ANTON_PROGRESS_KEY, fixedFlow, EMPTY_PROGRESS, resetTemporaryReplies } from "@/components/phone/fixed-conversation";
+import { resetAntonScene } from "@/components/phone/anton-scene";
 import { deliverLiveMessage, LIVE_LINES, LIVE_STATE_KEY, saveLiveSettings, setActiveChat, tickLive } from "@/components/phone/live";
 import { addReferenceSongs, REFERENCE_SONGS } from "@/components/phone/reference-music";
 
@@ -17,7 +18,7 @@ const allStorage = () => JSON.stringify(Object.fromEntries(Object.keys(localStor
 
 describe("Fixed Anton interaction", () => {
   beforeEach(() => {
-    cleanup(); localStorage.clear(); setActiveChat(null); resetTemporaryReplies();
+    cleanup(); localStorage.clear(); setActiveChat(null); resetTemporaryReplies(); resetAntonScene();
     localStorage.setItem("kkt-msgs-v1", JSON.stringify(saved));
     localStorage.setItem("kkt-contacts-v1", JSON.stringify(CONTACTS.map((c) => ({ ...c, unread: 0 }))));
     localStorage.setItem(LIVE_STATE_KEY, JSON.stringify({ delivered: LIVE_LINES.map((l) => l.id), nextAt: 9000 }));
@@ -71,7 +72,7 @@ describe("Fixed Anton interaction", () => {
     await screen.findByText("next");
     expect(screen.getByText("My private reply")).toBeInTheDocument();
     // A page refresh (module memory reset) clears it; fixed messages stay.
-    resetTemporaryReplies();
+    resetTemporaryReplies(); resetAntonScene();
     cleanup();
     render(<Kakao lang="en" onHome={() => {}} initialChat="anton" />);
     await screen.findByText("next");
@@ -107,27 +108,29 @@ describe("Fixed Anton interaction", () => {
     expect(deliverLiveMessage({ test: true })).toBeNull();
     expect(JSON.parse(localStorage.getItem("kkt-msgs-v1") ?? "[]")).toEqual(saved);
   });
-  it("shows Anton's contextual AI answer as a temporary message that never reaches storage", async () => {
+  it("runs the non-blocked branch with fixed Anton replies and player-sent final lines", async () => {
     const before = localStorage.getItem("kkt-msgs-v1");
-    const ui = render(<Kakao lang="en" onHome={() => {}} initialChat="anton" />);
-    await screen.findByText("first");
-    fireEvent.change(screen.getByRole("textbox", { name: "Message" }), { target: { value: "what are you doing?" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
-    expect(await screen.findByText("AI reply")).toBeInTheDocument();
-    expect(screen.getByText("what are you doing?")).toBeInTheDocument();
-    expect(allStorage()).not.toContain("AI reply");
-    expect(allStorage()).not.toContain("what are you doing?");
-    expect(localStorage.getItem("kkt-msgs-v1")).toBe(before);
-    fireEvent.click(screen.getByRole("button", { name: "‹" }));
-    fireEvent.click(screen.getByRole("button", { name: /찬영 Anton/ }));
-    // In-app navigation keeps the AI answer; only refresh clears it.
-    expect(screen.getByText("AI reply")).toBeInTheDocument();
-    expect(screen.getByText("next")).toBeInTheDocument();
-    resetTemporaryReplies();
-    ui.unmount();
     render(<Kakao lang="en" onHome={() => {}} initialChat="anton" />);
-    await screen.findByText("next");
+    await screen.findByText("Hyung, do you have a girlfriend?");
+    const send = async (message: string) => {
+      fireEvent.change(screen.getByRole("textbox", { name: "Message" }), { target: { value: message } });
+      fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+    };
+    for (const message of ["？", "谁说的我有女朋友了", "那只是一个学妹 我跟他不熟", "呀李灿荣"]) {
+      await send(message);
+    }
+    fireEvent.click(await screen.findByRole("button", { name: "没有被拉黑" }));
+    expect(await screen.findByText("A junior?")).toBeInTheDocument();
+    expect(await screen.findByText("Haha, hyung, if you ever like a girl, make sure you tell me^")).toBeInTheDocument();
+    expect(await screen.findByText("I don't mind :)")).toBeInTheDocument();
+    expect(await screen.findByText("Really.")).toBeInTheDocument();
+    for (const message of ["不是", "我真的没有", "我最最最喜欢anton了", "你不是知道吗？"]) {
+      await send(message);
+    }
+    expect(screen.getByText("你不是知道吗？")).toBeInTheDocument();
     expect(screen.queryByText("AI reply")).not.toBeInTheDocument();
+    expect(localStorage.getItem("kkt-msgs-v1")).toBe(before);
+    expect(allStorage()).not.toContain("你不是知道吗？");
   });
   it("old Anton AI jobs cannot stop the existing fixed live progress", () => {
     localStorage.setItem("kkt-msgs-v1", "[]");
