@@ -36,7 +36,6 @@ const SEOYUN_PLAYER_OPENING = [
   { zh: "都怪那个学妹", ko: "그 후배 때문이야", en: "It's all that junior's fault." },
   { zh: "发了ig帖子是我的背影", ko: "내 뒷모습 나온 인스타 게시물을 올렸어", en: "She posted an Instagram photo showing my back." },
   { zh: "anton以为她是我女朋友", ko: "앤톤은 그 애가 내 여자친구인 줄 알았어", en: "Anton thought she was my girlfriend." },
-  { zh: "现在已经被拉黑了^", ko: "지금은 차단당했어^", en: "And now he's blocked me^" },
 ] as const;
 const SEOYUN_PLAYER_LAST_BLOCKED = { zh: "现在已经被拉黑了^", ko: "지금은 차단당했어^", en: "And now he's blocked me^" };
 const SEOYUN_PLAYER_LAST_OPEN = { zh: "现在也不回我信息了", ko: "이제 내 메시지에도 답이 없어", en: "He isn't replying to my messages now either." };
@@ -55,7 +54,7 @@ const SEOYUN_OPEN_REPLIES = [
 const SEOYUN_BLOCKED_LAST = { zh: "这次得he才行", ko: "이번엔 꼭 해피엔딩이어야 해", en: "This one has to have a happy ending." };
 const SEOYUN_OPEN_LAST = { zh: "你也 吹吹耳边风吧", ko: "너도 옆에서 잘 얘기해 줘", en: "You should put in a good word too." };
 
-function makeSeoyunTemporary(text: { zh: string; ko: string; en: string }, sender: "me" | "them", lang: AppProps["lang"], after?: Msg): TemporaryReply {
+function makeSeoyunTemporary(text: { zh: string; ko: string; en: string }, sender: "me" | "them", after?: Msg): TemporaryReply {
   const now = new Date();
   return { afterId: after?.id, message: {
     id: `seoyun-script-${uid()}`, contactId: "seoyun", sender, type: "text",
@@ -309,7 +308,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
         window.setTimeout(() => {
           const latest = readTemporaryReplies("seoyun");
           const previous = latest.at(-1)?.message ?? anchor;
-          const incoming = makeSeoyunTemporary(line, "them", lang, previous);
+          const incoming = makeSeoyunTemporary(line, "them", previous);
           setSeoyunTemporary((old) => [...old, incoming]);
           setAntonTyping(false);
         }, 850);
@@ -322,7 +321,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       const introDone = [1, 2, 3].every((n) => msgs.some((m) => m.id === `seoyun-after-anton-${n}`));
       if (!introDone) { sendChat("kkt", open.id, text, lang, Date.now(), image); return; }
       const currentThread = withTemporaryReplies(fixedThread, seoyunTemporary);
-      const playerMsg = makeSeoyunTemporary({ zh: text, ko: text, en: text }, "me", lang, currentThread.at(-1));
+      const playerMsg = makeSeoyunTemporary({ zh: text, ko: text, en: text }, "me", currentThread.at(-1));
       setSeoyunTemporary((old) => [...old, playerMsg]);
       const playerCount = seoyunTemporary.filter((r) => r.message.sender === "me").length + 1;
       const replyCount = seoyunTemporary.filter((r) => r.message.sender === "them").length;
