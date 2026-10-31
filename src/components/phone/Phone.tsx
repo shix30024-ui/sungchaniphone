@@ -329,6 +329,19 @@ export default function Phone() {
       document.removeEventListener("visibilitychange", tick);
     };
   }, [locked]);
+  // Also cover a page restored directly into the unlocked state (sessionStorage).
+  // The scene guard ensures this cannot duplicate the burst handled by onUnlock.
+  useEffect(() => {
+    if (locked) return;
+    const sceneNotice = startAntonScene();
+    if (!sceneNotice) return;
+    setUnread(totalUnread());
+    setBanner(sceneNotice);
+    playKktSound();
+    const hide = window.setTimeout(() => setBanner(null), 5000);
+    return () => window.clearTimeout(hide);
+  }, [locked]);
+
   const setLive = (s: LiveSettings) => {
     const prev = live;
     setLiveState(s); saveLiveSettings(s);
