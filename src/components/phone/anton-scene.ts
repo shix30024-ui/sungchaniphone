@@ -1,6 +1,6 @@
 import type { Lang } from "./i18n";
-import { CONTACTS, MESSAGES, type Contact, type Msg } from "./story";
-import { readStored, updateStored, uid } from "./store";
+import { MESSAGES, type Msg } from "./story";
+import { readStored, uid } from "./store";
 import { readTemporaryReplies, writeTemporaryReplies, type TemporaryReply } from "./fixed-conversation";
 
 export type AntonScenePhase =
@@ -96,8 +96,6 @@ export function startAntonScene(): Msg | null {
     anchor = item.message;
   }
   writeTemporaryReplies("anton", [...readTemporaryReplies("anton"), ...additions]);
-  updateStored<Contact[]>("kkt-contacts-v1", CONTACTS, (contacts) => contacts.map((contact) =>
-    contact.id === "anton" ? { ...contact, unread: (contact.unread || 0) + additions.length } : contact));
   updateAntonScene({ started: true, phase: "first-replies", firstReplyCount: 0, finalReplyCount: 0, antonReplyCount: 0, ending: null });
   return additions.at(-1)?.message ?? null;
 }
