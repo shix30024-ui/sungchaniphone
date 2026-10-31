@@ -6,7 +6,7 @@
 import { CONTACTS, MESSAGES, type Contact, type Msg } from "./story";
 import { STORY_DATE } from "./chronology";
 import { backupPhoneData, readStored } from "./store";
-import { fixedFlow, readFixedProgress } from "./fixed-conversation";
+import { fixedFlow, readFixedProgress, readTemporaryReplies } from "./fixed-conversation";
 import { readAntonScene } from "./anton-scene";
 
 export const MSGS_KEY = "kkt-msgs-v1";
@@ -161,10 +161,13 @@ export const unreadLive = (): Msg[] =>
 export const totalUnread = (): number => {
   const contacts = readStored<Contact[]>(CONTACTS_KEY, CONTACTS);
   const messages = readStored<Msg[]>(MSGS_KEY, MESSAGES);
-  return contacts.reduce((sum, contact) => {
+  const savedUnread = contacts.reduce((sum, contact) => {
     const unreadMessages = messages.filter((message) => message.contactId === contact.id && message.live && !message.read).length;
     return sum + Math.max(contact.unread || 0, unreadMessages);
   }, 0);
+  const temporaryAntonUnread = readTemporaryReplies(LIVE_CONTACT)
+    .filter((reply) => reply.message.sender === "them" && !reply.message.read).length;
+  return savedUnread + temporaryAntonUnread;
 };
 
 type SeoyunNoticeState = { index: number; nextAt: number };
