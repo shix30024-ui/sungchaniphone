@@ -215,7 +215,7 @@ export function tickSeoyun(now = Date.now()): Msg | null {
   // Keep the three notices simple and evenly spaced: 2 seconds apart.
   const nextDelay = 2_000;
   localStorage.setItem(SEOYUN_NOTICE_KEY, JSON.stringify({
-    index, nextAt: index >= SEOYUN_NOTICES.length ? 0 : now + nextDelay,
+    index, nextAt: index >= SEOYUN_NOTICES.length ? 0 : now + nextDelay, runId: state.runId,
   }));
   return msg;
 }
