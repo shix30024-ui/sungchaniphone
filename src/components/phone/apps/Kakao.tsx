@@ -79,8 +79,24 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   // Merge bundled story additions after both local and shared saves hydrate.
   // Shared snapshots can arrive after mount, so rerun only on that explicit refresh.
   const mergeStorySeeds = () => {
+    // Recover records from the automatic pre-migration backup before adding
+    // bundled story seeds. Older migration code deleted every m1/m2/... row,
+    // which also erased edited history from other contacts.
+    let backup: Record<string, string> = {};
+    try {
+      backup = JSON.parse(localStorage.getItem("phone-backup-before-completion-v1") || "{}");
+    } catch { backup = {}; }
+    const backupRows = <T,>(key: string): T[] => {
+      try {
+        const value = backup[key];
+        return value ? JSON.parse(value) as T[] : [];
+      } catch { return []; }
+    };
     setContacts((current) => {
       const byId = new Map(current.map((contact) => [contact.id, contact]));
+      for (const contact of backupRows<Contact>("kkt-contacts-v1")) {
+        if (!byId.has(contact.id)) byId.set(contact.id, contact);
+      }
       for (const seed of CONTACTS) {
         const existing = byId.get(seed.id);
         if (!existing) byId.set(seed.id, seed);
@@ -89,30 +105,16 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       return [...byId.values()];
     });
     setMsgs((current) => {
-      // Bundled seed IDs are positional (m1, m2, ...), so after story edits
-      // old saved seeds can survive under now-obsolete IDs and appear duplicated.
-      // Remove all bundled-style seed rows, purge the deleted dates, then rebuild
-      // from the current story data while preserving player-authored custom IDs.
-      const kept = current.filter((message) => {
-        if (/^m\d+$/.test(message.id)) return false;
-        // Remove obsolete 2023-09-13 birthday reply copies from older saved snapshots.
-        if (message.contactId === "anton" && message.date === "2023-09-13" && message.sender === "me" && message.time === "00:09") return false;
-        return true;
-      });
-      const merged = [...kept, ...MESSAGES];
-      // Shared snapshots and older local saves may contain repeated copies with
-      // different IDs. Deduplicate by message content and timestamp for every chat.
-      const seen = new Set<string>();
-      return merged.filter((message) => {
-        const signature = JSON.stringify([
-          message.contactId, message.date, message.time, message.sender,
-          message.type, message.ko, message.zh, message.en ?? "", message.image ?? "",
-          message.originalText ?? "", message.speaker ?? "",
-        ]);
-        if (seen.has(signature)) return false;
-        seen.add(signature);
-        return true;
-      });
+      // Current records win; missing records are recovered from the backup,
+      // then only genuinely missing bundled seeds are appended by stable ID.
+      const byId = new Map(current.map((message) => [message.id, message]));
+      for (const message of backupRows<Msg>("kkt-msgs-v1")) {
+        if (!byId.has(message.id)) byId.set(message.id, message);
+      }
+      for (const message of MESSAGES) {
+        if (!byId.has(message.id)) byId.set(message.id, message);
+      }
+      return [...byId.values()];
     });
   };
   useEffect(() => {
