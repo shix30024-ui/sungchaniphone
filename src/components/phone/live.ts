@@ -155,8 +155,14 @@ export const rescheduleLive = (frequency: Frequency) => {
 export const unreadLive = (): Msg[] =>
   readStored<Msg[]>(MSGS_KEY, MESSAGES).filter((m) => m.live && !m.read).reverse();
 
-export const totalUnread = (): number =>
-  readStored<Contact[]>(CONTACTS_KEY, CONTACTS).reduce((n, c) => n + (c.unread || 0), 0);
+export const totalUnread = (): number => {
+  const contacts = readStored<Contact[]>(CONTACTS_KEY, CONTACTS);
+  const messages = readStored<Msg[]>(MSGS_KEY, MESSAGES);
+  return contacts.reduce((sum, contact) => {
+    const unreadMessages = messages.filter((message) => message.contactId === contact.id && message.live && !message.read).length;
+    return sum + Math.max(contact.unread || 0, unreadMessages);
+  }, 0);
+};
 
 type SeoyunNoticeState = { index: number; nextAt: number };
 const SEOYUN_NOTICE_KEY = "kkt-seoyun-notice-state-v1";
