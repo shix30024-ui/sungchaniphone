@@ -1,7 +1,7 @@
 import type { Lang } from "./i18n";
-import type { Msg } from "./story";
-import type { TemporaryReply } from "./fixed-conversation";
-import { uid } from "./store";
+import { CONTACTS, MESSAGES, type Contact, type Msg } from "./story";
+import { readStored, updateStored, uid } from "./store";
+import { writeTemporaryReplies, type TemporaryReply } from "./fixed-conversation";
 
 export type AntonScenePhase =
   | "first-replies"
@@ -79,9 +79,27 @@ export function makeAntonSceneMessage(
       id: `anton-scene-${uid()}`, contactId: "anton", sender: "them", type: "text",
       ko: text.ko, zh: text.zh, en: text.en, date: "2026-10-31",
       time: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
-      order: (after?.order ?? 0) + 1, read: true,
+      order: (after?.order ?? 0) + 1, read: false,
     },
   };
+}
+
+/** Deliver Anton’s opening burst while the player is on the unlocked home screen. */
+export function startAntonScene(): Msg | null {
+  if (scene.started) return null;
+  const saved = readStored<Msg[]>("kkt-msgs-v1", MESSAGES).filter((m) => m.contactId === "anton");
+  let anchor = [...saved].sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`) || (a.order ?? 0) - (b.order ?? 0)).at(-1);
+  const additions: TemporaryReply[] = [];
+  for (const line of ANTON_OPENING) {
+    const item = makeAntonSceneMessage(line, anchor);
+    additions.push(item);
+    anchor = item.message;
+  }
+  writeTemporaryReplies("anton", additions);
+  updateStored<Contact[]>("kkt-contacts-v1", CONTACTS, (contacts) => contacts.map((contact) =>
+    contact.id === "anton" ? { ...contact, unread: (contact.unread || 0) + additions.length } : contact));
+  updateAntonScene({ started: true, phase: "first-replies", firstReplyCount: 0, finalReplyCount: 0, antonReplyCount: 0, ending: null });
+  return additions.at(-1)?.message ?? null;
 }
 
 export function makeAntonSceneSystem(text: string, lang: Lang, after?: Msg): TemporaryReply {
