@@ -327,7 +327,7 @@ export default function Phone() {
       document.removeEventListener("visibilitychange", tick);
     };
   }, [locked]);
-  // Display incoming KKT notifications one at a time so a burst never overwrites itself.
+  // Cycle through incoming KKT notifications immediately, without a dwell or blank gap.
   useEffect(() => {
     if (locked || notificationQueue.length === 0) return;
     const next = notificationQueue[0];
@@ -339,7 +339,7 @@ export default function Phone() {
         setBanner(remaining[0] ?? null);
         return remaining;
       });
-    }, 5000);
+    }, 0);
     return () => window.clearTimeout(timer);
   }, [locked, notificationQueue]);
 
