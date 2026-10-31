@@ -119,7 +119,7 @@ describe("Fixed Anton interaction", () => {
     for (const message of ["？", "谁说的我有女朋友了", "那只是一个学妹 我跟他不熟", "呀李灿荣"]) {
       await send(message);
     }
-    fireEvent.click(await screen.findByRole("button", { name: "没有被拉黑" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Not blocked" }));
     await waitFor(() => expect(screen.getByText("A junior?")).toBeInTheDocument(), { timeout: 4000 });
     await waitFor(() => expect(screen.getByText("Really.")).toBeInTheDocument(), { timeout: 8000 });
     expect(screen.getByText("Haha, hyung, if you ever like a girl, make sure you tell me^")).toBeInTheDocument();
@@ -131,6 +131,18 @@ describe("Fixed Anton interaction", () => {
     expect(screen.queryByText("AI reply")).not.toBeInTheDocument();
     expect(localStorage.getItem("kkt-msgs-v1")).toBe(before);
     expect(allStorage()).not.toContain("你不是知道吗？");
+  });
+  it("shows the blocked system notice when the player chooses that ending", async () => {
+    render(<Kakao lang="zh" onHome={() => {}} initialChat="anton" />);
+    await screen.findByText("哥有女朋友了？");
+    const send = async (message: string) => {
+      fireEvent.change(screen.getByRole("textbox", { name: "输入消息" }), { target: { value: message } });
+      fireEvent.click(screen.getByRole("button", { name: "发送消息" }));
+    };
+    for (const message of ["？", "谁说的我有女朋友了", "那只是一个学妹 我跟他不熟", "呀李灿荣"]) await send(message);
+    fireEvent.click(await screen.findByRole("button", { name: "被拉黑" }));
+    expect(await screen.findByText("已被拉黑")).toBeInTheDocument();
+    expect(screen.queryByText("学妹吗？")).not.toBeInTheDocument();
   });
   it("old Anton AI jobs cannot stop the existing fixed live progress", () => {
     localStorage.setItem("kkt-msgs-v1", "[]");
