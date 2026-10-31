@@ -291,6 +291,7 @@ export default function Phone() {
   const [unread, setUnread] = useState(0);
   const [banner, setBanner] = useState<Msg | null>(null);
   const [notificationQueue, setNotificationQueue] = useState<Msg[]>([]);
+  const lastSoundNotificationId = useRef<string | null>(null);
   const owner = useOwner();
   const [chatTarget, setChatTarget] = useState<string | null>(null);
   const [pendingChat, setPendingChat] = useState(false);
@@ -306,7 +307,8 @@ export default function Phone() {
       // Always refresh badges; only notify after the phone is unlocked.
       setUnread(totalUnread());
       if (locked) return;
-      setNotificationQueue((queue) => [...queue, (e as CustomEvent<Msg>).detail]);
+      const message = (e as CustomEvent<Msg>).detail;
+      setNotificationQueue((queue) => queue.some((item) => item.id === message.id) ? queue : [...queue, message]);
     };
     const onReplyError = (event: Event) => setReplyError((event as CustomEvent<string>).detail);
     const tick = () => { if (document.visibilityState === "visible") { void tickReplies(Date.now(), getActiveChat()).catch(() => setReplyError(tr(lang, { en: "Reply paused. Saved messages remain unchanged.", ko: "답장이 중단됐습니다. 저장된 메시지는 유지됩니다.", zh: "回复已暂停，已保存的消息不会被覆盖。" }))); tickLive(); tickSeoyun(); } };
@@ -327,21 +329,28 @@ export default function Phone() {
       document.removeEventListener("visibilitychange", tick);
     };
   }, [locked]);
-  // Show queued KKT notifications in sequence, with a two-second interval and a sound for each.
+  // Show one KKT notification at a time. Queue additions must not restart
+  // the current notification or replay its sound.
+  const nextNotificationId = notificationQueue[0]?.id;
   useEffect(() => {
     if (locked || notificationQueue.length === 0) return;
     const next = notificationQueue[0];
     setBanner(next);
-    playKktSound();
-    const timer = window.setTimeout(() => {
-      setNotificationQueue((queue) => {
-        const remaining = queue.slice(1);
-        setBanner(remaining[0] ?? null);
-        return remaining;
-      });
+    if (lastSoundNotificationId.current !== next.id) {
+      lastSoundNotificationId.current = next.id;
+      playKktSound();
+    }
+    const hideTimer = window.setTimeout(() => {
+      setBanner(null);
+      const advanceTimer = window.setTimeout(() => {
+        setNotificationQueue((queue) =>
+          queue[0]?.id === next.id ? queue.slice(1) : queue
+        );
+      }, 500);
+      return () => window.clearTimeout(advanceTimer);
     }, 2000);
-    return () => window.clearTimeout(timer);
-  }, [locked, notificationQueue]);
+    return () => window.clearTimeout(hideTimer);
+  }, [locked, nextNotificationId]);
 
   // Also cover a page restored directly into the unlocked state (sessionStorage).
   // The scene guard ensures this cannot duplicate the burst handled by onUnlock.
@@ -350,7 +359,7 @@ export default function Phone() {
     const sceneNotices = startAntonScene();
     if (!sceneNotices.length) return;
     setUnread(totalUnread());
-    setNotificationQueue((queue) => [...queue, ...sceneNotices]);
+    setNotificationQueue((queue) => [...queue, ...sceneNotices.filter((message) => !queue.some((item) => item.id === message.id))]);
   }, [locked]);
 
   const setLive = (s: LiveSettings) => {
