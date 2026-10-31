@@ -186,7 +186,7 @@ export function tickSeoyun(now = Date.now()): Msg | null {
   try { state = { ...state, ...JSON.parse(localStorage.getItem(SEOYUN_NOTICE_KEY) || "{}") }; } catch {}
   if (state.index >= SEOYUN_NOTICES.length) return null;
   if (!state.nextAt) {
-    localStorage.setItem(SEOYUN_NOTICE_KEY, JSON.stringify({ ...state, nextAt: now + 18000 }));
+    localStorage.setItem(SEOYUN_NOTICE_KEY, JSON.stringify({ ...state, nextAt: now + 3000 }));
     return null;
   }
   if (now < state.nextAt) return null;
