@@ -289,7 +289,7 @@ export default function Phone() {
   const [open, setOpen] = useState<App | null>(null);
   const [live, setLiveState] = useState<LiveSettings>(DEFAULT_LIVE_SETTINGS);
   const [unread, setUnread] = useState(0);
-  const [banner, setBanner] = useState<Msg | null>(null);
+  const [banner, setBanner] = useState<Msg[]>([]);
   const [notificationQueue, setNotificationQueue] = useState<Msg[]>([]);
   const owner = useOwner();
   const [chatTarget, setChatTarget] = useState<string | null>(null);
@@ -327,20 +327,10 @@ export default function Phone() {
       document.removeEventListener("visibilitychange", tick);
     };
   }, [locked]);
-  // Cycle through incoming KKT notifications immediately, without a dwell or blank gap.
+  // Show every queued incoming KKT notification together; no timed gaps or instant-dismiss race.
   useEffect(() => {
-    if (locked || notificationQueue.length === 0) return;
-    const next = notificationQueue[0];
-    setBanner(next);
-    playKktSound();
-    const timer = window.setTimeout(() => {
-      setNotificationQueue((queue) => {
-        const remaining = queue.slice(1);
-        setBanner(remaining[0] ?? null);
-        return remaining;
-      });
-    }, 0);
-    return () => window.clearTimeout(timer);
+    if (locked) return;
+    setBanner(notificationQueue);
   }, [locked, notificationQueue]);
 
   // Also cover a page restored directly into the unlocked state (sessionStorage).
@@ -388,7 +378,8 @@ export default function Phone() {
   KKT_ICON = kktApp?.icon ?? "";
   KKT_NAME = contactName;
   const openChat = (contactId = LIVE_CONTACT) => {
-    setBanner(null);
+    setBanner([]);
+    setNotificationQueue([]);
     if (!kktApp) return;
     setChatTarget(contactId);
     setOpen(null);
@@ -444,9 +435,9 @@ export default function Phone() {
           <div className="home-bar" />
         </div>
       )}
-      {!locked && banner && (
-        <div className="notif-banner">
-          <NotifCard m={banner} lang={lang} preview={live.preview} onClick={() => openChat(banner.contactId)} />
+      {!locked && banner.length > 0 && (
+        <div className="notif-banner flex flex-col gap-2">
+          {banner.map((message) => <NotifCard key={message.id} m={message} lang={lang} preview={live.preview} onClick={() => openChat(message.contactId)} />)}
         </div>
       )}
       {!locked && replyError && <div className="reply-error" role="alert"><span>{replyError}</span><Button variant="ghost" size="icon" aria-label={t(lang, "cancel")} onClick={() => setReplyError(null)}><X /></Button></div>}
