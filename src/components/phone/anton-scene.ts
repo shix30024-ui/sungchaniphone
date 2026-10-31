@@ -53,17 +53,17 @@ export const ANTON_AFTER_REASSURANCE = [
 ] as const;
 
 export const FIRST_PLAYER_REPLIES = [
-  "？",
-  "谁说的我有女朋友了",
-  "那只是一个学妹 我跟他不熟",
-  "呀李灿荣",
+  { zh: "？", ko: "?", en: "?" },
+  { zh: "谁说的我有女朋友了", ko: "누가 나 여자친구 있다고 했어?", en: "Who said I have a girlfriend?" },
+  { zh: "那只是一个学妹 我跟他不熟", ko: "그냥 후배야. 나랑 별로 안 친해.", en: "She's just a junior. I don't know her that well." },
+  { zh: "呀李灿荣", ko: "야 이찬영", en: "Hey, Lee Chanyoung." },
 ] as const;
 
 export const FINAL_PLAYER_REPLIES = [
-  "不是",
-  "我真的没有",
-  "我最最最喜欢anton了",
-  "你不是知道吗？",
+  { zh: "不是", ko: "아니야", en: "No." },
+  { zh: "我真的没有", ko: "나 진짜 없어", en: "I really don't." },
+  { zh: "我最最最喜欢anton了", ko: "난 앤톤을 제일 제일 좋아해", en: "I like Anton the most. More than anyone." },
+  { zh: "你不是知道吗？", ko: "너도 알고 있잖아?", en: "You know that, don't you?" },
 ] as const;
 
 export function makeAntonSceneMessage(
