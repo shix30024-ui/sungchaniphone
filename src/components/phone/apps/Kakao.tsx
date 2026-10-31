@@ -193,7 +193,8 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const scroll = useRef<HTMLDivElement>(null);
   const editIds = useRef(new Set<string>());
   const [antonTyping, setAntonTyping] = useState(false);
-  const typing = antonTyping || (openId !== "anton" && queue.some((q) => !q.failed && q.channel === "kkt" && q.contactId === openId));
+  const [seoyunTyping, setSeoyunTyping] = useState(false);
+  const typing = (openId === "anton" && antonTyping) || (openId === "seoyun" && seoyunTyping) || (openId !== "anton" && openId !== "seoyun" && queue.some((q) => !q.failed && q.channel === "kkt" && q.contactId === openId));
   // Auto-scroll only when opening a chat or when the player is already near
   // the bottom, so scrolling up to read history is never yanked back down.
   const stickBottom = useRef(true);
@@ -303,13 +304,13 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const deliverSeoyunReplies = (lines: readonly { zh: string; ko: string; en: string }[], anchor: Msg | undefined) => {
     lines.forEach((line, index) => {
       window.setTimeout(() => {
-        setAntonTyping(true);
+        setSeoyunTyping(true);
         window.setTimeout(() => {
           const latest = readTemporaryReplies("seoyun");
           const previous = latest.at(-1)?.message ?? anchor;
           const incoming = makeSeoyunTemporary(line, "them", previous);
           setSeoyunTemporary((old) => [...old, incoming]);
-          setAntonTyping(false);
+          setSeoyunTyping(false);
         }, 850);
       }, index * 1500);
     });
