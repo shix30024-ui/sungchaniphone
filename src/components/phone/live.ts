@@ -153,7 +153,7 @@ export const rescheduleLive = (frequency: Frequency) => {
 
 /** Unread live messages from any contact, newest first, for lock-screen notifications. */
 export const unreadLive = (): Msg[] =>
-  readStored<Msg[]>(MSGS_KEY, MESSAGES).filter((m) => m.live && !m.read).reverse();
+  readStored<Msg[]>(MSGS_KEY, MESSAGES).filter((m) => m.contactId === LIVE_CONTACT && m.live && !m.read).reverse();
 
 export const totalUnread = (): number => {
   const contacts = readStored<Contact[]>(CONTACTS_KEY, CONTACTS);
