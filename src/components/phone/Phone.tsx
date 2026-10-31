@@ -340,16 +340,19 @@ export default function Phone() {
       lastSoundNotificationId.current = next.id;
       playKktSound();
     }
+    let advanceTimer: number | undefined;
     const hideTimer = window.setTimeout(() => {
       setBanner(null);
-      const advanceTimer = window.setTimeout(() => {
+      advanceTimer = window.setTimeout(() => {
         setNotificationQueue((queue) =>
           queue[0]?.id === next.id ? queue.slice(1) : queue
         );
       }, 500);
-      return () => window.clearTimeout(advanceTimer);
     }, 2000);
-    return () => window.clearTimeout(hideTimer);
+    return () => {
+      window.clearTimeout(hideTimer);
+      if (advanceTimer !== undefined) window.clearTimeout(advanceTimer);
+    };
   }, [locked, nextNotificationId]);
 
   // Also cover a page restored directly into the unlocked state (sessionStorage).
