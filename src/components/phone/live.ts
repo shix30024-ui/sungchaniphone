@@ -209,8 +209,8 @@ export function tickSeoyun(now = Date.now()): Msg | null {
     if (!viewing) window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: msg }));
   }
   const index = state.index + 1;
-  // Target elapsed times from the first trigger: ~3s, ~26s, and ~34s.
-  const nextDelay = index === 1 ? 23_000 : index === 2 ? 8_000 : 0;
+  // Keep the three notices simple and evenly spaced: 2 seconds apart.
+  const nextDelay = 2_000;
   localStorage.setItem(SEOYUN_NOTICE_KEY, JSON.stringify({
     index, nextAt: index >= SEOYUN_NOTICES.length ? 0 : now + nextDelay,
   }));
