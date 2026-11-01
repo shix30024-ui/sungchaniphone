@@ -7,6 +7,7 @@ export type AntonScenePhase =
   | "idle"
   | "warm-opening"
   | "awaiting-instagram"
+  | "anger-opening"
   | "first-replies"
   | "choose-ending"
   | "anton-typing"
@@ -109,19 +110,16 @@ export function finishAntonWarmup(): void {
 
 /** Deliver the jealous opening only after the Instagram back-photo post is viewed. */
 export function startAntonScene(): Msg[] {
-  if (scene.phase === "first-replies" || scene.phase === "choose-ending" || scene.phase === "anton-typing" || scene.phase === "final-replies" || scene.phase === "blocked" || scene.phase === "done") return [];
+  if (scene.phase === "anger-opening" || scene.phase === "first-replies" || scene.phase === "choose-ending" || scene.phase === "anton-typing" || scene.phase === "final-replies" || scene.phase === "blocked" || scene.phase === "done") return [];
   const saved = readStored<Msg[]>("kkt-msgs-v1", MESSAGES).filter((m) => m.contactId === "anton");
   const existingTemporary = readTemporaryReplies("anton");
-  let anchor = withTemporaryAnchor(saved, existingTemporary);
-  const additions: TemporaryReply[] = [];
-  for (const line of ANTON_OPENING) {
-    const item = makeAntonSceneMessage(line, anchor, false);
-    additions.push(item);
-    anchor = item.message;
-  }
-  writeTemporaryReplies("anton", [...existingTemporary, ...additions]);
-  updateAntonScene({ started: true, phase: "first-replies", firstReplyCount: 0, finalReplyCount: 0, antonReplyCount: 0, ending: null });
-  return additions.map((item) => item.message);
+  const anchor = withTemporaryAnchor(saved, existingTemporary);
+  const first = ANTON_OPENING[0];
+  if (!first) return [];
+  const opening = makeAntonSceneMessage(first, anchor, false);
+  writeTemporaryReplies("anton", [...existingTemporary, opening]);
+  updateAntonScene({ started: true, phase: "anger-opening", firstReplyCount: 0, finalReplyCount: 0, antonReplyCount: 1, ending: null });
+  return [opening.message];
 }
 
 function withTemporaryAnchor(saved: Msg[], temporary: TemporaryReply[]): Msg | undefined {
