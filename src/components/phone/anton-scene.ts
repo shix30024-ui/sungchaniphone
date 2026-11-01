@@ -96,12 +96,8 @@ export function makeAntonSceneMessage(
 /** Start the gentle KKT-first opening. Player replies remain in page memory. */
 export function startAntonWarmup(): Msg[] {
   if (scene.phase !== "idle") return [];
-  const saved = readStored<Msg[]>("kkt-msgs-v1", MESSAGES).filter((m) => m.contactId === "anton");
-  let anchor = [...saved].sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`) || (a.order ?? 0) - (b.order ?? 0)).at(-1);
-  const additions: TemporaryReply[] = [];
-
   updateAntonScene({ started: true, phase: "warm-opening", firstReplyCount: 0, finalReplyCount: 0, antonReplyCount: 0, ending: null });
-  return additions.map((item) => item.message);
+  return [];
 }
 
 /** The warm KKT-first route waits here until the player opens Instagram and views Yuna's post. */
