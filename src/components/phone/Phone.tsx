@@ -408,7 +408,10 @@ export default function Phone() {
     if (editMode && a.id !== "settings") setEditing(apps.find((original) => original.id === a.id) ?? a);
     else if (!editMode) {
       if (!firstAppRef.current && (a.id === "kkt" || a.id === "ig")) { firstAppRef.current = a.id; updateAntonScene({ openingRoute: a.id === "kkt" ? "kkt" : "ig" }); }
-      if (a.id === "kkt" && firstAppRef.current === "kkt" && readAntonScene().phase === "idle") setChatTarget("anton");
+      if (a.id === "kkt") {
+        const phase = readAntonScene().phase;
+        if ((firstAppRef.current === "kkt" && phase === "idle") || ["anger-opening", "first-replies", "choose-ending", "anton-typing", "final-replies", "blocked", "done"].includes(phase)) setChatTarget("anton");
+      }
       if (a.id === "ig" && !["anger-opening", "first-replies", "choose-ending", "anton-typing", "final-replies", "blocked", "done"].includes(readAntonScene().phase)) setInstagramTarget("yuna");
       setOpen(a);
     }
