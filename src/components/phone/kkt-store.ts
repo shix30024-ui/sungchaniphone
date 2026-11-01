@@ -47,8 +47,9 @@ export function usePersistKkt<T>(
   key: string,
   fallback: T,
   normalize?: (value: T) => T,
-): [T, (value: T | ((current: T) => T)) => boolean] {
+): [T, (value: T | ((current: T) => T)) => boolean, boolean] {
   const [value, setValue] = useState<T>(fallback);
+  const [ready, setReady] = useState(false);
   const currentRef = useRef<T>(fallback);
   const hydratedRef = useRef(false);
   const normalizeValue = (v: T) => normalize ? normalize(v) : v;
@@ -63,13 +64,14 @@ export function usePersistKkt<T>(
       try {
         const shared = sharedRead(key);
         if (shared.found) {
-          if (live) { hydratedRef.current = true; apply(normalizeValue(shared.value as T)); }
+          if (live) { hydratedRef.current = true; setReady(true); apply(normalizeValue(shared.value as T)); }
           return;
         }
         const stored = await readDb(key);
         if (!live) return;
         if (stored !== null) {
           hydratedRef.current = true;
+          setReady(true);
           apply(normalizeValue(JSON.parse(stored) as T));
           return;
         }
@@ -78,13 +80,13 @@ export function usePersistKkt<T>(
         if (legacy !== null) {
           const parsed = normalizeValue(JSON.parse(legacy) as T);
           await writeDb(key, JSON.stringify(parsed));
-          if (live) { hydratedRef.current = true; apply(parsed); }
+          if (live) { hydratedRef.current = true; setReady(true); apply(parsed); }
           return;
         }
-        if (live) { hydratedRef.current = true; apply(fallback); }
+        if (live) { hydratedRef.current = true; setReady(true); apply(fallback); }
       } catch {
         // Keep the in-memory/bundled value visible; never replace saved data with defaults.
-        if (live && !hydratedRef.current) { hydratedRef.current = true; }
+        if (live && !hydratedRef.current) { hydratedRef.current = true; setReady(true); }
       }
     };
     void hydrate();
@@ -125,5 +127,5 @@ export function usePersistKkt<T>(
     }
   };
 
-  return [normalizeValue(value), set];
+  return [normalizeValue(value), set, ready];
 }
