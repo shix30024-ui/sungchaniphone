@@ -74,7 +74,7 @@ const FREE_CHAT_REPLIES = [
   { ko: "나중에 얘기해.", zh: "之后再说吧。", en: "We'll talk later." },
 ] as const;
 
-export default function Kakao({ lang, onHome, initialChat }: AppProps & { initialChat?: string | null }) {
+export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: AppProps & { initialChat?: string | null; onOpenInstagram?: () => void }) {
   const [contacts, setContacts] = usePersist<Contact[]>("kkt-contacts-v1", CONTACTS);
   const [msgs, setMsgs] = usePersist<Msg[]>("kkt-msgs-v1", MESSAGES, completeTranslations);
   // Merge bundled story additions after both local and shared saves hydrate.
@@ -157,6 +157,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const [addingContact, setAddingContact] = useState(false);
   const [compose, setCompose] = useState("");
   const [call, setCall] = useState<"outgoing" | "incoming" | null>(null);
+  const [blockedActionOpen, setBlockedActionOpen] = useState(false);
   const [, setRecents] = usePersist<RecentCall[]>(RECENTS_KEY, []);
   const callStarted = useRef("");
   const startCall = (direction: "outgoing" | "incoming") => { callStarted.current = new Date().toISOString(); setCall(direction); };
@@ -380,6 +381,8 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       );
       setTemporary((old) => [...old, blockedSystem]);
       patchScene({ ending, phase: "blocked" });
+      setBlockedActionOpen(false);
+      window.setTimeout(() => setBlockedActionOpen(true), 720);
       // The blocked branch still has one final short incoming message from Anton.
       window.setTimeout(() => {
         const latest = readTemporaryReplies("anton");
@@ -586,6 +589,15 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
         })}
         {typing && <div className="flex gap-2 items-center py-2" role="status" aria-label={tr(lang, { en: "Typing", ko: "입력 중", zh: "正在输入" })}><KktAvatar src={open.avatar} size={28} /><span className="typing-dots"><i /><i /><i /></span></div>}
 
+      </div>
+      {open.id === "anton" && blockedActionOpen && scene.ending === "blocked" && !call && <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/35 p-6" role="dialog" aria-modal="true">
+        <div className="w-full max-w-xs rounded-2xl bg-card text-card-foreground border shadow-xl p-5 space-y-3">
+          <div className="text-center"><b className="block text-base">KakaoTalk 알림</b><p className="text-sm text-muted-foreground mt-2">{tr(lang, { en: "Message could not be sent.", ko: "메시지를 보낼 수 없습니다.", zh: "无法发送消息。" })}</p></div>
+          <Button className="w-full" onClick={() => { setBlockedActionOpen(false); startCall("outgoing"); }}><Phone className="mr-2" />{tr(lang, { en: "Call Anton", ko: "전화 걸기", zh: "拨打电话" })}</Button>
+          <Button variant="outline" className="w-full" onClick={() => { setBlockedActionOpen(false); onOpenInstagram?.(); }}><MessageCircle className="mr-2" />{tr(lang, { en: "Message Anton on Instagram", ko: "인스타그램으로 메시지 보내기", zh: "去 Instagram 私信 Anton" })}</Button>
+          <Button variant="outline" className="w-full" onClick={() => { setBlockedActionOpen(false); setOpenId("seoyun"); }}><MessageCircle className="mr-2" />{tr(lang, { en: "Open Seoyun chat", ko: "서윤 채팅 열기", zh: "打开 Seoyun 聊天" })}</Button>
+          <Button variant="ghost" className="w-full" onClick={() => setBlockedActionOpen(false)}>{tr(lang, { en: "Later", ko: "나중に", zh: "稍后" })}</Button>
+        </div>
       </div>
       {open.id === "anton" && scene.phase === "choose-ending" && <div className="flex gap-2 px-3 py-3 border-t bg-background"><Button className="flex-1" variant="outline" onClick={() => chooseEnding("blocked")}>{tr(lang, { en: "Blocked", ko: "차단됨", zh: "被拉黑" })}</Button><Button className="flex-1" onClick={() => chooseEnding("not-blocked")}>{tr(lang, { en: "Not blocked", ko: "차단되지 않음", zh: "没有被拉黑" })}</Button></div>}
       {emoji && <div className="kkt-emoji-panel">{["😊", "ㅋㅋ", "❤️", "👍", "😭", "😂"].map((face) => <Button variant="ghost" key={face} onClick={() => { setCompose((text) => text + face); setEmoji(false); }}>{face}</Button>)}</div>}
