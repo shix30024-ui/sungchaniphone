@@ -4,6 +4,9 @@ import { readStored, uid } from "./store";
 import { readTemporaryReplies, writeTemporaryReplies, type TemporaryReply } from "./fixed-conversation";
 
 export type AntonScenePhase =
+  | "idle"
+  | "warm-opening"
+  | "awaiting-instagram"
   | "first-replies"
   | "choose-ending"
   | "anton-typing"
@@ -23,7 +26,7 @@ export type AntonSceneState = {
 
 const INITIAL: AntonSceneState = {
   started: false,
-  phase: "first-replies",
+  phase: "idle",
   firstReplyCount: 0,
   finalReplyCount: 0,
   antonReplyCount: 0,
@@ -39,6 +42,11 @@ export const updateAntonScene = (patch: Partial<AntonSceneState>) => {
   return scene;
 };
 export const resetAntonScene = () => { scene = { ...INITIAL }; };
+
+export const ANTON_WARM_OPENING = [
+  { zh: "今天哥在干什么？", ko: "형 오늘 뭐 해?", en: "What are you doing today, hyung?" },
+  { zh: "我拉大提琴的时候想哥了", ko: "첼로 연주하면서 형 생각했어. 보고 싶어", en: "I thought of you while playing cello. I miss you, hyung." },
+] as const;
 
 export const ANTON_OPENING = [
   { zh: "哥有女朋友了？", ko: "형 여자친구 생겼어?", en: "Hyung, do you have a girlfriend?" },
@@ -85,22 +93,47 @@ export function makeAntonSceneMessage(
   };
 }
 
-/** Deliver Anton’s opening burst while the player is on the unlocked home screen. */
-export function startAntonScene(): Msg[] {
-  if (scene.started) return [];
-  // A fresh scene run must start Seoyun's notification sequence from the beginning.
-  try { localStorage.removeItem("kkt-seoyun-notice-state-v1"); } catch {}
+/** Start the gentle KKT-first opening. Player replies remain in page memory. */
+export function startAntonWarmup(): Msg[] {
+  if (scene.phase !== "idle") return [];
   const saved = readStored<Msg[]>("kkt-msgs-v1", MESSAGES).filter((m) => m.contactId === "anton");
   let anchor = [...saved].sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`) || (a.order ?? 0) - (b.order ?? 0)).at(-1);
+  const additions: TemporaryReply[] = [];
+  for (const line of ANTON_WARM_OPENING) {
+    const item = makeAntonSceneMessage(line, anchor, false);
+    additions.push(item);
+    anchor = item.message;
+  }
+  writeTemporaryReplies("anton", [...readTemporaryReplies("anton"), ...additions]);
+  updateAntonScene({ started: true, phase: "warm-opening", firstReplyCount: 0, finalReplyCount: 0, antonReplyCount: 0, ending: null });
+  return additions.map((item) => item.message);
+}
+
+/** The warm KKT-first route waits here until the player opens Instagram and views Yuna's post. */
+export function finishAntonWarmup(): void {
+  if (scene.phase === "warm-opening") updateAntonScene({ phase: "awaiting-instagram" });
+}
+
+/** Deliver the jealous opening only after the Instagram back-photo post is viewed. */
+export function startAntonScene(): Msg[] {
+  if (scene.phase === "first-replies" || scene.phase === "choose-ending" || scene.phase === "anton-typing" || scene.phase === "final-replies" || scene.phase === "blocked" || scene.phase === "done") return [];
+  const saved = readStored<Msg[]>("kkt-msgs-v1", MESSAGES).filter((m) => m.contactId === "anton");
+  const existingTemporary = readTemporaryReplies("anton");
+  let anchor = withTemporaryAnchor(saved, existingTemporary);
   const additions: TemporaryReply[] = [];
   for (const line of ANTON_OPENING) {
     const item = makeAntonSceneMessage(line, anchor, false);
     additions.push(item);
     anchor = item.message;
   }
-  writeTemporaryReplies("anton", [...readTemporaryReplies("anton"), ...additions]);
+  writeTemporaryReplies("anton", [...existingTemporary, ...additions]);
   updateAntonScene({ started: true, phase: "first-replies", firstReplyCount: 0, finalReplyCount: 0, antonReplyCount: 0, ending: null });
   return additions.map((item) => item.message);
+}
+
+function withTemporaryAnchor(saved: Msg[], temporary: TemporaryReply[]): Msg | undefined {
+  return [...saved, ...temporary.map((reply) => reply.message)]
+    .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`) || (a.order ?? 0) - (b.order ?? 0)).at(-1);
 }
 
 export function makeAntonSceneSystem(text: string, lang: Lang, after?: Msg): TemporaryReply {
