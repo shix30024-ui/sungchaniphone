@@ -443,7 +443,7 @@ export const MESSAGES: Msg[] = [
     ["them", "겨울이도 현관에서 기다리겠네", "冬天肯定也会在门口等你们。", "19:01"],
     ["them", "막내야 겨울이 간식도 사 와", "老幺，记得买冬天的零食。", "19:03"],
     ["me", "알겠어요ㅋㅋ 토요일에 같이 갈게요", "知道啦ㅋㅋ 周六我们一起回去。", "19:05"],
-  ]).map((m, i) => ({ ...m, speaker: (["mom", undefined, "mom", undefined, "dad", "brother", undefined, "mom", undefined, "dad", "brother", undefined][i]) as Msg["speaker"] })),
+  ]).map((m, i) => ({ ...m, speaker: (["mom", undefined, "mom", undefined, "dad", "brother", undefined, "mom", undefined, "dad", "brother", undefined][i]) as "mom" | "dad" | "brother" })),
 
   // Earlier birthday messages, kept in their original year and date.
   ...day("anton", "2023-09-13", [
@@ -614,7 +614,7 @@ export const MESSAGES: Msg[] = [
     ["them", "이번 주말에 할머니 댁 가는 거 잊지 마", "别忘了这周末去外婆家。", "09:05"],
     ["me", "안 잊었어요ㅎㅎ 토요일에 몇 시쯤 출발해요?", "没忘ㅎㅎ 周六大概几点出发？", "09:08"],
     ["them", "점심 먹고 천천히 출발하자", "吃完午饭再慢慢出发吧。", "09:10"],
-  ]).map((m, i) => ({ ...m, speaker: (["mom", undefined, "mom"][i]) as Msg["speaker"] })),
+  ]).map((m, i) => ({ ...m, speaker: (["mom", undefined, "mom"][i]) as "mom" | "dad" | "brother" })),
 
   ...day("anton", "2026-09-13", [
     ["them", "성성성성찬이 형~!", "松松松松灿哥～！", "00:01"],
@@ -659,7 +659,7 @@ export const MESSAGES: Msg[] = [
     ["me", "다들 고마워요ㅎㅎ 사랑해요", "谢谢大家ㅎㅎ 我爱你们。", "07:39"],
     ["them", "오늘 저녁은 다 같이 모여서 성찬이 좋아하는 음식 먹자", "今晚大家一起聚聚，吃成灿喜欢的东西吧。", "07:42"],
     ["them", "케이크는 형이 준비할게ㅋㅋ", "蛋糕哥哥来准备ㅋㅋ", "07:44"],
-  ]).map((m, i) => ({ ...m, speaker: (["mom", undefined, "mom", "brother"][i]) as Msg["speaker"] })),
+  ]).map((m, i) => ({ ...m, speaker: (["mom", undefined, "mom", "brother"][i]) as "mom" | "dad" | "brother" })),
 
   // Additional everyday conversations for non-Anton contacts (2026-10-26 to 2026-10-31).
   ...day("minjae", "2026-10-26", [
@@ -799,7 +799,7 @@ export const MESSAGES: Msg[] = [
     ["them", "엄마는 장 봐둘게 필요한 거 있니?", "妈妈去买菜，有什么想吃的吗？", "19:07"],
     ["me", "겨울이 간식 조금만 사 주세요ㅎㅎ", "给冬天买一点零食就好ㅎㅎ", "19:09"],
     ["them", "아빠가 데려올게", "爸爸去接它。", "19:10"],
-  ]).map((m, i) => ({ ...m, speaker: (["mom", undefined, "mom", undefined, "dad"][i]) as Msg["speaker"] })),
+  ]).map((m, i) => ({ ...m, speaker: (["mom", undefined, "mom", undefined, "dad"][i]) as "mom" | "dad" | "brother" })),
   ...day("group-family", "2026-10-31", [
     ["them", "내일 점심은 집에서 먹자", "明天中午在家吃吧。", "18:12"],
     ["me", "좋아요 뭐 먹어요?", "好啊，吃什么？", "18:14"],
@@ -807,7 +807,7 @@ export const MESSAGES: Msg[] = [
     ["them", "형은 과일 사 올게", "哥哥去买水果。", "18:16"],
     ["me", "그럼 저는 디저트 사 갈게요", "那我买甜点回去。", "18:18"],
     ["them", "겨울이 간식도 잊지 마ㅋㅋ", "别忘了冬天的零食ㅋㅋ", "18:19"],
-  ]).map((m, i) => ({ ...m, speaker: (["mom", undefined, "mom", "brother", undefined, "brother"][i]) as Msg["speaker"] })),
+  ]).map((m, i) => ({ ...m, speaker: (["mom", undefined, "mom", "brother", undefined, "brother"][i]) as "mom" | "dad" | "brother" })),
 
   // More ordinary chat history for non-Anton contacts.
   ...day("minjae", "2026-10-20", [
@@ -929,7 +929,7 @@ export const MESSAGES: Msg[] = [
     ["them", "형도 된대", "哥哥也说可以。", "18:43"],
     ["me", "그럼 겨울이 산책도 같이 가요", "那也一起带冬天散步吧。", "18:44"],
     ["them", "엄마가 좋아하겠다ㅎㅎ", "妈妈肯定会很开心ㅎㅎ", "18:45"],
-  ]).map((m, i) => ({ ...m, speaker: (["mom", undefined, "brother", undefined, "mom"][i]) as Msg["speaker"] })),
+  ]).map((m, i) => ({ ...m, speaker: (["mom", undefined, "brother", undefined, "mom"][i]) as "mom" | "dad" | "brother" })),
   ...day("group-family", "2026-10-29", [
     ["them", "겨울이 오늘 새 장난감 받았어", "冬天今天收到新玩具了。", "17:18"],
     ["me", "사진 보여주세요ㅋㅋ", "快给我看看照片ㅋㅋ", "17:19"],
@@ -937,7 +937,7 @@ export const MESSAGES: Msg[] = [
     ["me", "마음에 들었나 보다ㅋㅋ", "看来它很喜欢ㅋㅋ", "17:22"],
     ["them", "형이 사 왔어", "是哥哥买回来的。", "17:23"],
     ["me", "오 형 칭찬해 드려야겠네", "哦，那得夸夸哥哥了。", "17:24"],
-  ]).map((m, i) => ({ ...m, speaker: (["mom", undefined, "mom", undefined, "mom", undefined][i]) as Msg["speaker"] })),
+  ]).map((m, i) => ({ ...m, speaker: (["mom", undefined, "mom", undefined, "mom", undefined][i]) as "mom" | "dad" | "brother" })),
 
   ...day("seoyun", "2026-10-23", [
     ["them", "아 맞다 오늘 앤톤 동아리 연습 왔어", "对了，Anton 今天来社团练习了。", "17:02"],
