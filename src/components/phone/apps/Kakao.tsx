@@ -76,8 +76,8 @@ const FREE_CHAT_REPLIES = [
 ] as const;
 
 export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: AppProps & { initialChat?: string | null; onOpenInstagram?: () => void }) {
-  const [contacts, setContacts] = usePersistKkt<Contact[]>("kkt-contacts-v1", CONTACTS);
-  const [msgs, setMsgs] = usePersistKkt<Msg[]>("kkt-msgs-v1", MESSAGES, completeTranslations);
+  const [contacts, setContacts, contactsReady] = usePersistKkt<Contact[]>("kkt-contacts-v1", CONTACTS);
+  const [msgs, setMsgs, msgsReady] = usePersistKkt<Msg[]>("kkt-msgs-v1", MESSAGES, completeTranslations);
   // Merge bundled story additions after both local and shared saves hydrate.
   // Shared snapshots can arrive after mount, so rerun only on that explicit refresh.
   const mergeStorySeeds = () => {
@@ -102,12 +102,13 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     });
   };
   useEffect(() => {
+    if (!contactsReady || !msgsReady) return;
     mergeStorySeeds();
     window.addEventListener("phone-shared-refresh", mergeStorySeeds);
     return () => window.removeEventListener("phone-shared-refresh", mergeStorySeeds);
   // The migration intentionally uses the latest persisted value through usePersist setters.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [contactsReady, msgsReady]);
   const [openId, setOpenId] = useState<string | null>(initialChat ?? null);
   // Temporary replies live in page memory (fixed-conversation module), so they
   // survive leaving/re-entering the chat but vanish on refresh or close.
