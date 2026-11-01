@@ -15,10 +15,11 @@ import { useOwner } from "../owner";
 import { withLocalInteraction } from "../shared-state";
 import { instagramCaption, editInstagramCaption } from "../instagram-language";
 
-export default function Instagram({ lang, onHome }: AppProps) {
+export default function Instagram({ lang, onHome, initialDmContactId }: AppProps & { initialDmContactId?: string | null }) {
   const owner = useOwner();
   const [tab, setTab] = useState<"home" | "search" | "profile">("home");
   const [dm, setDm] = useState(false);
+  useEffect(() => { if (initialDmContactId) setDm(true); }, [initialDmContactId]);
   const [activity, setActivity] = useState(false);
   const [newFollowerUnread, setNewFollowerUnread] = useState(true);
   const [followedYuna, setFollowedYuna] = usePersist<boolean>("ig-follow-yuna-v1", false);
@@ -95,7 +96,7 @@ export default function Instagram({ lang, onHome }: AppProps) {
       </div>
     </div>
   </div>;
-  if (dm) return <InstagramDM accounts={accounts} lang={lang} onClose={() => setDm(false)} initialContactId="yuna" />;
+  if (dm) return <InstagramDM accounts={accounts} lang={lang} onClose={() => setDm(false)} initialContactId={initialDmContactId ?? "yuna"} />;
 
   if (activity) {
     const follower = yunaFollower;
