@@ -13,7 +13,7 @@ export const FRIEND_ACCOUNTS: SocialAccount[] = [
   { id: "yuna", username: "yuna_Yuna", name: "김유나", bio: "", avatar: "https://images.pexels.com/photos/26201109/pexels-photo-26201109/free-photo-of-white-maltese-dog.jpeg?auto=compress&cs=tinysrgb&w=512&h=512&fit=crop", followers: "1,083", following: "486", followingIds: [SELF_ID], isPrivate: true },
 ];
 export const FRIEND_POSTS: SocialPost[] = [
-  { id: "friend-yuna-back-20261031", authorId: "yuna", image: "img:campus", caption: "축제 끝나고 찍은 사진ㅎㅎ", date: "2026-10-31", time: "21:10", likes: 38, comments: [{ id: "fc-yuna-1", user: "sohee_00", text: "사진 분위기 좋다ㅎㅎ", date: "2026-10-31", time: "21:16" }] },
+  { id: "friend-yuna-back-20261031", authorId: "yuna", image: "img:campus", caption: "축제 때 찍은 선배 뒷모습ㅎㅎ", date: "2026-10-31", time: "21:10", likes: 38, comments: [{ id: "fc-yuna-1", user: "sohee_00", text: "사진 분위기 좋다ㅎㅎ", date: "2026-10-31", time: "21:16" }] },
   { id: "friend-anton-practice-20261026", authorId: "anton", image: "img:practice", caption: "같은 네 마디만 한 시간째. 잠깐 쉬자", date: "2026-10-26", time: "18:40", likes: 83, comments: [{ id: "fc-a1", user: "jiho_l", text: "손목도 쉬어야 돼", date: "2026-10-26", time: "18:52" }] },
   { id: "friend-doyun-cafe-20261026", authorId: "doyun", image: "img:cafe", caption: "팀플 파일명 최종_진짜최종_v7. 커피는 두 잔째", date: "2026-10-26", time: "16:10", likes: 46, comments: [{ id: "fc-d1", user: "minjae_fc", text: "v8에서 보자", date: "2026-10-26", time: "16:28" }] },
   { id: "friend-minjae-football-20261025", authorId: "minjae", image: "img:football", caption: "일요일 오전 운동 끝. 오늘 수비 괜찮았다 ⚽", date: "2026-10-25", time: "11:35", likes: 112, comments: [{ id: "fc-m1", user: "doyun.p", text: "난 아직 자고 있었음", date: "2026-10-25", time: "12:02" }] },
