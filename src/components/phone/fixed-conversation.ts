@@ -9,9 +9,10 @@ export type TemporaryReply = { message: Msg; afterId?: string | undefined };
 export const EMPTY_PROGRESS: FixedProgress = { answeredIds: [] };
 
 export function fixedFlow(messages: Msg[], progress: FixedProgress) {
-  const ordered = sortMessages(messages.filter((m) => m.contactId === "anton"));
-  const index = ordered.findIndex((m) => m.sender === "them" && m.requiresReply && !progress.answeredIds.includes(m.id));
-  // Gates track existing progress only; they never hide already-authored records.
+  // Fixed reply gates are exclusive to Anton. Other contacts must show their
+  // own complete saved thread instead of being filtered out as non-Anton rows.
+  const ordered = sortMessages(messages);
+  const index = ordered.findIndex((m) => m.contactId === "anton" && m.sender === "them" && m.requiresReply && !progress.answeredIds.includes(m.id));
   return { visible: ordered, waiting: index < 0 ? undefined : ordered[index] };
 }
 
