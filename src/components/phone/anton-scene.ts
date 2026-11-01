@@ -97,10 +97,9 @@ export function makeAntonSceneMessage(
 }
 
 /** Start the gentle KKT-first opening. Player replies remain in page memory. */
-export function startAntonWarmup(): Msg[] {
-  if (scene.phase !== "idle") return [];
+export function startAntonWarmup(): void {
+  if (scene.phase !== "idle") return;
   updateAntonScene({ started: true, phase: "warm-opening", firstReplyCount: 0, finalReplyCount: 0, antonReplyCount: 0, ending: null });
-  return [];
 }
 
 /** The warm KKT-first route waits here until the player opens Instagram and views Yuna's post. */
