@@ -79,24 +79,10 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   // Merge bundled story additions after both local and shared saves hydrate.
   // Shared snapshots can arrive after mount, so rerun only on that explicit refresh.
   const mergeStorySeeds = () => {
-    // Recover records from the automatic pre-migration backup before adding
-    // bundled story seeds. Older migration code deleted every m1/m2/... row,
-    // which also erased edited history from other contacts.
-    let backup: Record<string, string> = {};
-    try {
-      backup = JSON.parse(localStorage.getItem("phone-backup-before-completion-v1") || "{}");
-    } catch { backup = {}; }
-    const backupRows = <T,>(key: string): T[] => {
-      try {
-        const value = backup[key];
-        return value ? JSON.parse(value) as T[] : [];
-      } catch { return []; }
-    };
+    // Do not re-import the pre-migration backup: deleted story rows can be
+    // resurrected from it. Preserve current saved edits and add only missing seeds.
     setContacts((current) => {
       const byId = new Map(current.map((contact) => [contact.id, contact]));
-      for (const contact of backupRows<Contact>("kkt-contacts-v1")) {
-        if (!byId.has(contact.id)) byId.set(contact.id, contact);
-      }
       for (const seed of CONTACTS) {
         const existing = byId.get(seed.id);
         if (!existing) byId.set(seed.id, seed);
@@ -105,12 +91,8 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       return [...byId.values()];
     });
     setMsgs((current) => {
-      // Current records win; missing records are recovered from the backup,
-      // then only genuinely missing bundled seeds are appended by stable ID.
+      // Current saved records win; never recover deleted rows from the old backup.
       const byId = new Map(current.map((message) => [message.id, message]));
-      for (const message of backupRows<Msg>("kkt-msgs-v1")) {
-        if (!byId.has(message.id)) byId.set(message.id, message);
-      }
       for (const message of MESSAGES) {
         if (!byId.has(message.id)) byId.set(message.id, message);
       }
@@ -232,7 +214,16 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   // Render bundled contacts even when an older shared snapshot only contains Anton.
   // Saved/edited rows keep priority by stable ID; missing story seeds remain visible.
   const displayContacts = [...new Map([...CONTACTS, ...contacts].map((contact) => [contact.id, contact])).values()];
-  const displayMsgs = [...new Map([...MESSAGES, ...msgs].map((message) => [message.id, message])).values()];
+  // Stable content-level de-duplication catches legacy rows whose generated mN
+  // IDs shifted after story edits. Keep the saved copy when a duplicate exists.
+  const mergedMsgs = [...new Map([...MESSAGES, ...msgs].map((message) => [message.id, message])).values()];
+  const seenMessageContent = new Set<string>();
+  const displayMsgs = mergedMsgs.filter((message) => {
+    const contentKey = [message.contactId, message.date, message.time, message.sender, message.type, message.ko, message.zh, message.en ?? "", message.image ?? ""].join("\u001f");
+    if (seenMessageContent.has(contentKey)) return false;
+    seenMessageContent.add(contentKey);
+    return true;
+  });
   const temporaryAntonMessages = temporary.map((reply) => reply.message);
   const unreadForContact = (contactId: string) => Math.max(
     contacts.find((contact) => contact.id === contactId)?.unread || 0,
