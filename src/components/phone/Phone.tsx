@@ -342,6 +342,7 @@ export default function Phone() {
     if (lastSoundNotificationId.current !== next.id) {
       lastSoundNotificationId.current = next.id;
       playKktSound();
+      if (next.id.startsWith("anton-scene-")) { try { navigator.vibrate?.([120, 60, 160]); } catch { /* vibration is optional */ } }
     }
     let advanceTimer: number | undefined;
     const hideTimer = window.setTimeout(() => {
@@ -351,7 +352,7 @@ export default function Phone() {
           queue[0]?.id === next.id ? queue.slice(1) : queue
         );
       }, 120);
-    }, 850);
+    }, next.id.startsWith("anton-scene-") ? 3200 : 850);
     return () => {
       window.clearTimeout(hideTimer);
       if (advanceTimer !== undefined) window.clearTimeout(advanceTimer);
@@ -457,7 +458,7 @@ export default function Phone() {
       )}
       {!locked && replyError && <div className="reply-error" role="alert"><span>{replyError}</span><Button variant="ghost" size="icon" aria-label={t(lang, "cancel")} onClick={() => setReplyError(null)}><X /></Button></div>}
       {open && (
-        <AppView onAntonPostViewed={() => { const sceneNotices = startAntonScene(); if (sceneNotices.length) { setUnread(totalUnread()); setNotificationQueue((queue) => [...queue, ...sceneNotices.filter((message) => !queue.some((item) => item.id === message.id))]); } }} initialChat={open.id === "kkt" ? chatTarget : null} apps={apps} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onOpenInstagram={() => { const igApp = translatedApps.find((item) => item.id === "ig"); if (igApp) { setChatTarget(null); setInstagramTarget("anton"); setOpen(igApp); } }} instagramTarget={instagramTarget} onClose={() => setOpen(null)}
+        <AppView onAntonPostViewed={() => { const sceneNotices = startAntonScene(); const notice = sceneNotices[0]; if (notice) { setUnread(totalUnread()); setNotificationQueue((queue) => queue.some((item) => item.id === notice.id) ? queue : [...queue, notice]); } }} initialChat={open.id === "kkt" ? chatTarget : null} apps={apps} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onOpenInstagram={() => { const igApp = translatedApps.find((item) => item.id === "ig"); if (igApp) { setChatTarget(null); setInstagramTarget("anton"); setOpen(igApp); } }} instagramTarget={instagramTarget} onClose={() => setOpen(null)}
           onLock={() => { setOpen(null); setLocked(true); try { sessionStorage.removeItem("phone-unlocked"); } catch { /* ignore */ } }}
           onEditApps={() => { if (!owner) return; setOpen(null); setEditMode(true); }} />
       )}
