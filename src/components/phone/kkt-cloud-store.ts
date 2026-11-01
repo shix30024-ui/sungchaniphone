@@ -131,7 +131,14 @@ export function useCloudKkt<T extends { id: string }>(
             if (migrateError) throw migrateError;
           }
         } else if (rows.length === 0) {
-          rows = fallback;
+          // A viewer may still be on the legacy shared-content store while the
+          // per-record table is being rolled out. Read that published snapshot
+          // before showing bundled demo messages.
+          const key = kind === "contact" ? "kkt-contacts-v1" : "kkt-msgs-v1";
+          const shared = sharedRead(key);
+          rows = shared.found && Array.isArray(shared.value)
+            ? shared.value as T[]
+            : fallback;
         }
         if (alive) { apply(normalizeValue(rows)); setReady(true); }
       } catch (error) {
