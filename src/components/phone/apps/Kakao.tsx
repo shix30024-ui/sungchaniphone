@@ -157,7 +157,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const [addingContact, setAddingContact] = useState(false);
   const [compose, setCompose] = useState("");
   const [call, setCall] = useState<"outgoing" | "incoming" | null>(null);
-  const [recents, setRecents] = usePersist<RecentCall[]>(RECENTS_KEY, []);
+  const [, setRecents] = usePersist<RecentCall[]>(RECENTS_KEY, []);
   const callStarted = useRef("");
   const startCall = (direction: "outgoing" | "incoming") => { callStarted.current = new Date().toISOString(); setCall(direction); };
   const [menu, setMenu] = useState(false);
