@@ -141,21 +141,26 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   }, [openId, scene.phase]);
   useEffect(() => {
     if (openId !== "anton" || scene.phase !== "warm-opening") return;
-    const line = ANTON_WARM_OPENING[1];
-    if (!line) { finishAntonWarmup(); setScene(readAntonScene()); return; }
+    const line = ANTON_WARM_OPENING[scene.antonReplyCount];
+    if (!line) { finishAntonWarmup(); setScene(readAntonScene()); setAntonTyping(false); return; }
     setAntonTyping(true);
     const timer = window.setTimeout(() => {
       const latest = readTemporaryReplies("anton");
-      const anchor = latest.at(-1)?.message;
+      const anchor = latest.at(-1)?.message ?? sortMsgs(msgs.filter((m) => m.contactId === "anton")).at(-1);
       const incoming = makeAntonSceneMessage(line, anchor, false);
       setTemporary((old) => [...old, incoming]);
-      finishAntonWarmup();
+      const nextCount = scene.antonReplyCount + 1;
+      if (nextCount >= ANTON_WARM_OPENING.length) {
+        finishAntonWarmup();
+        setAntonTyping(false);
+      } else {
+        updateAntonScene({ antonReplyCount: nextCount });
+      }
       setScene(readAntonScene());
-      setAntonTyping(false);
-    }, 1250);
+    }, 1150);
     return () => window.clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openId, scene.phase]);
+  }, [openId, scene.phase, scene.antonReplyCount]);
 
   // Opening Anton’s chat clears the temporary scripted-message unread state too.
   useEffect(() => {
