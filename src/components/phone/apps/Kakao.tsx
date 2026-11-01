@@ -229,11 +229,14 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, scene.phase, scene.antonReplyCount]);
 
-  const displayContacts = contacts;
+  // Render bundled contacts even when an older shared snapshot only contains Anton.
+  // Saved/edited rows keep priority by stable ID; missing story seeds remain visible.
+  const displayContacts = [...new Map([...CONTACTS, ...contacts].map((contact) => [contact.id, contact])).values()];
+  const displayMsgs = [...new Map([...MESSAGES, ...msgs].map((message) => [message.id, message])).values()];
   const temporaryAntonMessages = temporary.map((reply) => reply.message);
   const unreadForContact = (contactId: string) => Math.max(
     contacts.find((contact) => contact.id === contactId)?.unread || 0,
-    msgs.filter((message) => message.contactId === contactId && message.live && !message.read).length,
+    displayMsgs.filter((message) => message.contactId === contactId && message.live && !message.read).length,
     contactId === "anton" ? temporaryAntonMessages.filter((message) => message.sender === "them" && !message.read).length : 0,
   );
   const open = displayContacts.find((c) => c.id === openId);
@@ -241,7 +244,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   if (!open) {
     const rows = displayContacts
       .map((c) => {
-        const saved = msgs.filter((m) => m.contactId === c.id && m.type !== "date");
+        const saved = displayMsgs.filter((m) => m.contactId === c.id && m.type !== "date");
         const combined = c.id === "anton" ? [...saved, ...temporaryAntonMessages.filter((m) => m.type !== "date")] : c.id === "seoyun" ? [...saved, ...readTemporaryReplies("seoyun").map((r) => r.message).filter((m) => m.type !== "date")] : saved;
         return { c, last: sortMsgs(combined).at(-1) };
       })
@@ -296,7 +299,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
     );
   }
 
-  const savedThread = sortMsgs(msgs.filter((m) => m.contactId === open.id));
+  const savedThread = sortMsgs(displayMsgs.filter((m) => m.contactId === open.id));
   const flow = fixedFlow(savedThread, progress);
   const fixedThread = flow.visible;
   const thread = open.id === "anton" ? withTemporaryReplies(fixedThread, temporary) : open.id === "seoyun" ? withTemporaryReplies(fixedThread, seoyunTemporary) : fixedThread;
