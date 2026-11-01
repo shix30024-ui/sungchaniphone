@@ -110,6 +110,7 @@ export function finishAntonWarmup(): void {
 /** Deliver the jealous opening only after the Instagram back-photo post is viewed. */
 export function startAntonScene(): Msg[] {
   if (scene.phase === "anger-opening" || scene.phase === "first-replies" || scene.phase === "choose-ending" || scene.phase === "anton-typing" || scene.phase === "final-replies" || scene.phase === "blocked" || scene.phase === "done") return [];
+  try { localStorage.removeItem("kkt-seoyun-notice-state-v1"); } catch { /* optional story notice state */ }
   const saved = readStored<Msg[]>("kkt-msgs-v1", MESSAGES).filter((m) => m.contactId === "anton");
   const existingTemporary = readTemporaryReplies("anton");
   const anchor = withTemporaryAnchor(saved, existingTemporary);
