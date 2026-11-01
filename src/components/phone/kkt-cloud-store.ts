@@ -215,7 +215,20 @@ export function useCloudKkt<T extends { id: string }>(
         }
       } catch (error) {
         console.error("[KKT cloud] Save failed:", error);
-        alert("KKT cloud save failed. Your changes are still on screen; please retry before closing this page.");
+        // Keep a verified local recovery copy of the latest attempted state.
+        // This does not overwrite cloud rows or silently claim the cloud save succeeded.
+        try {
+          const key = kind === "contact" ? "kkt-contacts-v1" : "kkt-msgs-v1";
+          await writePreviousIndexedDb(key, next);
+          const recovered = await readPreviousIndexedDb(key);
+          if (!recovered || JSON.stringify(recovered) !== JSON.stringify(next)) {
+            throw new Error("KKT recovery copy verification failed");
+          }
+          alert("KKT cloud save failed. A local recovery copy was saved on this device, but it has not synced to the cloud. Please export the recovery snapshot before changing devices.");
+        } catch (backupError) {
+          console.error("[KKT recovery] Failed to preserve unsynced changes:", backupError);
+          alert("KKT cloud save failed, and a local recovery copy could not be verified. Keep this page open and export your phone data before closing.");
+        }
       }
     });
     return true;
