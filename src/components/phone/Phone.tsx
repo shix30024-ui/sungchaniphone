@@ -36,7 +36,7 @@ import { getActiveChat } from "./live";
 import { Wifi, ChevronUp, ChevronDown, X, Search, Plane } from "lucide-react";
 import { SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from "./system";
 import { weatherAppName } from "./x-language";
-import { startAntonScene } from "./anton-scene";
+import { readAntonScene, startAntonScene } from "./anton-scene";
 import { useSharedPhone, useSharingStatus } from "./shared";
 import { isSharedOwner, queueSharedSave } from "./shared-state";
 
