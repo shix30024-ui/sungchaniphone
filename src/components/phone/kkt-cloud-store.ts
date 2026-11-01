@@ -78,6 +78,7 @@ export function useCloudKkt<T extends { id: string }>(
   const isOwner = useRef(false);
   const cloudReady = useRef(false);
   const busy = useRef(false);
+  const saveQueue = useRef<Promise<void>>(Promise.resolve());
   const normalizeValue = (rows: T[]) => normalize ? normalize(rows) : rows;
   const apply = (rows: T[]) => { current.current = rows; setValue(rows); };
 
@@ -171,7 +172,7 @@ export function useCloudKkt<T extends { id: string }>(
     const after = new Map(next.map((row) => [row.id, row]));
     const changed = [...after.values()].filter((row) => JSON.stringify(before.get(row.id)) !== JSON.stringify(row));
     const removed = [...before.keys()].filter((id) => !after.has(id));
-    void (async () => {
+    saveQueue.current = saveQueue.current.catch(() => undefined).then(async () => {
       try {
         if (changed.length) {
           const records: KktRecord[] = changed.map((row) => ({
@@ -190,7 +191,7 @@ export function useCloudKkt<T extends { id: string }>(
         console.error("[KKT cloud] Save failed:", error);
         alert("KKT cloud save failed. Your changes are still on screen; please retry before closing this page.");
       }
-    })();
+    });
     return true;
   };
 
