@@ -175,3 +175,34 @@ export function useImportSafety(): boolean {
   }, []);
   return has;
 }
+
+/** Read the one-time localStorage snapshot that was moved into IndexedDB. Read-only: never applies it automatically. */
+export async function readIndexedSafetySnapshot(): Promise<Record<string, string> | null> {
+  try {
+    const raw = await getKv("safety-snapshot-v1");
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    const result: Record<string, string> = {};
+    for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+      if (/^(phone-|kkt-|ig-|x-|photos-|notes-|calendar-|music-)/.test(key) && typeof value === "string") result[key] = value;
+    }
+    return Object.keys(result).length ? result : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Download the IndexedDB safety snapshot for inspection or safekeeping; this does not overwrite current data. */
+export async function exportIndexedSafetySnapshot(): Promise<boolean> {
+  const snapshot = await readIndexedSafetySnapshot();
+  if (!snapshot) return false;
+  const text = JSON.stringify(snapshot, null, 2);
+  const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `phone-indexeddb-safety-snapshot-${Date.now()}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return true;
+}
