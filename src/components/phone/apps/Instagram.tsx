@@ -32,6 +32,14 @@ export default function Instagram({ lang, onHome, initialDmContactId, onAntonPos
   const [posts, setPosts] = usePersist<Post[]>("ig-posts-v1", POSTS);
   const [friendPosts, setFriendPosts] = usePersist<SocialPost[]>(FRIEND_POSTS_KEY, FRIEND_POSTS);
   const [accounts, setAccounts] = usePersist<SocialAccount[]>(ACCOUNTS_KEY, FRIEND_ACCOUNTS);
+  // Add newly authored fictional friend posts to older saved feeds without overwriting edits.
+  useEffect(() => {
+    setFriendPosts((current) => {
+      const ids = new Set(current.map((post) => post.id));
+      const additions = FRIEND_POSTS.filter((post) => !ids.has(post.id));
+      return additions.length ? [...current, ...additions] : current;
+    });
+  }, [setFriendPosts]);
   // Restore newly added fictional accounts into older saved lists without overwriting existing edits.
   useEffect(() => {
     setAccounts((current) => current.some((a) => a.id === "yuna") ? current.map((a) => a.id === "yuna" ? { ...a, ...((a.avatar === "img:campus" || a.avatar.startsWith("data:image/svg+xml")) ? { avatar: FRIEND_ACCOUNTS.find((x) => x.id === "yuna")!.avatar } : {}), isPrivate: true } : a) : [...current, FRIEND_ACCOUNTS.find((a) => a.id === "yuna")!]);
