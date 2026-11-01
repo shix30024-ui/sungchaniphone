@@ -99,9 +99,7 @@ export function startAntonWarmup(): Msg[] {
   const saved = readStored<Msg[]>("kkt-msgs-v1", MESSAGES).filter((m) => m.contactId === "anton");
   let anchor = [...saved].sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`) || (a.order ?? 0) - (b.order ?? 0)).at(-1);
   const additions: TemporaryReply[] = [];
-  const first = ANTON_WARM_OPENING[0];
-  if (first) additions.push(makeAntonSceneMessage(first, anchor, false));
-  writeTemporaryReplies("anton", [...readTemporaryReplies("anton"), ...additions]);
+
   updateAntonScene({ started: true, phase: "warm-opening", firstReplyCount: 0, finalReplyCount: 0, antonReplyCount: 0, ending: null });
   return additions.map((item) => item.message);
 }
