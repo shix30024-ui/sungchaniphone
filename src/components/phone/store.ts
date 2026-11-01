@@ -1,21 +1,36 @@
 import { useEffect, useState } from "react";
 import { sharedRead, sharedWrite, queueSharedSave } from "./shared-state";
 import { authoredValue } from "./shared-policy";
+import { getKv, putKv } from "./photo-db";
 
-/** Persisted state in localStorage. Loads after mount so SSR markup matches. */
-export function backupPhoneData() {
+/** Keep the one-time safety snapshot in IndexedDB, not localStorage's small quota. */
+export async function backupPhoneData(): Promise<void> {
+  const backupKey = "phone-backup-before-completion-v1";
+  const idbKey = "safety-snapshot-v1";
   try {
-    if (localStorage.getItem("phone-backup-before-completion-v1")) return;
+    // Migrate an older localStorage snapshot only after the IndexedDB copy reads back correctly.
+    const oldSnapshot = localStorage.getItem(backupKey);
+    if (oldSnapshot !== null) {
+      await putKv(idbKey, oldSnapshot);
+      if (await getKv(idbKey) === oldSnapshot) localStorage.removeItem(backupKey);
+      return;
+    }
+    if (await getKv(idbKey) !== null) return;
     const backup: Record<string, string> = {};
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && /^(phone-|kkt-|ig-|x-|photos-|notes-|calendar-|music-)/.test(key)) {
         const value = localStorage.getItem(key);
-        if (value !== null) backup[key] = value;
+        if (value !== null && key !== backupKey) backup[key] = value;
       }
     }
-    localStorage.setItem("phone-backup-before-completion-v1", JSON.stringify(backup));
-  } catch { /* Never stop loading existing data if backup space is unavailable. */ }
+    const serialized = JSON.stringify(backup);
+    await putKv(idbKey, serialized);
+    if (await getKv(idbKey) !== serialized) throw new Error("Safety snapshot verification failed");
+  } catch (error) {
+    // Backups must never overwrite or block the original records.
+    console.error("[Phone backup] Snapshot could not be verified; original records were left untouched.", error);
+  }
 }
 
 export function readStored<T>(key: string, fallback: T): T {
@@ -32,7 +47,7 @@ export function updateStored<T>(key: string, fallback: T, update: (current: T) =
   // array. Do not rewrite large localStorage records (or create a backup copy)
   // unless the stored content actually changed.
   if (JSON.stringify(current) === JSON.stringify(next)) return current;
-  backupPhoneData();
+  void backupPhoneData();
   if (sharedWrite(key, next)) return next;
   localStorage.setItem(key, JSON.stringify(next));
   window.dispatchEvent(new CustomEvent("phone-store", { detail: key }));
@@ -62,7 +77,7 @@ export function usePersist<T>(key: string, def: T, normalize?: (value: T) => T):
       const s = localStorage.getItem(key);
       if (composed.found) setVal(normalize ? normalize(composed.value as T) : composed.value as T);
       else if (s) {
-        backupPhoneData();
+        void backupPhoneData();
         const loaded = JSON.parse(s) as T;
         setVal(normalize ? normalize(loaded) : loaded);
       }
