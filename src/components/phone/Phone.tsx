@@ -36,7 +36,7 @@ import { getActiveChat } from "./live";
 import { Wifi, ChevronUp, ChevronDown, X, Search, Plane } from "lucide-react";
 import { SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from "./system";
 import { weatherAppName } from "./x-language";
-import { readAntonScene, startAntonScene } from "./anton-scene";
+import { readAntonScene, startAntonScene, updateAntonScene } from "./anton-scene";
 import { useSharedPhone, useSharingStatus } from "./shared";
 import { isSharedOwner, queueSharedSave } from "./shared-state";
 
@@ -407,7 +407,7 @@ export default function Phone() {
     setInstagramTarget(null);
     if (editMode && a.id !== "settings") setEditing(apps.find((original) => original.id === a.id) ?? a);
     else if (!editMode) {
-      if (!firstAppRef.current && (a.id === "kkt" || a.id === "ig")) firstAppRef.current = a.id;
+      if (!firstAppRef.current && (a.id === "kkt" || a.id === "ig")) { firstAppRef.current = a.id; updateAntonScene({ openingRoute: a.id === "kkt" ? "kkt" : "ig" }); }
       if (a.id === "kkt" && firstAppRef.current === "kkt" && readAntonScene().phase === "idle") setChatTarget("anton");
       if (a.id === "ig" && !["first-replies", "choose-ending", "anton-typing", "final-replies", "blocked", "done"].includes(readAntonScene().phase)) setInstagramTarget("yuna");
       setOpen(a);
