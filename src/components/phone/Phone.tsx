@@ -239,8 +239,8 @@ function Editor({ lang, app, onSave, onRemove, onClose }: { lang: Lang; app: App
   );
 }
 
-function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initialChat, live, setLive }: { lang: Lang; app: App; apps: App[]; setLang: (l: Lang) => void; onClose: () => void; onLock: () => void; onEditApps: () => void; initialChat: string | null; live: LiveSettings; setLive: (s: LiveSettings) => void }) {
-  const builtIn = app.id === "kkt" ? <Kakao lang={lang} onHome={onClose} initialChat={initialChat} />
+function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initialChat, live, setLive, onOpenInstagram }: { lang: Lang; app: App; apps: App[]; setLang: (l: Lang) => void; onClose: () => void; onLock: () => void; onEditApps: () => void; initialChat: string | null; live: LiveSettings; setLive: (s: LiveSettings) => void; onOpenInstagram: () => void }) {
+  const builtIn = app.id === "kkt" ? <Kakao lang={lang} onHome={onClose} initialChat={initialChat} onOpenInstagram={onOpenInstagram} />
     : app.id === "msg" ? <Messages lang={lang} onHome={onClose} />
     : app.id === "safari" ? <Safari lang={lang} onHome={onClose} />
     : app.id === "ig" ? <Instagram lang={lang} onHome={onClose} />
@@ -465,7 +465,7 @@ export default function Phone() {
       )}
       {!locked && replyError && <div className="reply-error" role="alert"><span>{replyError}</span><Button variant="ghost" size="icon" aria-label={t(lang, "cancel")} onClick={() => setReplyError(null)}><X /></Button></div>}
       {open && (
-        <AppView initialChat={open.id === "kkt" ? chatTarget : null} apps={apps} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onClose={() => setOpen(null)}
+        <AppView initialChat={open.id === "kkt" ? chatTarget : null} apps={apps} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onOpenInstagram={() => { const igApp = translatedApps.find((item) => item.id === "ig"); if (igApp) { setChatTarget(null); setOpen(igApp); } }} onClose={() => setOpen(null)}
           onLock={() => { setOpen(null); setLocked(true); try { sessionStorage.removeItem("phone-unlocked"); } catch { /* ignore */ } }}
           onEditApps={() => { if (!owner) return; setOpen(null); setEditMode(true); }} />
       )}
