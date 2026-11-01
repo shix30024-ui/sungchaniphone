@@ -243,7 +243,7 @@ function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initia
   const builtIn = app.id === "kkt" ? <Kakao lang={lang} onHome={onClose} initialChat={initialChat} onOpenInstagram={onOpenInstagram} />
     : app.id === "msg" ? <Messages lang={lang} onHome={onClose} />
     : app.id === "safari" ? <Safari lang={lang} onHome={onClose} />
-    : app.id === "ig" ? <Instagram lang={lang} onHome={onClose} />
+    : app.id === "ig" ? <Instagram lang={lang} onHome={onClose} initialDmContactId={initialChat === "anton" ? "anton" : null} />
     : app.id === "x" ? <XApp lang={lang} onHome={onClose} />
     : app.id === "photos" ? <Photos lang={lang} onHome={onClose} />
     : app.id === "cam" ? <Camera lang={lang} onHome={onClose} />
