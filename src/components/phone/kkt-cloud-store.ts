@@ -137,10 +137,29 @@ export function useCloudKkt<T extends { id: string }>(
       } catch (error) {
         cloudReady.current = false;
         console.error("[KKT cloud] Hydration failed:", error);
-        if (alive) {
-          // Never overwrite the visible screen with defaults after a failed read.
-          setReady(true);
+        // The cloud migration may not have been applied yet. Recover the previous
+        // authored records locally instead of leaving the bundled demo seeds on screen.
+        try {
+          const key = kind === "contact" ? "kkt-contacts-v1" : "kkt-msgs-v1";
+          let recovered: T[] | null = null;
+          const indexed = await readPreviousIndexedDb(key);
+          if (indexed) recovered = indexed as T[];
+          if (!recovered) {
+            const shared = sharedRead(key);
+            if (shared.found && Array.isArray(shared.value)) recovered = shared.value as T[];
+          }
+          if (!recovered) {
+            const raw = localStorage.getItem(key);
+            if (raw) {
+              const parsed: unknown = JSON.parse(raw);
+              if (Array.isArray(parsed)) recovered = parsed as T[];
+            }
+          }
+          if (alive && recovered) apply(normalizeValue(recovered));
+        } catch (recoveryError) {
+          console.error("[KKT recovery] Previous records could not be read:", recoveryError);
         }
+        if (alive) setReady(true);
       } finally {
         busy.current = false;
       }
