@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { type AppProps, tr } from "../i18n";
 import { POSTS, PROFILE, type Post, type Profile } from "../story";
 import { uid, usePersist } from "../store";
@@ -15,7 +15,7 @@ import { useOwner } from "../owner";
 import { withLocalInteraction } from "../shared-state";
 import { instagramCaption, editInstagramCaption } from "../instagram-language";
 
-export default function Instagram({ lang, onHome, initialDmContactId }: AppProps & { initialDmContactId?: string | null }) {
+export default function Instagram({ lang, onHome, initialDmContactId, onAntonPostViewed }: AppProps & { initialDmContactId?: string | null; onAntonPostViewed?: () => void }) {
   const owner = useOwner();
   const [tab, setTab] = useState<"home" | "search" | "profile">("home");
   const [dm, setDm] = useState(false);
@@ -55,6 +55,13 @@ export default function Instagram({ lang, onHome, initialDmContactId }: AppProps
   const profilePosts = authorPosts(sorted, profileId);
   const post = sorted.find((p) => p.id === openId);
   const postAuthor = post ? account(post.authorId) : prof;
+  const notifiedAntonPost = useRef<string | null>(null);
+  useEffect(() => {
+    if (post?.id === "friend-yuna-back-20261031" && notifiedAntonPost.current !== post.id) {
+      notifiedAntonPost.current = post.id;
+      onAntonPostViewed?.();
+    }
+  }, [post?.id, onAntonPostViewed]);
   const showProfile = (id: string) => { setProfileId(id); setOpenId(null); setCommentsOpen(false); setTab("profile"); };
   const followYuna = () => {
     if (followedYuna) return;
