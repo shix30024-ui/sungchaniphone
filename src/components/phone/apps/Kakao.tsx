@@ -133,7 +133,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   useEffect(() => { setActiveChat(openId); return () => setActiveChat(null); }, [openId]);
   // The KKT-first route begins with a gentle two-message exchange, not the argument.
   useEffect(() => {
-    if (openId !== "anton" || scene.phase !== "idle") return;
+    if (openId !== "anton" || scene.phase !== "idle" || scene.openingRoute !== "kkt") return;
     const opening = startAntonWarmup();
     if (opening.length) setTemporaryState(readTemporaryReplies("anton"));
     setScene(readAntonScene());
