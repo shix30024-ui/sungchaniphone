@@ -3,6 +3,7 @@ import { setActiveChat } from "../live";
 import { type AppProps, tr } from "../i18n";
 import { CONTACTS, MESSAGES, type Contact, type Msg, type MsgType } from "../story";
 import { uid, usePersist } from "../store";
+import { usePersistKkt } from "../kkt-store";
 import { RECENTS_KEY, type RecentCall } from "../contacts";
 import { PhotoImg } from "../photo-db";
 import { moveKktImagesToDb } from "../kkt-images";
@@ -75,8 +76,8 @@ const FREE_CHAT_REPLIES = [
 ] as const;
 
 export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: AppProps & { initialChat?: string | null; onOpenInstagram?: () => void }) {
-  const [contacts, setContacts] = usePersist<Contact[]>("kkt-contacts-v1", CONTACTS);
-  const [msgs, setMsgs] = usePersist<Msg[]>("kkt-msgs-v1", MESSAGES, completeTranslations);
+  const [contacts, setContacts] = usePersistKkt<Contact[]>("kkt-contacts-v1", CONTACTS);
+  const [msgs, setMsgs] = usePersistKkt<Msg[]>("kkt-msgs-v1", MESSAGES, completeTranslations);
   // Merge bundled story additions after both local and shared saves hydrate.
   // Shared snapshots can arrive after mount, so rerun only on that explicit refresh.
   const mergeStorySeeds = () => {
