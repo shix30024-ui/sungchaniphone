@@ -12,7 +12,7 @@ export async function backupPhoneData(): Promise<void> {
     const oldSnapshot = localStorage.getItem(backupKey);
     if (oldSnapshot !== null) {
       await putKv(idbKey, oldSnapshot);
-      if (await getKv(idbKey) === oldSnapshot) localStorage.removeItem(backupKey);
+      if (await getKv(idbKey) !== oldSnapshot) throw new Error("Legacy safety snapshot migration could not be verified");
       return;
     }
     if (await getKv(idbKey) !== null) return;
