@@ -72,7 +72,6 @@ export function InstagramDM({ accounts, lang, onClose, initialContactId }: { acc
       { id: "ig-yuna-festival-2-20261031", contactId: "yuna", sender: "them", type: "text", ko: "근데 왜 답장 안 해요? 아까는 인사도 해줬으면서ㅠㅠ", zh: "但是为什么不回信息呢？明明在线下都跟我打招呼了ㅠㅠ", en: "But why aren't you replying? You said hi to me in person earlierㅠㅠ", date: "2026-10-31", time: "21:08", order: 8, read: true },
       { id: "ig-yuna-sungchan-busy-20261031", contactId: "yuna", sender: "me", type: "text", ko: "아 요즘 너무 바빠서 인스타를 잘 못 봤어 미안해", zh: "啊 最近太忙了不太看ig 抱歉", en: "Ah, I've been really busy lately and haven't checked Instagram much. Sorry.", date: "2026-10-31", time: "21:12", order: 9, read: true },
       { id: "ig-yuna-kkt-ask-20261031", contactId: "yuna", sender: "them", type: "text", ko: "그럼 오빠 카톡 알려주면 안 돼요?", zh: "那给我哥哥的kkt吧？", en: "Then could you give me your KakaoTalk?", date: "2026-10-31", time: "21:13", order: 10, read: true },
-      { id: "ig-yuna-no-reply-20261031", contactId: "yuna", sender: "me", type: "text", ko: "답장하지 않음", zh: "没有回复这条消息", en: "No reply to this message", date: "2026-10-31", time: "21:14", order: 11, read: true },
     ];
     setMsgs((current) => {
       const existing = new Set(current.map((m) => m.id));
@@ -105,7 +104,7 @@ export function InstagramDM({ accounts, lang, onClose, initialContactId }: { acc
   useEffect(() => { setShowYunaHistory(false); }, [open]);
   const yunaReplyTexts = ["你好", "是学妹啊"];
   const sentYunaReplies = thread.filter((m) => m.sender === "me" && yunaReplyTexts.includes(m.originalText ?? messageText(m, "zh")));
-  const yunaHistoryIds = new Set(["ig-yuna-day2-20261029", "ig-yuna-day3-20261030", "ig-yuna-festival-1-20261031", "ig-yuna-festival-2-20261031", "ig-yuna-sungchan-busy-20261031", "ig-yuna-kkt-ask-20261031", "ig-yuna-no-reply-20261031"]);
+  const yunaHistoryIds = new Set(["ig-yuna-day2-20261029", "ig-yuna-day3-20261030", "ig-yuna-festival-1-20261031", "ig-yuna-festival-2-20261031", "ig-yuna-sungchan-busy-20261031", "ig-yuna-kkt-ask-20261031"]);
   const visibleThread = open === "yuna" && !showYunaHistory
     ? thread.filter((m) => !yunaHistoryIds.has(m.id))
     : thread;
