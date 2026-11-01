@@ -808,7 +808,6 @@ export const MESSAGES: Msg[] = [
     ["me", "그럼 저는 디저트 사 갈게요", "那我买甜点回去。", "18:18"],
     ["them", "겨울이 간식도 잊지 마ㅋㅋ", "别忘了冬天的零食ㅋㅋ", "18:19"],
   ]).map((m, i) => ({ ...m, speaker: (["mom", undefined, "mom", "brother", undefined, "brother"][i]) as Msg["speaker"] })),
-];
 
   // More ordinary chat history for non-Anton contacts.
   ...day("minjae", "2026-10-20", [
@@ -970,6 +969,8 @@ export const MESSAGES: Msg[] = [
     ["them", "뭐야 둘이 연락 안 하는 날도 있네", "什么嘛，原来你们也有不联系的时候。", "18:29"],
     ["me", "너 과제나 해ㅋㅋ", "你还是去做作业吧ㅋㅋ", "18:30"],
   ]),
+];
+
 // system rows need text
 const firstMessage = MESSAGES[0];
 if (firstMessage) {
