@@ -32,6 +32,31 @@ async function readPreviousIndexedDb(key: string): Promise<unknown[] | null> {
   }
 }
 
+async function writePreviousIndexedDb(key: string, rows: unknown[]): Promise<void> {
+  if (typeof indexedDB === "undefined") throw new Error("IndexedDB is unavailable");
+  const db = await new Promise<IDBDatabase>((resolve, reject) => {
+    const request = indexedDB.open("phone-photos-db", 2);
+    request.onupgradeneeded = () => {
+      const currentDb = request.result;
+      if (!currentDb.objectStoreNames.contains("images")) currentDb.createObjectStore("images");
+      if (!currentDb.objectStoreNames.contains("kv")) currentDb.createObjectStore("kv");
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction("kv", "readwrite");
+      tx.objectStore("kv").put(JSON.stringify(rows), `kkt:${key}`);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  } finally {
+    db.close();
+  }
+}
+
 function idOf(value: unknown): string | null {
   if (!value || typeof value !== "object") return null;
   const id = (value as Record<string, unknown>).id;
@@ -50,7 +75,7 @@ export function useCloudKkt<T extends { id: string }>(
   const [value, setValue] = useState<T[]>(fallback);
   const [ready, setReady] = useState(false);
   const current = useRef<T[]>(fallback);
-  const isOwner = useRef(false);
+  const isOwner = useRef(false);\n  const cloudReady = useRef(false);
   const busy = useRef(false);
   const normalizeValue = (rows: T[]) => normalize ? normalize(rows) : rows;
   const apply = (rows: T[]) => { current.current = rows; setValue(rows); };
@@ -67,7 +92,7 @@ export function useCloudKkt<T extends { id: string }>(
         ]);
         if (error) throw error;
         if (ownerError) throw ownerError;
-        isOwner.current = owner === true;
+        isOwner.current = owner === true;\n        cloudReady.current = true;
 
         let rows = (remote ?? []).map((row) => row.payload as T);
         if (rows.length === 0 && isOwner.current) {
@@ -107,7 +132,7 @@ export function useCloudKkt<T extends { id: string }>(
         }
         if (alive) { apply(normalizeValue(rows)); setReady(true); }
       } catch (error) {
-        console.error("[KKT cloud] Hydration failed:", error);
+        cloudReady.current = false;\n        console.error("[KKT cloud] Hydration failed:", error);
         if (alive) {
           // Never overwrite the visible screen with defaults after a failed read.
           setReady(true);
@@ -129,7 +154,7 @@ export function useCloudKkt<T extends { id: string }>(
     const next = normalizeValue(typeof nextValue === "function" ? nextValue(previous) : nextValue);
     if (JSON.stringify(previous) === JSON.stringify(next)) return true;
     apply(next);
-    if (!isOwner.current) return true;
+    if (!cloudReady.current) {\n      const key = kind === "contact" ? "kkt-contacts-v1" : "kkt-msgs-v1";\n      void writePreviousIndexedDb(key, next).catch((error) => {\n        console.error("[KKT fallback] Save failed:", error);\n        alert("KKT could not save. Please keep this page open and retry.");\n      });\n      return true;\n    }\n    if (!isOwner.current) return true;
 
     const before = new Map(previous.map((row) => [row.id, row]));
     const after = new Map(next.map((row) => [row.id, row]));
