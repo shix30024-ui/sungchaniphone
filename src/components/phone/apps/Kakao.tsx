@@ -92,14 +92,11 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       }
       return [...byId.values()];
     });
-    setMsgs((current) => {
-      // Current saved records win; never recover deleted rows from the old backup.
-      const byId = new Map(current.map((message) => [message.id, message]));
-      for (const message of MESSAGES) {
-        if (!byId.has(message.id)) byId.set(message.id, message);
-      }
-      return [...byId.values()];
-    });
+    // Do not merge message seeds into an already-hydrated conversation.
+    // A missing seed ID may mean the owner deliberately deleted that message;
+    // re-adding every missing ID silently resurrects deleted story content.
+    // Initial installs are seeded by useCloudKkt's empty-store migration instead.
+    setMsgs((current) => current);
   };
   useEffect(() => {
     if (!contactsReady || !msgsReady) return;
