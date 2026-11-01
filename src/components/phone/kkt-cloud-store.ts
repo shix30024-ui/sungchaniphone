@@ -75,7 +75,8 @@ export function useCloudKkt<T extends { id: string }>(
   const [value, setValue] = useState<T[]>(fallback);
   const [ready, setReady] = useState(false);
   const current = useRef<T[]>(fallback);
-  const isOwner = useRef(false);\n  const cloudReady = useRef(false);
+  const isOwner = useRef(false);
+  const cloudReady = useRef(false);
   const busy = useRef(false);
   const normalizeValue = (rows: T[]) => normalize ? normalize(rows) : rows;
   const apply = (rows: T[]) => { current.current = rows; setValue(rows); };
@@ -92,7 +93,8 @@ export function useCloudKkt<T extends { id: string }>(
         ]);
         if (error) throw error;
         if (ownerError) throw ownerError;
-        isOwner.current = owner === true;\n        cloudReady.current = true;
+        isOwner.current = owner === true;
+        cloudReady.current = true;
 
         let rows = (remote ?? []).map((row) => row.payload as T);
         if (rows.length === 0 && isOwner.current) {
@@ -132,7 +134,8 @@ export function useCloudKkt<T extends { id: string }>(
         }
         if (alive) { apply(normalizeValue(rows)); setReady(true); }
       } catch (error) {
-        cloudReady.current = false;\n        console.error("[KKT cloud] Hydration failed:", error);
+        cloudReady.current = false;
+        console.error("[KKT cloud] Hydration failed:", error);
         if (alive) {
           // Never overwrite the visible screen with defaults after a failed read.
           setReady(true);
@@ -154,7 +157,15 @@ export function useCloudKkt<T extends { id: string }>(
     const next = normalizeValue(typeof nextValue === "function" ? nextValue(previous) : nextValue);
     if (JSON.stringify(previous) === JSON.stringify(next)) return true;
     apply(next);
-    if (!cloudReady.current) {\n      const key = kind === "contact" ? "kkt-contacts-v1" : "kkt-msgs-v1";\n      void writePreviousIndexedDb(key, next).catch((error) => {\n        console.error("[KKT fallback] Save failed:", error);\n        alert("KKT could not save. Please keep this page open and retry.");\n      });\n      return true;\n    }\n    if (!isOwner.current) return true;
+    if (!cloudReady.current) {
+      const key = kind === "contact" ? "kkt-contacts-v1" : "kkt-msgs-v1";
+      void writePreviousIndexedDb(key, next).catch((error) => {
+        console.error("[KKT fallback] Save failed:", error);
+        alert("KKT could not save. Please keep this page open and retry.");
+      });
+      return true;
+    }
+    if (!isOwner.current) return true;
 
     const before = new Map(previous.map((row) => [row.id, row]));
     const after = new Map(next.map((row) => [row.id, row]));
