@@ -6,8 +6,8 @@ import type { Contact } from "../story";
 import { KktAvatar } from "../ui";
 import { callResult, type CallResult } from "../contacts";
 
-export default function Call({ contact, lang, incoming = false, onClose, onComplete }: { contact: Contact; lang: Lang; incoming?: boolean; onClose: () => void; onComplete?: (result: CallResult) => void }) {
-  const [state, setState] = useState<"calling" | "ringing" | "connected" | "ended">(incoming ? "ringing" : "calling");
+export default function Call({ contact, lang, incoming = false, simulateFailure = false, onClose, onComplete }: { contact: Contact; lang: Lang; incoming?: boolean; simulateFailure?: boolean; onClose: () => void; onComplete?: (result: CallResult) => void }) {
+  const [state, setState] = useState<"calling" | "ringing" | "connected" | "ended" | "failed">(incoming ? "ringing" : "calling");
   const [muted, setMuted] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [speaker, setSpeaker] = useState(false);
@@ -19,16 +19,26 @@ export default function Call({ contact, lang, incoming = false, onClose, onCompl
     setState("ended");
   };
   useEffect(() => {
-    if (incoming || state === "ended" || state === "connected") return;
-    const timer = setTimeout(() => setState((s) => s === "calling" ? "ringing" : "connected"), state === "calling" ? 1200 : 2200);
+    if (incoming || state === "ended" || state === "failed" || state === "connected") return;
+    const timer = setTimeout(() => {
+      if (simulateFailure && state === "ringing") {
+        if (!completed.current) {
+          completed.current = true;
+          onComplete?.(callResult(false, false, 0));
+        }
+        setState("failed");
+      } else {
+        setState((s) => s === "calling" ? "ringing" : "connected");
+      }
+    }, state === "calling" ? 1200 : simulateFailure ? 1800 : 2200);
     return () => clearTimeout(timer);
-  }, [state, incoming]);
+  }, [state, incoming, simulateFailure, onComplete]);
   useEffect(() => {
     if (state !== "connected") return;
     const timer = setInterval(() => setSeconds((n) => n + 1), 1000);
     return () => clearInterval(timer);
   }, [state]);
-  const status = state === "calling" ? { en: "Calling…", ko: "연결 중…", zh: "正在呼叫…" } : state === "ringing" ? { en: incoming ? "Incoming call" : "Ringing…", ko: incoming ? "전화 수신" : "응답 대기 중…", zh: incoming ? "来电" : "等待接听…" } : state === "ended" ? { en: "Call ended", ko: "통화 종료", zh: "通话结束" } : null;
+  const status = state === "calling" ? { en: "Calling…", ko: "연결 중…", zh: "正在呼叫…" } : state === "ringing" ? { en: incoming ? "Incoming call" : "Ringing…", ko: incoming ? "전화 수신" : "응답 대기 중…", zh: incoming ? "来电" : "等待接听…" } : state === "failed" ? { en: "The call could not be connected.", ko: "통화 연결이 되지 않습니다.", zh: "无法接通电话。" } : state === "ended" ? { en: "Call ended", ko: "통화 종료", zh: "通话结束" } : null;
   return <div className="app-page call-screen">
     <div className="px-4"><Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Back to chat", ko: "채팅으로 돌아가기", zh: "返回聊天" })} onClick={() => { finish(); onClose(); }}><ArrowLeft /></Button></div>
     <div className="flex flex-1 flex-col items-center pt-12 gap-5">
@@ -40,7 +50,7 @@ export default function Call({ contact, lang, incoming = false, onClose, onCompl
       {state === "connected" && <Button variant="secondary" size="icon" className="call-control" aria-label={tr(lang, { en: "Mute", ko: "음소거", zh: "静音" })} aria-pressed={muted} onClick={() => setMuted(!muted)}>{muted ? <MicOff /> : <Mic />}</Button>}
       {onComplete && state === "connected" && <Button variant="secondary" size="icon" className="call-control" aria-label={tr(lang, { en: "Speaker", ko: "스피커", zh: "扬声器" })} aria-pressed={speaker} onClick={() => setSpeaker(!speaker)}><Volume2 /></Button>}
       {incoming && state === "ringing" && <Button size="icon" className="call-control call-answer" aria-label={tr(lang, { en: "Answer", ko: "받기", zh: "接听" })} onClick={() => setState("connected")}><Phone /></Button>}
-      <Button variant={state === "ended" ? "secondary" : "destructive"} size="icon" className="call-control" aria-label={tr(lang, state === "ended" ? { en: "Back", ko: "뒤로", zh: "返回" } : { en: "Hang up", ko: "종료", zh: "挂断" })} onClick={() => state === "ended" ? onClose() : finish()}>{state === "ended" ? <ArrowLeft /> : <PhoneOff />}</Button>
+      <Button variant={state === "ended" || state === "failed" ? "secondary" : "destructive"} size="icon" className="call-control" aria-label={tr(lang, state === "ended" || state === "failed" ? { en: "Back", ko: "뒤로", zh: "返回" } : { en: "Hang up", ko: "종료", zh: "挂断" })} onClick={() => state === "ended" || state === "failed" ? onClose() : finish()}>{state === "ended" || state === "failed" ? <ArrowLeft /> : <PhoneOff />}</Button>
     </div>
   </div>;
 }
