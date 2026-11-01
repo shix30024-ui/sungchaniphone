@@ -41,9 +41,13 @@ const day = (contactId: string, date: string, rows: Row[]): Msg[] =>
     id: `m${++n}`, contactId, sender, type, ko, zh, date, time, image, order: n,
   }));
 
+// Stable IDs protect the earliest Anton conversations from collisions with older saved mN records.
+const earlyDay = (date: string, rows: Row[]): Msg[] =>
+  day("anton", date, rows).map((message, index) => ({ ...message, id: `anton-early-${date}-${message.time.replace(":", "")}-${index + 1}` }));
+
 export const MESSAGES: Msg[] = [
   // 2022 — Anton adds Sungchan on KakaoTalk; early days before Seoul Forest.
-  ...day("anton", "2022-11-14", [
+  ...earlyDay("2022-11-14", [
     ["them", "", "", "18:12", "system"],
     ["them", "드디어 형 카톡 추가했어요", "终于加到哥的 KKT 了。", "18:13"],
     ["them", "안녕하세요 이찬영이에요^", "你好，我是李灿荣^", "18:13"],
@@ -54,7 +58,7 @@ export const MESSAGES: Msg[] = [
     ["me", "우리 인스타에서 벌써 맞팔 아니었어요?ㅋㅋ", "我们不是早就在 IG 上互关了吗？哈哈", "18:18"],
     ["them", "인스타랑 카톡은 다르잖아요^", "IG 和 KKT 不一样嘛^", "18:20"],
   ]),
-  ...day("anton", "2022-11-14", [
+  ...earlyDay("2022-11-14", [
     ["them", "오늘 축제 진짜 재밌었어요~", "今天校庆活动好有意思～", "21:02"],
     ["them", "형 춤추는 거 봤어요. 진짜 멋있었어요", "看到哥跳舞了，很帅。", "21:03"],
     ["me", "너도 노래 잘하던데", "你唱歌也很好听。", "21:05"],
@@ -70,7 +74,7 @@ export const MESSAGES: Msg[] = [
     ["me", "일찍 쉬어", "早点休息吧。", "21:20"],
     ["me", "잘 자", "晚安。", "21:21"],
   ]),
-  ...day("anton", "2022-11-15", [
+  ...earlyDay("2022-11-15", [
     ["me", "좋은 아침", "早。", "08:12"],
     ["me", "오늘 뭐 해?", "今天在干什么？", "08:13"],
     ["them", "gm🌞~", "gm🌞～", "08:21"],
@@ -82,7 +86,7 @@ export const MESSAGES: Msg[] = [
     ["them", "좋아, 아직 형이랑 단둘이 나가본 적 없잖아^", "好啊，还没和哥单独出去过呢^", "08:31"],
     ["them", "앞으로도 자주 같이 나가자ㅎㅎ", "以后也多多出去吧ㅎㅎ", "08:32"],
   ]),
-  ...day("anton", "2022-11-15", [
+  ...earlyDay("2022-11-15", [
     ["them", "형 오늘 진짜 잘하더라", "哥今天真的好棒。", "20:18"],
     ["them", "형 그렇게 잘하는 거 처음 봤어😳", "第一次见哥那么猛😳", "20:19"],
     ["me", "네가 옆에 있어서 그런가 봐", "可能因为你在我身边吧？", "20:22"],
@@ -90,7 +94,7 @@ export const MESSAGES: Msg[] = [
     ["me", "ㅋㅋㅋ", "哈哈哈。", "20:23"],
     ["them", "좋아, 그럼 내가 형 수호천사 할게", "好啊，那我就是哥的守护天使了。", "20:26"],
   ]),
-  ...day("anton", "2023-03-18", [
+  ...earlyDay("2023-03-18", [
     ["me", "오늘 저녁에 우리 집 와서 영화 볼래?", "晚上要来家里看电影吗？", "15:08"],
     ["me", "좋아하는 영화 있어?", "有什么喜欢的电影？", "15:09"],
     ["them", "i just spammed cyberpunk season 2", "i just spammed cyberpunk season 2", "15:14"],
@@ -105,7 +109,7 @@ export const MESSAGES: Msg[] = [
     ["me", "외우기 쉽잖아", "简单好记嘛。", "15:26"],
     ["me", "입에 착 붙지 않아?ㅋㅋ", "不觉得很顺口吗？哈哈", "15:26"],
   ]),
-  ...day("anton", "2023-03-18", [
+  ...earlyDay("2023-03-18", [
     ["them", "", "", "21:42", "image", "photo:1"],
     ["them", "누가 찍어버렸어……", "被人拍下来了……", "21:43"],
     ["them", "뭐라고 설명해야 할지 모르겠어😣", "说不清了😣", "21:44"],
@@ -116,7 +120,7 @@ export const MESSAGES: Msg[] = [
     ["them", "oh……", "oh……", "21:53"],
     ["them", "사실 나도 좋아", "其实我也喜欢。", "21:54"],
   ]),
-  ...day("anton", "2023-03-19", [
+  ...earlyDay("2023-03-19", [
     ["them", "나 수업 가는 중이야", "我出门上课了。", "08:06"],
     ["them", "아침 식탁 위에 놔뒀어", "早餐放在餐厅桌子上了。", "08:07"],
     ["them", "형 꼭 챙겨 먹어~", "哥记得吃～", "08:07"],
