@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { sharedRead } from "./shared-state";
 
 type KktKind = "contact" | "message";
-type KktRecord = { record_type: KktKind; record_id: string; payload: Record<string, unknown> };
+type KktRecord = { record_type: KktKind; record_id: string; payload: Json };
 
 function idOf(value: unknown): string | null {
   if (!value || typeof value !== "object") return null;
@@ -61,7 +62,7 @@ export function useCloudKkt<T extends { id: string }>(
           rows = normalizeValue(legacy ?? fallback);
           const records: KktRecord[] = rows.flatMap((item) => {
             const id = idOf(item);
-            return id ? [{ record_type: kind, record_id: id, payload: item as Record<string, unknown> }] : [];
+            return id ? [{ record_type: kind, record_id: id, payload: item as unknown as Json }] : [];
           });
           if (records.length) {
             const { error: migrateError } = await supabase.from("phone_kkt_records").upsert(records, { onConflict: "record_type,record_id" });
@@ -106,7 +107,7 @@ export function useCloudKkt<T extends { id: string }>(
           const records: KktRecord[] = changed.map((row) => ({
             record_type: kind,
             record_id: row.id,
-            payload: row as Record<string, unknown>,
+            payload: row as unknown as Json,
           }));
           const { error } = await supabase.from("phone_kkt_records").upsert(records, { onConflict: "record_type,record_id" });
           if (error) throw error;
