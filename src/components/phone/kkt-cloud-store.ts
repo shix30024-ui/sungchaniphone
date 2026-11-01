@@ -6,6 +6,32 @@ import { sharedRead } from "./shared-state";
 type KktKind = "contact" | "message";
 type KktRecord = { record_type: KktKind; record_id: string; payload: Json };
 
+async function readPreviousIndexedDb(key: string): Promise<unknown[] | null> {
+  if (typeof indexedDB === "undefined") return null;
+  const db = await new Promise<IDBDatabase>((resolve, reject) => {
+    const request = indexedDB.open("phone-photos-db", 2);
+    request.onupgradeneeded = () => {
+      const currentDb = request.result;
+      if (!currentDb.objectStoreNames.contains("images")) currentDb.createObjectStore("images");
+      if (!currentDb.objectStoreNames.contains("kv")) currentDb.createObjectStore("kv");
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  try {
+    const raw = await new Promise<unknown>((resolve, reject) => {
+      const request = db.transaction("kv").objectStore("kv").get(`kkt:${key}`);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    if (typeof raw !== "string") return null;
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : null;
+  } finally {
+    db.close();
+  }
+}
+
 function idOf(value: unknown): string | null {
   if (!value || typeof value !== "object") return null;
   const id = (value as Record<string, unknown>).id;
@@ -47,9 +73,17 @@ export function useCloudKkt<T extends { id: string }>(
         if (rows.length === 0 && isOwner.current) {
           // Migrate the existing authored data before falling back to bundled seeds.
           const key = kind === "contact" ? "kkt-contacts-v1" : "kkt-msgs-v1";
-          const shared = sharedRead(key);
           let legacy: T[] | null = null;
-          if (shared.found && Array.isArray(shared.value)) legacy = shared.value as T[];
+          // The previous iteration moved the latest edits into IndexedDB.
+          // Read that copy first; localStorage may be an older snapshot.
+          try {
+            const indexed = await readPreviousIndexedDb(key);
+            if (indexed) legacy = indexed as T[];
+          } catch { /* Continue to the other non-destructive migration sources. */ }
+          if (!legacy) {
+            const shared = sharedRead(key);
+            if (shared.found && Array.isArray(shared.value)) legacy = shared.value as T[];
+          }
           if (!legacy) {
             try {
               const raw = localStorage.getItem(key);
