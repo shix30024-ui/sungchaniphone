@@ -16,6 +16,7 @@ export type AntonScenePhase =
 
 export type AntonSceneState = {
   started: boolean;
+  openingRoute: "kkt" | "ig" | null;
   phase: AntonScenePhase;
   firstReplyCount: number;
   finalReplyCount: number;
@@ -26,6 +27,7 @@ export type AntonSceneState = {
 
 const INITIAL: AntonSceneState = {
   started: false,
+  openingRoute: null,
   phase: "idle",
   firstReplyCount: 0,
   finalReplyCount: 0,
