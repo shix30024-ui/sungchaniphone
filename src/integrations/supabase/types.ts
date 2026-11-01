@@ -50,6 +50,27 @@ export type Database = {
         }
         Relationships: []
       }
+      phone_kkt_records: {
+        Row: {
+          record_type: string
+          record_id: string
+          payload: Json
+          updated_at: string
+        }
+        Insert: {
+          record_type: string
+          record_id: string
+          payload: Json
+          updated_at?: string
+        }
+        Update: {
+          record_type?: string
+          record_id?: string
+          payload?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
