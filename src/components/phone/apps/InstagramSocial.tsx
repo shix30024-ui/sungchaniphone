@@ -101,7 +101,8 @@ export function InstagramDM({ accounts, lang, onClose, initialContactId }: { acc
   }, [initialContactId, accounts]);
   const contact = open ? dmAccount(accounts, open) : undefined;
   const typing = queue.some((q) => !q.failed && q.channel === "ig" && q.contactId === open);
-  const thread = msgs.filter((m) => m.contactId === open);
+  const thread = msgs.filter((m) => m.contactId === open).sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`) || a.order - b.order);
+  useEffect(() => { setShowYunaHistory(false); }, [open]);
   const yunaReplyTexts = ["你好", "是学妹啊"];
   const sentYunaReplies = thread.filter((m) => m.sender === "me" && yunaReplyTexts.includes(m.originalText ?? messageText(m, "zh")));
   const yunaHistoryIds = new Set(["ig-yuna-day2-20261029", "ig-yuna-day3-20261030", "ig-yuna-festival-1-20261031", "ig-yuna-festival-2-20261031", "ig-yuna-sungchan-busy-20261031", "ig-yuna-kkt-ask-20261031", "ig-yuna-no-reply-20261031"]);
