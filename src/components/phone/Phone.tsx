@@ -239,11 +239,11 @@ function Editor({ lang, app, onSave, onRemove, onClose }: { lang: Lang; app: App
   );
 }
 
-function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initialChat, live, setLive, onOpenInstagram, instagramTarget }: { lang: Lang; app: App; apps: App[]; setLang: (l: Lang) => void; onClose: () => void; onLock: () => void; onEditApps: () => void; initialChat: string | null; live: LiveSettings; setLive: (s: LiveSettings) => void; onOpenInstagram: () => void; instagramTarget: string | null }) {
+function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initialChat, live, setLive, onOpenInstagram, instagramTarget, onAntonPostViewed }: { lang: Lang; app: App; apps: App[]; setLang: (l: Lang) => void; onClose: () => void; onLock: () => void; onEditApps: () => void; initialChat: string | null; live: LiveSettings; setLive: (s: LiveSettings) => void; onOpenInstagram: () => void; instagramTarget: string | null; onAntonPostViewed: () => void }) {
   const builtIn = app.id === "kkt" ? <Kakao lang={lang} onHome={onClose} initialChat={initialChat} onOpenInstagram={onOpenInstagram} />
     : app.id === "msg" ? <Messages lang={lang} onHome={onClose} />
     : app.id === "safari" ? <Safari lang={lang} onHome={onClose} />
-    : app.id === "ig" ? <Instagram lang={lang} onHome={onClose} initialDmContactId={instagramTarget} />
+    : app.id === "ig" ? <Instagram lang={lang} onHome={onClose} initialDmContactId={instagramTarget} onAntonPostViewed={onAntonPostViewed} />
     : app.id === "x" ? <XApp lang={lang} onHome={onClose} />
     : app.id === "photos" ? <Photos lang={lang} onHome={onClose} />
     : app.id === "cam" ? <Camera lang={lang} onHome={onClose} />
@@ -299,6 +299,7 @@ export default function Phone() {
   const [contactName, setContactName] = useState("");
   const [homeSearch, setHomeSearch] = useState<string | null>(null);
   const [replyError, setReplyError] = useState<string | null>(null);
+  const firstAppRef = useRef<string | null>(null);
 
   useEffect(() => {
     const refresh = () => { setContactName(liveContactName()); setUnread(totalUnread()); setLiveState(loadLiveSettings()); };
@@ -357,16 +358,6 @@ export default function Phone() {
     };
   }, [locked, nextNotificationId]);
 
-  // Also cover a page restored directly into the unlocked state (sessionStorage).
-  // The scene guard ensures this cannot duplicate the burst handled by onUnlock.
-  useEffect(() => {
-    if (locked) return;
-    const sceneNotices = startAntonScene();
-    if (!sceneNotices.length) return;
-    setUnread(totalUnread());
-    setNotificationQueue((queue) => [...queue, ...sceneNotices.filter((message) => !queue.some((item) => item.id === message.id))]);
-  }, [locked]);
-
   const setLive = (s: LiveSettings) => {
     const prev = live;
     setLiveState(s); saveLiveSettings(s);
@@ -414,7 +405,12 @@ export default function Phone() {
     setChatTarget(null);
     setInstagramTarget(null);
     if (editMode && a.id !== "settings") setEditing(apps.find((original) => original.id === a.id) ?? a);
-    else if (!editMode) setOpen(a);
+    else if (!editMode) {
+      if (!firstAppRef.current && (a.id === "kkt" || a.id === "ig")) firstAppRef.current = a.id;
+      if (a.id === "kkt" && firstAppRef.current === "kkt" && readAntonScene().phase === "idle") setChatTarget("anton");
+      if (a.id === "ig" && !["first-replies", "choose-ending", "anton-typing", "final-replies", "blocked", "done"].includes(readAntonScene().phase)) setInstagramTarget("yuna");
+      setOpen(a);
+    }
   };
 
   return (
@@ -426,14 +422,8 @@ export default function Phone() {
           onUnlock={() => {
             setLocked(false);
             try { sessionStorage.setItem("phone-unlocked", "1"); } catch { /* ignore */ }
-            const sceneNotices = startAntonScene();
             const pending = unreadLive();
-            if (sceneNotices.length) {
-              setUnread(totalUnread());
-              setNotificationQueue((queue) => [...queue, ...sceneNotices]);
-            } else if (pending.length) {
-              setNotificationQueue((queue) => (pending[0] ? [...queue, pending[0]] : queue));
-            }
+            if (pending.length) setNotificationQueue((queue) => (pending[0] ? [...queue, pending[0]] : queue));
             if (pendingChat) { setPendingChat(false); openChat(); }
           }} />
       ) : (
@@ -467,7 +457,7 @@ export default function Phone() {
       )}
       {!locked && replyError && <div className="reply-error" role="alert"><span>{replyError}</span><Button variant="ghost" size="icon" aria-label={t(lang, "cancel")} onClick={() => setReplyError(null)}><X /></Button></div>}
       {open && (
-        <AppView initialChat={open.id === "kkt" ? chatTarget : null} apps={apps} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onOpenInstagram={() => { const igApp = translatedApps.find((item) => item.id === "ig"); if (igApp) { setChatTarget(null); setInstagramTarget("anton"); setOpen(igApp); } }} instagramTarget={instagramTarget} onClose={() => setOpen(null)}
+        <AppView onAntonPostViewed={() => { const sceneNotices = startAntonScene(); if (sceneNotices.length) { setUnread(totalUnread()); setNotificationQueue((queue) => [...queue, ...sceneNotices.filter((message) => !queue.some((item) => item.id === message.id))]); } }} initialChat={open.id === "kkt" ? chatTarget : null} apps={apps} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onOpenInstagram={() => { const igApp = translatedApps.find((item) => item.id === "ig"); if (igApp) { setChatTarget(null); setInstagramTarget("anton"); setOpen(igApp); } }} instagramTarget={instagramTarget} onClose={() => setOpen(null)}
           onLock={() => { setOpen(null); setLocked(true); try { sessionStorage.removeItem("phone-unlocked"); } catch { /* ignore */ } }}
           onEditApps={() => { if (!owner) return; setOpen(null); setEditMode(true); }} />
       )}
