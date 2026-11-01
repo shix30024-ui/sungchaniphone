@@ -239,11 +239,11 @@ function Editor({ lang, app, onSave, onRemove, onClose }: { lang: Lang; app: App
   );
 }
 
-function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initialChat, live, setLive, onOpenInstagram }: { lang: Lang; app: App; apps: App[]; setLang: (l: Lang) => void; onClose: () => void; onLock: () => void; onEditApps: () => void; initialChat: string | null; live: LiveSettings; setLive: (s: LiveSettings) => void; onOpenInstagram: () => void }) {
+function AppView({ lang, app, apps, setLang, onClose, onLock, onEditApps, initialChat, live, setLive, onOpenInstagram, instagramTarget }: { lang: Lang; app: App; apps: App[]; setLang: (l: Lang) => void; onClose: () => void; onLock: () => void; onEditApps: () => void; initialChat: string | null; live: LiveSettings; setLive: (s: LiveSettings) => void; onOpenInstagram: () => void; instagramTarget: string | null }) {
   const builtIn = app.id === "kkt" ? <Kakao lang={lang} onHome={onClose} initialChat={initialChat} onOpenInstagram={onOpenInstagram} />
     : app.id === "msg" ? <Messages lang={lang} onHome={onClose} />
     : app.id === "safari" ? <Safari lang={lang} onHome={onClose} />
-    : app.id === "ig" ? <Instagram lang={lang} onHome={onClose} initialDmContactId={initialChat === "anton" ? "anton" : null} />
+    : app.id === "ig" ? <Instagram lang={lang} onHome={onClose} initialDmContactId={instagramTarget} />
     : app.id === "x" ? <XApp lang={lang} onHome={onClose} />
     : app.id === "photos" ? <Photos lang={lang} onHome={onClose} />
     : app.id === "cam" ? <Camera lang={lang} onHome={onClose} />
@@ -294,6 +294,7 @@ export default function Phone() {
   const lastSoundNotificationId = useRef<string | null>(null);
   const owner = useOwner();
   const [chatTarget, setChatTarget] = useState<string | null>(null);
+  const [instagramTarget, setInstagramTarget] = useState<string | null>(null);
   const [pendingChat, setPendingChat] = useState(false);
   const [contactName, setContactName] = useState("");
   const [homeSearch, setHomeSearch] = useState<string | null>(null);
@@ -411,6 +412,7 @@ export default function Phone() {
 
   const tap = (a: App) => {
     setChatTarget(null);
+    setInstagramTarget(null);
     if (editMode && a.id !== "settings") setEditing(apps.find((original) => original.id === a.id) ?? a);
     else if (!editMode) setOpen(a);
   };
@@ -465,7 +467,7 @@ export default function Phone() {
       )}
       {!locked && replyError && <div className="reply-error" role="alert"><span>{replyError}</span><Button variant="ghost" size="icon" aria-label={t(lang, "cancel")} onClick={() => setReplyError(null)}><X /></Button></div>}
       {open && (
-        <AppView initialChat={open.id === "kkt" ? chatTarget : null} apps={apps} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onOpenInstagram={() => { const igApp = translatedApps.find((item) => item.id === "ig"); if (igApp) { setChatTarget(null); setOpen(igApp); } }} onClose={() => setOpen(null)}
+        <AppView initialChat={open.id === "kkt" ? chatTarget : null} apps={apps} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onOpenInstagram={() => { const igApp = translatedApps.find((item) => item.id === "ig"); if (igApp) { setChatTarget(null); setInstagramTarget("anton"); setOpen(igApp); } }} instagramTarget={instagramTarget} onClose={() => setOpen(null)}
           onLock={() => { setOpen(null); setLocked(true); try { sessionStorage.removeItem("phone-unlocked"); } catch { /* ignore */ } }}
           onEditApps={() => { if (!owner) return; setOpen(null); setEditMode(true); }} />
       )}
