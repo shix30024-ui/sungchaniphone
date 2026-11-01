@@ -43,7 +43,10 @@ export default function Instagram({ lang, onHome }: AppProps) {
   const [profDraft, setProfDraft] = useState<Profile | null>(null);
   const S = tr(lang, { en: "Save", ko: "저장", zh: "保存" });
   const C = tr(lang, { en: "Cancel", ko: "취소", zh: "取消" });
-  const sorted = socialFeed(posts, friendPosts);
+  // This post was explicitly removed. Filter legacy local/shared copies as well
+  // as the bundled seed so the deleted Seongsu café entry cannot reappear.
+  const visiblePosts = posts.filter((p) => !(p.id === "p7" || (p.date === "2025-09-06" && /성수|咖啡店|cafe/i.test(p.caption))));
+  const sorted = socialFeed(visiblePosts, friendPosts);
   const account = (id: string): Profile => id === SELF_ID ? prof : accounts.find((a) => a.id === id) ?? prof;
   const selectedProfile = account(profileId);
   const isYunaProfile = profileId === "yuna" || selectedProfile.username === "yuna_Yuna";
