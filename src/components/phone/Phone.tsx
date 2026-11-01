@@ -409,7 +409,7 @@ export default function Phone() {
     else if (!editMode) {
       if (!firstAppRef.current && (a.id === "kkt" || a.id === "ig")) { firstAppRef.current = a.id; updateAntonScene({ openingRoute: a.id === "kkt" ? "kkt" : "ig" }); }
       if (a.id === "kkt" && firstAppRef.current === "kkt" && readAntonScene().phase === "idle") setChatTarget("anton");
-      if (a.id === "ig" && !["first-replies", "choose-ending", "anton-typing", "final-replies", "blocked", "done"].includes(readAntonScene().phase)) setInstagramTarget("yuna");
+      if (a.id === "ig" && !["anger-opening", "first-replies", "choose-ending", "anton-typing", "final-replies", "blocked", "done"].includes(readAntonScene().phase)) setInstagramTarget("yuna");
       setOpen(a);
     }
   };
