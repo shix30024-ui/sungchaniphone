@@ -397,7 +397,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       patchScene({ ending, phase: "anton-typing", antonReplyCount: 0 });
     }
   };
-  if (call) return <Call contact={open} lang={lang} incoming={call === "incoming"} simulateFailure={scene.ending === "blocked" && call === "outgoing"} onClose={() => setCall(null)} onComplete={(result) => setRecents((current) => [{ id: uid(), contactId: open.id, name: open.name, time: callStarted.current || new Date().toISOString(), simulated: true, ...result }, ...current])} />;;
+  if (call) return <Call contact={open} lang={lang} incoming={call === "incoming"} simulateFailure={scene.ending === "blocked" && call === "outgoing"} onClose={() => setCall(null)} onComplete={(result) => setRecents((current) => [{ id: uid(), contactId: open.id, name: open.name, time: callStarted.current || new Date().toISOString(), simulated: true, ...result }, ...current])} />;
   const startEdit = () => { editIds.current = new Set(savedThread.map((m) => m.id)); setDraft(savedThread.map((m) => ({ ...m }))); setDraftC({ ...open }); setEditing(true); };
   const save = () => {
     const ok = setMsgs((current) => [...current.filter((m) => m.contactId !== open.id || !editIds.current.has(m.id)), ...draft.map((m, i) => ({ ...m, order: i }))]);
