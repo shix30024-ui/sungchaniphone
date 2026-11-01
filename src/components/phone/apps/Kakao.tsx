@@ -219,6 +219,9 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const mergedMsgs = [...new Map([...MESSAGES, ...msgs].map((message) => [message.id, message])).values()];
   const seenMessageContent = new Set<string>();
   const displayMsgs = mergedMsgs.filter((message) => {
+    // These Anton story dates were explicitly removed; exclude stale local/shared
+    // copies too, so a previous save cannot bring them back into the thread.
+    if (message.contactId === "anton" && ["2026-10-24", "2026-10-26"].includes(message.date)) return false;
     const contentKey = [message.contactId, message.date, message.time, message.sender, message.type, message.ko, message.zh, message.en ?? "", message.image ?? ""].join("\u001f");
     if (seenMessageContent.has(contentKey)) return false;
     seenMessageContent.add(contentKey);
