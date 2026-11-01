@@ -147,7 +147,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     const timer = window.setTimeout(() => {
       const latest = readTemporaryReplies("anton");
       const anchor = latest.at(-1)?.message ?? sortMsgs(msgs.filter((m) => m.contactId === "anton")).at(-1);
-      const incoming = makeAntonSceneMessage(line, anchor, false);
+      const incoming = makeAntonSceneMessage(line, anchor);
       setTemporary((old) => [...old, incoming]);
       const nextCount = scene.antonReplyCount + 1;
       if (nextCount >= ANTON_WARM_OPENING.length) {
