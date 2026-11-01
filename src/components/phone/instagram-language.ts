@@ -12,6 +12,7 @@ const translations: Record<string, { zh: string; en: string }> = {
   p3: { zh: "工学院 FC 圣诞聚餐 🎄", en: "Engineering FC Christmas dinner 🎄" },
   p2: { zh: "银杏季节", en: "Ginkgo season" },
   p1: { zh: "好久没踢完整场了", en: "First full match in a while" },
+  "friend-yuna-back-20261031": { zh: "校庆那天拍的照片。学长的背影很好看，所以发上来了ㅎㅎ", en: "A photo from the festival. I liked the way my senior looked from behindㅎㅎ" },
   "friend-anton-practice-20261026": { zh: "同样四小节已经练了一个小时。先休息一下", en: "An hour on the same four bars. Taking a break" },
   "friend-doyun-cafe-20261026": { zh: "小组作业文件名：最终_真的最终_v7。咖啡已经第二杯了", en: "Group project file: final_really-final_v7. On coffee number two" },
   "friend-minjae-football-20261025": { zh: "周日早上运动结束。今天防守还不错 ⚽", en: "Sunday morning workout done. Defense was pretty good today ⚽" },
