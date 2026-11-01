@@ -275,9 +275,10 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   // Render bundled contacts even when an older shared snapshot only contains Anton.
   // Saved/edited rows keep priority by stable ID; missing story seeds remain visible.
   const displayContacts = [...new Map([...CONTACTS, ...contacts].map((contact) => [contact.id, contact])).values()];
-  // Stable content-level de-duplication catches legacy rows whose generated mN
-  // IDs shifted after story edits. Keep the saved copy when a duplicate exists.
-  const mergedMsgs = [...new Map([...MESSAGES, ...msgs].map((message) => [message.id, message])).values()];
+  // The hydrated store is the source of truth. MESSAGES is only the initial
+  // fallback for a genuinely empty store; merging it here would resurrect rows
+  // that the owner deliberately deleted from a saved conversation.
+  const mergedMsgs = msgs;
   const seenMessageContent = new Set<string>();
   const displayMsgs = mergedMsgs.filter((message) => {
     // These Anton story dates were explicitly removed; exclude stale local/shared
