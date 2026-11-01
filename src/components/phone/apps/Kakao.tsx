@@ -596,7 +596,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
           <Button className="w-full" onClick={() => { setBlockedActionOpen(false); startCall("outgoing"); }}><Phone className="mr-2" />{tr(lang, { en: "Call Anton", ko: "전화 걸기", zh: "拨打电话" })}</Button>
           <Button variant="outline" className="w-full" onClick={() => { setBlockedActionOpen(false); onOpenInstagram?.(); }}><MessageCircle className="mr-2" />{tr(lang, { en: "Message Anton on Instagram", ko: "인스타그램으로 메시지 보내기", zh: "去 Instagram 私信 Anton" })}</Button>
           <Button variant="outline" className="w-full" onClick={() => { setBlockedActionOpen(false); setOpenId("seoyun"); }}><MessageCircle className="mr-2" />{tr(lang, { en: "Open Seoyun chat", ko: "서윤 채팅 열기", zh: "打开 Seoyun 聊天" })}</Button>
-          <Button variant="ghost" className="w-full" onClick={() => setBlockedActionOpen(false)}>{tr(lang, { en: "Later", ko: "나중に", zh: "稍后" })}</Button>
+          <Button variant="ghost" className="w-full" onClick={() => setBlockedActionOpen(false)}>{tr(lang, { en: "Later", ko: "나중에", zh: "稍后" })}</Button>
         </div>
       </div>
       {open.id === "anton" && scene.phase === "choose-ending" && <div className="flex gap-2 px-3 py-3 border-t bg-background"><Button className="flex-1" variant="outline" onClick={() => chooseEnding("blocked")}>{tr(lang, { en: "Blocked", ko: "차단됨", zh: "被拉黑" })}</Button><Button className="flex-1" onClick={() => chooseEnding("not-blocked")}>{tr(lang, { en: "Not blocked", ko: "차단되지 않음", zh: "没有被拉黑" })}</Button></div>}
