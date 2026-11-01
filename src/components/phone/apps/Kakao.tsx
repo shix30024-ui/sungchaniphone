@@ -3,6 +3,7 @@ import { setActiveChat } from "../live";
 import { type AppProps, tr } from "../i18n";
 import { CONTACTS, MESSAGES, type Contact, type Msg, type MsgType } from "../story";
 import { uid, usePersist } from "../store";
+import { RECENTS_KEY, type RecentCall } from "../contacts";
 import { PhotoImg } from "../photo-db";
 import { moveKktImagesToDb } from "../kkt-images";
 import { BackBtn, EditBar, Field, ImageField, KktAvatar, TopBar } from "../ui";
@@ -156,6 +157,9 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
   const [addingContact, setAddingContact] = useState(false);
   const [compose, setCompose] = useState("");
   const [call, setCall] = useState<"outgoing" | "incoming" | null>(null);
+  const [recents, setRecents] = usePersist<RecentCall[]>(RECENTS_KEY, []);
+  const callStarted = useRef("");
+  const startCall = (direction: "outgoing" | "incoming") => { callStarted.current = new Date().toISOString(); setCall(direction); };
   const [menu, setMenu] = useState(false);
   const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState("");
@@ -390,7 +394,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       patchScene({ ending, phase: "anton-typing", antonReplyCount: 0 });
     }
   };
-  if (call) return <Call contact={open} lang={lang} incoming={call === "incoming"} onClose={() => setCall(null)} />;
+  if (call) return <Call contact={open} lang={lang} incoming={call === "incoming"} simulateFailure={scene.ending === "blocked" && call === "outgoing"} onClose={() => setCall(null)} onComplete={(result) => setRecents((current) => [{ id: uid(), contactId: open.id, name: open.name, time: callStarted.current || new Date().toISOString(), simulated: true, ...result }, ...current])} />;;
   const startEdit = () => { editIds.current = new Set(savedThread.map((m) => m.id)); setDraft(savedThread.map((m) => ({ ...m }))); setDraftC({ ...open }); setEditing(true); };
   const save = () => {
     const ok = setMsgs((current) => [...current.filter((m) => m.contactId !== open.id || !editIds.current.has(m.id)), ...draft.map((m, i) => ({ ...m, order: i }))]);
@@ -520,7 +524,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
           <Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Chat menu", ko: "채팅 메뉴", zh: "聊天菜单" })} aria-expanded={menu} onClick={() => setMenu(!menu)}><Menu size={22} /></Button>
         </>} />
       {searching && <div className="kkt-search"><input className="kkt-compose" aria-label={tr(lang, { en: "Search messages", ko: "메시지 검색", zh: "搜索聊天记录" })} placeholder={label(lang, "search")} value={search} onChange={(e) => setSearch(e.target.value)} /><Button variant="ghost" size="icon" aria-label={L.cancel} onClick={() => { setSearching(false); setSearch(""); }}><X /></Button></div>}
-      {menu && <div className="kkt-menu-sheet">{owner && <Button variant="ghost" onClick={() => { setMenu(false); startEdit(); }}>{L.edit}</Button>}<Button variant="ghost" onClick={() => { setMenu(false); setCall("outgoing"); }}><Phone />{tr(lang, { en: "Call", ko: "전화", zh: "拨打电话" })}</Button><Button variant="ghost" onClick={() => { setMenu(false); setCall("incoming"); }}><PhoneIncoming />{tr(lang, { en: "Simulate incoming call", ko: "모의 전화 수신", zh: "模拟来电" })}</Button></div>}
+      {menu && <div className="kkt-menu-sheet">{owner && <Button variant="ghost" onClick={() => { setMenu(false); startEdit(); }}>{L.edit}</Button>}<Button variant="ghost" onClick={() => { setMenu(false); startCall("outgoing"); }}><Phone />{tr(lang, { en: "Call", ko: "전화", zh: "拨打电话" })}</Button><Button variant="ghost" onClick={() => { setMenu(false); startCall("incoming"); }}><PhoneIncoming />{tr(lang, { en: "Simulate incoming call", ko: "모의 전화 수신", zh: "模拟来电" })}</Button></div>}
       <div className="kkt-thread flex-1 overflow-y-auto" ref={scroll}
         onScroll={(e) => { const el = e.currentTarget; stickBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }}>
         {thread.filter((m) => !searching || !search || messageText(m, lang).toLowerCase().includes(search.toLowerCase())).map((m, i) => {
