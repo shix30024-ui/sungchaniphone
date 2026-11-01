@@ -162,6 +162,33 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, scene.phase, scene.antonReplyCount]);
 
+  // After the KKT push, finish Anton's jealous burst one message at a time when the chat is opened.
+  useEffect(() => {
+    if (openId !== "anton" || scene.phase !== "anger-opening") return;
+    const line = ANTON_OPENING[scene.antonReplyCount];
+    if (!line) {
+      patchScene({ phase: "first-replies", antonReplyCount: 0 });
+      return;
+    }
+    setAntonTyping(true);
+    const timer = window.setTimeout(() => {
+      const latest = readTemporaryReplies("anton");
+      const anchor = latest.at(-1)?.message ?? sortMsgs(msgs.filter((m) => m.contactId === "anton")).at(-1);
+      const incoming = makeAntonSceneMessage(line, anchor, false);
+      setTemporary((old) => [...old, incoming]);
+      const nextCount = scene.antonReplyCount + 1;
+      if (nextCount >= ANTON_OPENING.length) {
+        patchScene({ phase: "first-replies", firstReplyCount: 0, antonReplyCount: 0 });
+        setAntonTyping(false);
+      } else {
+        patchScene({ antonReplyCount: nextCount });
+      }
+      setScene(readAntonScene());
+    }, 1100);
+    return () => window.clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, scene.phase, scene.antonReplyCount]);
+
   // Opening Anton’s chat clears the temporary scripted-message unread state too.
   useEffect(() => {
     if (openId === "anton" && temporary.some((reply) => reply.message.sender === "them" && !reply.message.read)) {
