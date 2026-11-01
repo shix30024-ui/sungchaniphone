@@ -9,7 +9,7 @@ const textOf = (m: Msg) => m.originalText ?? `${m.ko} ${m.zh} ${m.en ?? ""}`;
 function choose<T>(items: T[], seed: string): T {
   let hash = 0;
   for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
-  return items[hash % items.length];
+  return items[hash % items.length] ?? items[0]!;
 }
 
 const tired = /피곤|힘들|지쳤|累|疲惫|tired|exhausted|rough day/i;

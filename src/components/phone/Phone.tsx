@@ -335,6 +335,7 @@ export default function Phone() {
   useEffect(() => {
     if (locked || notificationQueue.length === 0) return;
     const next = notificationQueue[0];
+    if (!next) return;
     setBanner(next);
     if (lastSoundNotificationId.current !== next.id) {
       lastSoundNotificationId.current = next.id;
@@ -429,7 +430,7 @@ export default function Phone() {
               setUnread(totalUnread());
               setNotificationQueue((queue) => [...queue, ...sceneNotices]);
             } else if (pending.length) {
-              setNotificationQueue((queue) => [...queue, pending[0]]);
+              setNotificationQueue((queue) => (pending[0] ? [...queue, pending[0]] : queue));
             }
             if (pendingChat) { setPendingChat(false); openChat(); }
           }} />

@@ -350,6 +350,7 @@ export default function Kakao({ lang, onHome, initialChat }: AppProps & { initia
       // three messages the player sends in the free-chat phase.
       if (count % 3 === 0) {
         const reply = FREE_CHAT_REPLIES[(Math.floor(count / 3) - 1) % FREE_CHAT_REPLIES.length];
+        if (!reply) return;
         const delay = 18000 + Math.floor(Math.random() * 10000);
         window.setTimeout(() => {
           setAntonTyping(true);
