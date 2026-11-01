@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Check, Globe, Bell, LayoutGrid, LockKeyhole, Info, Search, Plane, Wifi, Bluetooth, Settings as Gear } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -9,7 +9,7 @@ import { STORY_DATE } from "../chronology";
 import { usePersist } from "../store";
 import { SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from "../system";
 import { lockOwner, unlockOwner, useOwner } from "../owner";
-import { exportPhoneData, importPhoneDataFile, inspectRecovery, readBackup, restoreFromBackup, undoLastImport, useImportSafety } from "../recovery";
+import { exportPhoneData, exportIndexedSafetySnapshot, importPhoneDataFile, inspectRecovery, readBackup, readIndexedSafetySnapshot, restoreFromBackup, undoLastImport, useImportSafety } from "../recovery";
 import { SharedControls } from "../shared";
 
 type Page = "main" | "language" | "notifications" | "about" | "general" | "owner";
@@ -25,7 +25,18 @@ export default function Settings({ lang, setLang, live, setLive, apps, onHome, o
   const [codeError, setCodeError] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [importMsg, setImportMsg] = useState("");
+  const [indexedSnapshot, setIndexedSnapshot] = useState<{ total: number; kkt: number; ig: number } | null>(null);
   const hasSafety = useImportSafety();
+  useEffect(() => {
+    if (!owner || page !== "owner") return;
+    let live = true;
+    void readIndexedSafetySnapshot().then((snapshot) => {
+      if (!live) return;
+      const keys = Object.keys(snapshot ?? {});
+      setIndexedSnapshot({ total: keys.length, kkt: keys.filter((key) => key.startsWith("kkt-")).length, ig: keys.filter((key) => key.startsWith("ig-")).length });
+    });
+    return () => { live = false; };
+  }, [owner, page]);
   const onImport = async (f: File) => {
     const r = await importPhoneDataFile(f);
     setImportMsg(r
@@ -94,6 +105,11 @@ export default function Settings({ lang, setLang, live, setLive, apps, onHome, o
         {owner && <>
           <div className="settings-section-title">{L("KKT / IG data check", "KKT / IG 데이터 확인", "KKT / IG 数据检查")}</div>
           <div className="settings-group">
+            <div className="settings-row">
+              <span className="settings-row-name">{L("IndexedDB safety snapshot", "IndexedDB 안전 백업", "IndexedDB 安全快照")}</span>
+              <span className="settings-row-value">{indexedSnapshot ? L(`${indexedSnapshot.total} saved keys · KKT ${indexedSnapshot.kkt} · IG ${indexedSnapshot.ig}`, `키 ${indexedSnapshot.total}개 · KKT ${indexedSnapshot.kkt} · IG ${indexedSnapshot.ig}`, `${indexedSnapshot.total} 个键 · KKT ${indexedSnapshot.kkt} · IG ${indexedSnapshot.ig}`) : L("Not found or unreadable", "없거나 읽을 수 없음", "未找到或无法读取")}</span>
+            </div>
+            {indexedSnapshot && indexedSnapshot.total > 0 && <Button variant="ghost" className="settings-row" onClick={() => { void exportIndexedSafetySnapshot().then((ok) => setImportMsg(ok ? L("IndexedDB safety snapshot downloaded; current data was not changed", "IndexedDB 안전 백업을 다운로드했습니다. 현재 데이터는 변경되지 않았습니다.", "已下载 IndexedDB 安全快照，当前数据未被修改") : L("Could not read the IndexedDB snapshot", "IndexedDB 백업을 읽을 수 없습니다", "无法读取 IndexedDB 快照"))); }}><span className="settings-row-name text-primary">{L("Download IndexedDB safety snapshot", "IndexedDB 안전 백업 다운로드", "下载 IndexedDB 安全快照")}</span></Button>}
             {inspectRecovery().map((r) => <div key={r.key} className="settings-row"><span className="settings-row-name">{r.key}</span><span className="settings-row-value">{L("now", "현재", "当前")} {r.current} · {L("backup", "백업", "备份")} {r.backup}{r.differs ? " ⚠" : ""}</span></div>)}
             {!readBackup() && <div className="settings-row"><span className="settings-row-name">{L("No backup on this device", "이 기기에 백업 없음", "此设备没有备份")}</span></div>}
             <Button variant="ghost" className="settings-row" onClick={() => { void exportPhoneData(); }}><span className="settings-row-name text-primary">{L("Download all data", "모든 데이터 다운로드", "下载全部数据")}</span></Button>
