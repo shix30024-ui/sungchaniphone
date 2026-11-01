@@ -17,7 +17,7 @@ import { STORY_DATE, messageText, sortMessages } from "../chronology";
 import { confirmDelete, label, localeFor } from "../labels";
 import { completeTranslations } from "../translations";
 import { ANTON_PROGRESS_KEY, EMPTY_PROGRESS, fixedFlow, acknowledgeFixedNode, temporaryReply, withTemporaryReplies, readTemporaryReplies, writeTemporaryReplies, temporaryIncoming, type FixedProgress, type TemporaryReply } from "../fixed-conversation";
-import { ANTON_AFTER_REASSURANCE, FIRST_PLAYER_REPLIES, FINAL_PLAYER_REPLIES, makeAntonSceneMessage, makeAntonSceneSystem, readAntonScene, updateAntonScene, type AntonSceneState } from "../anton-scene";
+import { ANTON_AFTER_REASSURANCE, FIRST_PLAYER_REPLIES, FINAL_PLAYER_REPLIES, makeAntonSceneMessage, makeAntonSceneSystem, readAntonScene, updateAntonScene, startAntonWarmup, finishAntonWarmup, ANTON_WARM_OPENING, type AntonSceneState } from "../anton-scene";
 
 const TODAY = STORY_DATE;
 const sortMsgs = sortMessages<Msg>;
@@ -131,6 +131,32 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   // One-time: move large chat images out of the small browser storage. Text and order are untouched.
   useEffect(() => { void moveKktImagesToDb(); }, []);
   useEffect(() => { setActiveChat(openId); return () => setActiveChat(null); }, [openId]);
+  // The KKT-first route begins with a gentle two-message exchange, not the argument.
+  useEffect(() => {
+    if (openId !== "anton" || scene.phase !== "idle") return;
+    const opening = startAntonWarmup();
+    if (opening.length) setTemporaryState(readTemporaryReplies("anton"));
+    setScene(readAntonScene());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, scene.phase]);
+  useEffect(() => {
+    if (openId !== "anton" || scene.phase !== "warm-opening") return;
+    const line = ANTON_WARM_OPENING[1];
+    if (!line) { finishAntonWarmup(); setScene(readAntonScene()); return; }
+    setAntonTyping(true);
+    const timer = window.setTimeout(() => {
+      const latest = readTemporaryReplies("anton");
+      const anchor = latest.at(-1)?.message;
+      const incoming = makeAntonSceneMessage(line, anchor, false);
+      setTemporary((old) => [...old, incoming]);
+      finishAntonWarmup();
+      setScene(readAntonScene());
+      setAntonTyping(false);
+    }, 1250);
+    return () => window.clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, scene.phase]);
+
   // Opening Anton’s chat clears the temporary scripted-message unread state too.
   useEffect(() => {
     if (openId === "anton" && temporary.some((reply) => reply.message.sender === "them" && !reply.message.read)) {
@@ -339,7 +365,24 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     setTemporary((old) => [...old, playerMsg]);
     if (flow.waiting) acknowledgeFixedNode(flow.waiting.id);
     const current = readAntonScene();
-    if (current.phase === "first-replies") {
+    if (current.phase === "awaiting-instagram" || current.phase === "warm-opening") {
+      const normalized = text.toLowerCase();
+      const reply = /想你|보고 싶|miss|보고싶/.test(normalized)
+        ? { zh: "我也是，刚刚还在想哥。", ko: "나도 형 생각하고 있었어.", en: "I was thinking about you too, hyung." }
+        : /干嘛|做什么|뭐 해|what/.test(normalized)
+          ? { zh: "刚练习完，正准备回家ㅋㅋ", ko: "방금 연습 끝났어. 이제 집 가려고ㅋㅋ", en: "Just finished practice. Heading home nowㅋㅋ" }
+          : { zh: "ㅋㅋ 나도哥的消息一直在等。", ko: "ㅋㅋ 나도 형 연락 기다리고 있었어.", en: "ㅋㅋ I was hoping you'd message me too." };
+      window.setTimeout(() => {
+        setAntonTyping(true);
+        window.setTimeout(() => {
+          const latest = readTemporaryReplies("anton");
+          const anchor = latest.at(-1)?.message ?? playerMsg.message;
+          const incoming = makeAntonSceneMessage(reply, anchor);
+          setTemporary((old) => [...old, incoming]);
+          setAntonTyping(false);
+        }, 900);
+      }, 350);
+    } else if (current.phase === "first-replies") {
       const count = current.firstReplyCount + 1;
       patchScene({ firstReplyCount: count, phase: count >= FIRST_PLAYER_REPLIES.length ? "choose-ending" : "first-replies" });
     } else if (current.phase === "final-replies") {
