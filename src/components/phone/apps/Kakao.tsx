@@ -288,7 +288,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   const displayMsgs = mergedMsgs.filter((message) => {
     // These Anton story dates were explicitly removed; exclude stale local/shared
     // copies too, so a previous save cannot bring them back into the thread.
-    if (message.contactId === "anton" && ["2026-10-24", "2026-10-26"].includes(message.date)) return false;
+    if (message.contactId === "anton" && message.date === "2026-10-26") return false;
     const contentKey = [message.contactId, message.date, message.time, message.sender, message.type, message.ko, message.zh, message.en ?? "", message.image ?? ""].join("\u001f");
     if (seenMessageContent.has(contentKey)) return false;
     seenMessageContent.add(contentKey);
