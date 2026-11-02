@@ -17,7 +17,7 @@ import { type PendingReply, QUEUE_KEY, sendChat } from "../conversation";
 import { STORY_DATE, messageText, sortMessages } from "../chronology";
 import { confirmDelete, label, localeFor } from "../labels";
 import { completeTranslations } from "../translations";
-import { ANTON_PROGRESS_KEY, EMPTY_PROGRESS, fixedFlow, acknowledgeFixedNode, temporaryReply, withTemporaryReplies, readTemporaryReplies, writeTemporaryReplies, temporaryIncoming, type FixedProgress, type TemporaryReply } from "../fixed-conversation";
+import { ANTON_PROGRESS_KEY, EMPTY_PROGRESS, fixedFlow, acknowledgeFixedNode, temporaryReply, withTemporaryReplies, readTemporaryReplies, writeTemporaryReplies, type FixedProgress, type TemporaryReply } from "../fixed-conversation";
 import { ANTON_OPENING, ANTON_AFTER_REASSURANCE, FIRST_PLAYER_REPLIES, FINAL_PLAYER_REPLIES, makeAntonSceneMessage, makeAntonSceneSystem, readAntonScene, updateAntonScene, startAntonWarmup, finishAntonWarmup, ANTON_WARM_OPENING, type AntonSceneState } from "../anton-scene";
 
 const TODAY = STORY_DATE;
