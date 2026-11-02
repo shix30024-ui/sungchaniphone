@@ -59,7 +59,7 @@ async function writePreviousIndexedDb(key: string, rows: unknown[]): Promise<voi
 
 function idOf(value: unknown): string | null {
   if (!value || typeof value !== "object") return null;
-  const id = (value as Record<string, unknown>).id;
+  const id = (value as Record<string, unknown>)["id"];
   return typeof id === "string" && id.length > 0 ? id : null;
 }
 
