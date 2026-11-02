@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      phone_kkt_records: {
+        Row: {
+          payload: Json
+          record_id: string
+          record_type: string
+          updated_at: string
+        }
+        Insert: {
+          payload: Json
+          record_id: string
+          record_type: string
+          updated_at?: string
+        }
+        Update: {
+          payload?: Json
+          record_id?: string
+          record_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       phone_owner_roles: {
         Row: {
           role: string
@@ -46,27 +67,6 @@ export type Database = {
           id?: string
           payload?: Json
           revision?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      phone_kkt_records: {
-        Row: {
-          record_type: string
-          record_id: string
-          payload: Json
-          updated_at: string
-        }
-        Insert: {
-          record_type: string
-          record_id: string
-          payload: Json
-          updated_at?: string
-        }
-        Update: {
-          record_type?: string
-          record_id?: string
-          payload?: Json
           updated_at?: string
         }
         Relationships: []

@@ -15,6 +15,13 @@
       "when": 1793577600000,
       "tag": "0001_kkt_record_store",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793603234829,
+      "tag": "0002_phone_kkt_records",
+      "breakpoints": true
     }
   ]
 }
