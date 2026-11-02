@@ -402,22 +402,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     if (flow.waiting) acknowledgeFixedNode(flow.waiting.id);
     const current = readAntonScene();
     if (current.phase === "awaiting-instagram" || current.phase === "warm-opening") {
-      const normalized = text.toLowerCase();
-      const reply = /想你|보고 싶|miss|보고싶/.test(normalized)
-        ? { zh: "我也是，刚刚还在想哥。", ko: "나도 형 생각하고 있었어.", en: "I was thinking about you too, hyung." }
-        : /干嘛|做什么|뭐 해|what/.test(normalized)
-          ? { zh: "刚练习完，正准备回家ㅋㅋ", ko: "방금 연습 끝났어. 이제 집 가려고ㅋㅋ", en: "Just finished practice. Heading home nowㅋㅋ" }
-          : { zh: "ㅋㅋ 나도哥的消息一直在等。", ko: "ㅋㅋ 나도 형 연락 기다리고 있었어.", en: "ㅋㅋ I was hoping you'd message me too." };
-      window.setTimeout(() => {
-        setAntonTyping(true);
-        window.setTimeout(() => {
-          const latest = readTemporaryReplies("anton");
-          const anchor = latest.at(-1)?.message ?? playerMsg.message;
-          const incoming = makeAntonSceneMessage(reply, anchor);
-          setTemporary((old) => [...old, incoming]);
-          setAntonTyping(false);
-        }, 900);
-      }, 350);
+      // Free chat is player-led here: Anton no longer sends an automatic reply.
     } else if (current.phase === "first-replies") {
       const count = current.firstReplyCount + 1;
       patchScene({ firstReplyCount: count, phase: count >= FIRST_PLAYER_REPLIES.length ? "choose-ending" : "first-replies" });
@@ -425,27 +410,8 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       const count = current.finalReplyCount + 1;
       patchScene({ finalReplyCount: count, phase: count >= FINAL_PLAYER_REPLIES.length ? "done" : "final-replies" });
     } else if (current.phase === "done" && current.ending === "not-blocked") {
-      const count = current.freeMessageCount + 1;
-      patchScene({ freeMessageCount: count });
-      // Keep Anton's replies sparse: one delayed, restrained response for every
-      // three messages the player sends in the free-chat phase.
-      if (count % 3 === 0) {
-        const reply = FREE_CHAT_REPLIES[(Math.floor(count / 3) - 1) % FREE_CHAT_REPLIES.length];
-        if (!reply) return;
-        const delay = 18000 + Math.floor(Math.random() * 10000);
-        window.setTimeout(() => {
-          setAntonTyping(true);
-          window.setTimeout(() => {
-            const latest = readTemporaryReplies("anton");
-            const anchor = latest.at(-1)?.message ?? playerMsg.message;
-            const incoming = temporaryIncoming(reply, anchor);
-            const next = [...latest, incoming];
-            writeTemporaryReplies("anton", next);
-            setTemporaryState(next);
-            setAntonTyping(false);
-          }, 1300);
-        }, delay);
-      }
+      patchScene({ freeMessageCount: current.freeMessageCount + 1 });
+      // No timed or automatic Anton replies in free chat.
     }
   };
 
@@ -679,6 +645,10 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
         </div>
       </div>}
       {open.id === "anton" && scene.phase === "choose-ending" && <div className="flex gap-2 px-3 py-3 border-t bg-background"><Button className="flex-1" variant="outline" onClick={() => chooseEnding("blocked")}>{tr(lang, { en: "Blocked", ko: "차단됨", zh: "被拉黑" })}</Button><Button className="flex-1" onClick={() => chooseEnding("not-blocked")}>{tr(lang, { en: "Not blocked", ko: "차단되지 않음", zh: "没有被拉黑" })}</Button></div>}
+      {open.id === "anton" && scene.phase === "done" && <div className="flex flex-wrap gap-2 px-3 py-2 border-t bg-background">
+        <Button type="button" size="sm" variant="outline" onClick={() => setCompose(tr(lang, { zh: "今天在忙校庆的事情", ko: "오늘은 학교 축제 준비로 바빠", en: "I'm busy with the school anniversary event today." }))}>{tr(lang, { zh: "今天在忙校庆的事情", ko: "오늘은 학교 축제 준비로 바빠", en: "Busy with the school event today" })}</Button>
+        <Button type="button" size="sm" variant="outline" onClick={() => setCompose(tr(lang, { zh: "我也想你了小宝宝。", ko: "나도 보고 싶었어, 자기야.", en: "I missed you too, baby." }))}>{tr(lang, { zh: "我也想你了小宝宝。", ko: "나도 보고 싶었어, 자기야.", en: "I missed you too, baby." })}</Button>
+      </div>}
       {emoji && <div className="kkt-emoji-panel">{["😊", "ㅋㅋ", "❤️", "👍", "😭", "😂"].map((face) => <Button variant="ghost" key={face} onClick={() => { setCompose((text) => text + face); setEmoji(false); }}>{face}</Button>)}</div>}
       <form className="kkt-input" onSubmit={(event) => {
         event.preventDefault();
