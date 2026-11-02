@@ -1076,7 +1076,7 @@ const ph = (image: string, date: string, note: string): Photo => ({ id: Math.ran
 export const ALBUMS: Album[] = [
   { id: "a2023", name: "2023", photos: [ph("hanriver", "2023-08-12", "뚝섬 한강"), ph("cinema", "2023-10-28", "11시 반 심야")] },
   { id: "a2024", name: "2024", photos: [ph("football", "2024-04-13", "풀경기"), ph("campus", "2024-10-30", "은행나무"), ph("practice", "2024-12-02", "앤톤 연습실"), ph("bbq", "2024-12-24", "FC 회식"), ph("cinema", "2024-12-26", "또 심야")] },
-  { id: "a2025", name: "2025", photos: [ph("moving", "2025-03-22", "이삿날"), ph("practice", "2025-06-14", "작업실"), ph("hanriver", "2025-07-19", "한강 라면"), ph("cafe", "2025-09-06", "성수")] },
+  { id: "a2025", name: "2025", photos: [ph("moving", "2025-03-22", "이삿날"), ph("practice", "2025-06-14", "작업실"), ph("hanriver", "2025-07-19", "한강 라면")] },
   { id: "a2026", name: "2026", photos: [ph("football", "2026-09-27", "이긴 날"), ph("campus", "2026-10-20", "마지막 가을")] },
 ];
 
