@@ -92,11 +92,16 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       }
       return [...byId.values()];
     });
-    // Do not merge message seeds into an already-hydrated conversation.
-    // A missing seed ID may mean the owner deliberately deleted that message;
-    // re-adding every missing ID silently resurrects deleted story content.
-    // Initial installs are seeded by useCloudKkt's empty-store migration instead.
-    setMsgs((current) => current);
+    // Add only the missing Oct 24 music-share conversation to existing KKT data.
+    // Match message content as well as time so older saved mN IDs cannot collide.
+    // Existing edits, replies, and every other date remain untouched.
+    const oct24Seeds = MESSAGES.filter((message) => message.contactId === "anton" && message.date === "2026-10-24");
+    setMsgs((current) => {
+      const signature = (message: Msg) => [message.contactId, message.date, message.time, message.sender, message.type, message.ko, message.zh].join("|");
+      const existing = new Set(current.map(signature));
+      const missing = oct24Seeds.filter((message) => !existing.has(signature(message)));
+      return missing.length ? [...current, ...missing] : current;
+    });
   };
   useEffect(() => {
     if (!contactsReady || !msgsReady) return;
