@@ -672,7 +672,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
           <Button variant="outline" className="w-full" onClick={() => { setBlockedActionOpen(false); setOpenId("seoyun"); }}><MessageCircle className="mr-2" />{tr(lang, { en: "Open Seoyun chat", ko: "서윤 채팅 열기", zh: "打开 Seoyun 聊天" })}</Button>
           <Button variant="ghost" className="w-full" onClick={() => setBlockedActionOpen(false)}>{tr(lang, { en: "Later", ko: "나중에", zh: "稍后" })}</Button>
         </div>
-      </div>
+      </div>}
       {open.id === "anton" && scene.phase === "choose-ending" && <div className="flex gap-2 px-3 py-3 border-t bg-background"><Button className="flex-1" variant="outline" onClick={() => chooseEnding("blocked")}>{tr(lang, { en: "Blocked", ko: "차단됨", zh: "被拉黑" })}</Button><Button className="flex-1" onClick={() => chooseEnding("not-blocked")}>{tr(lang, { en: "Not blocked", ko: "차단되지 않음", zh: "没有被拉黑" })}</Button></div>}
       {emoji && <div className="kkt-emoji-panel">{["😊", "ㅋㅋ", "❤️", "👍", "😭", "😂"].map((face) => <Button variant="ghost" key={face} onClick={() => { setCompose((text) => text + face); setEmoji(false); }}>{face}</Button>)}</div>}
       <form className="kkt-input" onSubmit={(event) => {
