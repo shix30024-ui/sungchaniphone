@@ -236,6 +236,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   const [listSearch, setListSearch] = useState("");
   const [listSearching, setListSearching] = useState(false);
   const upload = useRef<HTMLInputElement>(null);
+  const composeInput = useRef<HTMLInputElement>(null);
   const [queue] = usePersist<PendingReply[]>(QUEUE_KEY, []);
   const scroll = useRef<HTMLDivElement>(null);
   const editIds = useRef(new Set<string>());
@@ -646,8 +647,8 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       </div>}
       {open.id === "anton" && scene.phase === "choose-ending" && <div className="flex gap-2 px-3 py-3 border-t bg-background"><Button className="flex-1" variant="outline" onClick={() => chooseEnding("blocked")}>{tr(lang, { en: "Blocked", ko: "차단됨", zh: "被拉黑" })}</Button><Button className="flex-1" onClick={() => chooseEnding("not-blocked")}>{tr(lang, { en: "Not blocked", ko: "차단되지 않음", zh: "没有被拉黑" })}</Button></div>}
       {open.id === "anton" && scene.phase === "done" && <div className="flex flex-wrap gap-2 px-3 py-2 border-t bg-background">
-        <Button type="button" size="sm" variant="outline" onClick={() => setCompose(tr(lang, { zh: "今天在忙校庆的事情", ko: "오늘은 학교 축제 준비로 바빠", en: "I'm busy with the school anniversary event today." }))}>{tr(lang, { zh: "今天在忙校庆的事情", ko: "오늘은 학교 축제 준비로 바빠", en: "Busy with the school event today" })}</Button>
-        <Button type="button" size="sm" variant="outline" onClick={() => setCompose(tr(lang, { zh: "我也想你了小宝宝。", ko: "나도 보고 싶었어, 자기야.", en: "I missed you too, baby." }))}>{tr(lang, { zh: "我也想你了小宝宝。", ko: "나도 보고 싶었어, 자기야.", en: "I missed you too, baby." })}</Button>
+        <Button type="button" size="sm" variant="outline" onClick={() => { setCompose(tr(lang, { zh: "今天在忙校庆的事情", ko: "오늘은 학교 축제 준비로 바빠", en: "I'm busy with the school anniversary event today." })); composeInput.current?.focus(); }}>{tr(lang, { zh: "今天在忙校庆的事情", ko: "오늘은 학교 축제 준비로 바빠", en: "Busy with the school event today" })}</Button>
+        <Button type="button" size="sm" variant="outline" onClick={() => { setCompose(tr(lang, { zh: "我也想你了小宝宝。", ko: "나도 보고 싶었어, 자기야.", en: "I missed you too, baby." })); composeInput.current?.focus(); }}>{tr(lang, { zh: "我也想你了小宝宝。", ko: "나도 보고 싶었어, 자기야.", en: "I missed you too, baby." })}</Button>
       </div>}
       {emoji && <div className="kkt-emoji-panel">{["😊", "ㅋㅋ", "❤️", "👍", "😭", "😂"].map((face) => <Button variant="ghost" key={face} onClick={() => { setCompose((text) => text + face); setEmoji(false); }}>{face}</Button>)}</div>}
       <form className="kkt-input" onSubmit={(event) => {
@@ -656,7 +657,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       }}>
         <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Send photo", ko: "사진 보내기", zh: "发送图片" })} onClick={() => upload.current?.click()}><SquarePlus /></Button>
         <input ref={upload} type="file" accept="image/*" className="hidden" onChange={async (e) => { const input = e.currentTarget; const file = input.files?.[0]; try { if (file) { const image = await fileToDataUrl(file); send(compose, image); setCompose(""); } } catch { alert(tr(lang, { en: "Could not send photo", ko: "사진을 보낼 수 없습니다", zh: "图片未发送，请重试" })); } finally { input.value = ""; } }} />
-        <input aria-label={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} placeholder={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} disabled={open.id === "anton" && ["warm-opening", "anger-opening", "choose-ending", "anton-typing", "blocked"].includes(scene.phase)} className="kkt-compose" value={compose} onPointerDown={fillSuggestedReply} onFocus={fillSuggestedReply} onChange={(event) => setCompose(event.target.value)} />
+        <input ref={composeInput} aria-label={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} placeholder={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} disabled={open.id === "anton" && ["warm-opening", "anger-opening", "choose-ending", "anton-typing", "blocked"].includes(scene.phase)} className="kkt-compose" value={compose} onPointerDown={fillSuggestedReply} onFocus={fillSuggestedReply} onChange={(event) => setCompose(event.target.value)} />
         <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Emoji", ko: "이모티콘", zh: "表情" })} aria-expanded={emoji} onClick={() => setEmoji(!emoji)}><Smile size={21} /></Button>
         <Button type="button" size="icon" aria-label={tr(lang, { en: "Send message", ko: "메시지 보내기", zh: "发送消息" })} className="kkt-send" onClick={submitMessage} disabled={!compose.trim() || (open.id === "anton" && ["warm-opening", "anger-opening", "choose-ending", "anton-typing", "blocked"].includes(scene.phase))}><Send size={17} /></Button>
       </form>
