@@ -32,12 +32,17 @@ export default function Instagram({ lang, onHome, initialDmContactId, onAntonPos
   const [posts, setPosts] = usePersist<Post[]>("ig-posts-v1", POSTS);
   const [friendPosts, setFriendPosts] = usePersist<SocialPost[]>(FRIEND_POSTS_KEY, FRIEND_POSTS);
   const [accounts, setAccounts] = usePersist<SocialAccount[]>(ACCOUNTS_KEY, FRIEND_ACCOUNTS);
-  // Add newly authored fictional friend posts to older saved feeds without overwriting edits.
+  // Add new fictional friend posts and migrate the bundled image for Yuna's
+  // 2026-10-31 post in older saved feeds, while preserving all user-edited fields.
   useEffect(() => {
     setFriendPosts((current) => {
-      const ids = new Set(current.map((post) => post.id));
+      const yunaSeed = FRIEND_POSTS.find((post) => post.id === "friend-yuna-back-20261031");
+      const migrated = yunaSeed
+        ? current.map((post) => post.id === yunaSeed.id ? { ...post, image: yunaSeed.image } : post)
+        : current;
+      const ids = new Set(migrated.map((post) => post.id));
       const additions = FRIEND_POSTS.filter((post) => !ids.has(post.id));
-      return additions.length ? [...current, ...additions] : current;
+      return additions.length ? [...migrated, ...additions] : migrated;
     });
   }, [setFriendPosts]);
   // Restore newly added fictional accounts into older saved lists without overwriting existing edits.
