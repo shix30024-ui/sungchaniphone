@@ -7,8 +7,9 @@ import practice from "@/assets/story/practice.jpg";
 import cafe from "@/assets/story/cafe.jpg";
 import moving from "@/assets/story/moving.jpg";
 import campus from "@/assets/story/campus.jpg";
+import yunaConcert from "@/assets/story/8ce2f9413896a9cc337d760561fbad88.jpg";
 
-export const IMG: Record<string, string> = { football, hanriver, cinema, bbq, practice, cafe, moving, campus };
+export const IMG: Record<string, string> = { football, hanriver, cinema, bbq, practice, cafe, moving, campus, yunaConcert };
 
 /* ---------- KakaoTalk ---------- */
 export type MsgType = "text" | "image" | "music" | "system" | "date";
