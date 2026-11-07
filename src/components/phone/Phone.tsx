@@ -306,8 +306,8 @@ export default function Phone() {
     let hide: ReturnType<typeof setTimeout> | undefined;
     const onLive = (e: Event) => {
       // Always refresh badges; only notify after the phone is unlocked.
-      setUnread(totalUnread());
-      if (locked) return;
+      if (locked) { setUnread(totalUnread()); return; }
+      setUnread((current) => Math.max(totalUnread(), current + 1));
       const message = (e as CustomEvent<Msg>).detail;
       setNotificationQueue((queue) => queue.some((item) => item.id === message.id) ? queue : [...queue, message]);
     };
@@ -392,6 +392,7 @@ export default function Phone() {
   KKT_ICON = kktApp?.icon ?? "";
   KKT_NAME = contactName;
   const openChat = (contactId = LIVE_CONTACT) => {
+    setUnread(totalUnread());
     setBanner(null);
     setNotificationQueue([]);
     if (!kktApp) return;
