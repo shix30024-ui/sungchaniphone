@@ -105,7 +105,7 @@ export default function Instagram({ lang, onHome, initialDmContactId, onAntonPos
     <Button variant="ghost" size="icon" className="ml-auto" aria-label={tr(lang, { en: "Save post", ko: "게시물 저장", zh: "收藏帖子" })} aria-pressed={!!p.saved} onClick={() => updatePost(p.id, (current) => ({ ...current, saved: !current.saved }))}><Bookmark fill={p.saved ? "currentColor" : "none"} /></Button>
   </div>;
   const share = shareId && <div className="ig-share-sheet" role="dialog"><div className="sheet"><div className="flex justify-between items-center"><b>{tr(lang, { en: "Share", ko: "공유", zh: "分享" })}</b><Button variant="ghost" size="icon" aria-label={C} onClick={() => setShareId(null)}><ArrowLeft /></Button></div>{["anton", "minjae", "doyun"].map((id) => <Button key={id} variant="ghost" className="w-full justify-start" onClick={() => { const shared = sorted.find((p) => p.id === shareId); if (shared) { sendChat("ig", id, `${account(shared.authorId).username} · ${instagramCaption(shared, lang)}`, lang); setShareId(null); setDm(true); } }}>{id === "anton" ? "Anton" : id === "minjae" ? "김민재" : "박도윤"}</Button>)}</div></div>;
-  if (showYunaDmPrompt) return <div className="app-page bg-background">
+  if (showYunaDmPrompt && readNewStory().stage !== 2) return <div className="app-page bg-background">
     <TopBar title={tr(lang, { en: "Following", ko: "팔로우", zh: "已回关" })} left={<BackBtn onClick={() => setShowYunaDmPrompt(false)} />} />
     <div className="flex-1 flex items-center justify-center p-6">
       <div className="w-full max-w-sm rounded-2xl border bg-card p-5 text-center space-y-3">
@@ -119,7 +119,7 @@ export default function Instagram({ lang, onHome, initialDmContactId, onAntonPos
       </div>
     </div>
   </div>;
-  if (dm) return <InstagramDM accounts={accounts} lang={lang} onClose={() => setDm(false)} initialContactId={initialDmContactId ?? "yuna"} />;
+  if (dm) return <InstagramDM accounts={accounts} lang={lang} onClose={() => setDm(false)} onYunaProfile={() => { setDm(false); showProfile("yuna"); }} initialContactId={initialDmContactId ?? "yuna"} />;
 
   if (activity) {
     const follower = yunaFollower;
@@ -222,6 +222,7 @@ export default function Instagram({ lang, onHome, initialDmContactId, onAntonPos
           <div className="px-3 py-2 space-y-1.5 text-sm">
             {interactions(post)}
             <b>{post.likes.toLocaleString()} {tr(lang, { en: "likes", ko: "좋아요", zh: "次赞" })}</b>
+            {post.id === "friend-yuna-back-20261031" && <p className="text-xs text-muted-foreground">{tr(lang, { en: "Liked by anton", ko: "anton님이 좋아합니다", zh: "Anton 点赞了这条帖子" })}</p>}
             <p><b>{postAuthor.username}</b> {instagramCaption(post, lang)}</p>
             <Button variant="ghost" className="px-0 h-auto text-muted-foreground" onClick={() => setCommentsOpen(true)}>{tr(lang, { en: `View all ${post.comments.length} comments`, ko: `댓글 ${post.comments.length}개 모두 보기`, zh: `查看全部 ${post.comments.length} 条评论` })}</Button>
             {post.comments.slice(0, 2).map((c) => <p key={c.id}><b>{c.user}</b> {c.text}</p>)}
