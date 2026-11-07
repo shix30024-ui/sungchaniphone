@@ -16,8 +16,8 @@ export default function XApp({ lang, onHome }: AppProps) {
   const [tweets, setTweets] = usePersist<Tweet[]>("x-tweets-v2", TWEETS);
   const [draft, setDraft] = useState<Tweet | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [storyStage, setStoryStage] = useState(() => readNewStory().stage);
-  useEffect(() => subscribeNewStory(() => setStoryStage(readNewStory().stage)), []);
+  const [story3ReplySent, setStory3ReplySent] = useState(() => readNewStory().xReplySent);
+  useEffect(() => subscribeNewStory(() => setStory3ReplySent(readNewStory().xReplySent)), []);
   const story3Post: Tweet = {
     id: "new-story-stage3-post",
     text: "나 여자친구 같은 거 없어. 내가 제일 좋아하는 사람은 따로 있는데. 내 마음도 모르면서 멋대로 오해하고 있어!!!",
@@ -46,9 +46,7 @@ export default function XApp({ lang, onHome }: AppProps) {
     zh: "怕他拒绝我。。。",
     en: "I'm afraid he'll reject me...",
   };
-  const visibleTweets = storyStage >= 5
-    ? [story3Post, ...tweets.filter((tweet) => tweet.id !== story3Post.id)]
-    : tweets;
+  const visibleTweets = [story3Post, ...tweets.filter((tweet) => tweet.id !== story3Post.id)];
   const open = visibleTweets.find((tweet) => tweet.id === openId);
   const sorted = [...visibleTweets].sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
 
@@ -99,7 +97,7 @@ export default function XApp({ lang, onHome }: AppProps) {
       <p className="text-sm border-y py-2.5"><b>{open.rts}</b> <span className="text-muted-foreground">{tr(lang, { en: "Reposts", ko: "재게시", zh: "转帖" })}</span>  <b className="ml-3">{open.likes}</b> <span className="text-muted-foreground">{tr(lang, { en: "Likes", ko: "마음에 들어요", zh: "喜欢" })}</span></p>
       <h2 className="text-sm font-semibold border-t pt-4">{label(lang, "replies")}</h2>
       {(open.replies ?? []).map((reply) => <div key={reply.id} className="flex gap-3 border-b pb-3"><span className="x-reply-avatar">{reply.user.slice(0, 1).toUpperCase()}</span><div className="min-w-0"><p className="text-sm"><b>{reply.user}</b> <span className="text-muted-foreground">· {reply.date.replaceAll("-", ".")} {reply.time}</span></p><p className="text-[15px] whitespace-pre-wrap">{xText(reply, lang)}</p></div></div>)}
-      {open.id === "new-story-stage3-post" && storyStage === 5 && (
+      {open.id === "new-story-stage3-post" && !story3ReplySent && (
         <div className="pt-3">
           <input
             aria-label={tr(lang, { en: "Reply", ko: "답글", zh: "回复" })}
@@ -107,7 +105,7 @@ export default function XApp({ lang, onHome }: AppProps) {
             readOnly
             value={story3Reply[lang]}
             onClick={() => {
-              updateNewStory({ stage: 6, xPostPublished: true });
+              updateNewStory({ xReplySent: true, xPostPublished: true });
               const now = new Date();
               window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: {
                 id: "new-story-seoyun-notice", contactId: "seoyun", sender: "them", type: "text",
@@ -123,7 +121,7 @@ export default function XApp({ lang, onHome }: AppProps) {
           <p className="text-xs text-muted-foreground mt-2">{tr(lang, { en: "Tap the reply field to send", ko: "답글 입력창을 눌러 전송하세요", zh: "点击回复框发送" })}</p>
         </div>
       )}
-      {open.id === "new-story-stage3-post" && storyStage >= 6 && (
+      {open.id === "new-story-stage3-post" && story3ReplySent && (
         <div className="flex gap-3 border-b pb-3">
           <span className="x-reply-avatar">O</span>
           <div className="min-w-0">
