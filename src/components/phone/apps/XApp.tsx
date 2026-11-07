@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Plus, Trash2, MessageCircle, Repeat2, Heart, BarChart2, Share, Home, Search, Bell, Mail, ChevronLeft } from "lucide-react";
 import { xText, editXText } from "../x-language";
 import { useOwner } from "../owner";
+import { readNewStory, updateNewStory } from "../new-story";
+import { LIVE_EVENT } from "../live";
 
 export default function XApp({ lang, onHome }: AppProps) {
   const owner = useOwner();
@@ -46,7 +48,20 @@ export default function XApp({ lang, onHome }: AppProps) {
         </div>
         <EditBar save={tr(lang, { en: "Save", ko: "저장", zh: "保存" })} cancel={tr(lang, { en: "Cancel", ko: "취소", zh: "取消" })}
           onCancel={() => setDraft(null)}
-          onSave={() => { setTweets((current) => exists ? current.map((t) => (t.id === draft.id ? draft : t)) : [draft, ...current]); setDraft(null); }} />
+          onSave={() => {
+            setTweets((current) => exists ? current.map((t) => (t.id === draft.id ? draft : t)) : [draft, ...current]);
+            if (!exists && readNewStory().stage === 4) {
+              updateNewStory({ stage: 5, xPostPublished: true });
+              const now = new Date();
+              window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: {
+                id: "new-story-seoyun-notice", contactId: "seoyun", sender: "them", type: "text",
+                ko: "성찬아, 카톡 봐. 서윤이야.", zh: "成灿，看看KKT。是 Seoyun。", en: "Sungchan, check KakaoTalk. It's Seoyun.",
+                date: "2026-10-31", time: "21:20", order: 900001, live: true, read: false, notified: true,
+                createdAt: now.toISOString(),
+              } }));
+            }
+            setDraft(null);
+          }} />
       </div>
     );
   }
@@ -70,6 +85,10 @@ export default function XApp({ lang, onHome }: AppProps) {
       <header className="x-header"><button aria-label={tr(lang, { en: "Back", ko: "뒤로", zh: "返回" })} onClick={onHome} className="x-back"><ChevronLeft size={20} /><img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png" alt="" /></button><span className="x-logo">𝕏</span></header>
       <div className="x-tabs"><b>{tr(lang, { en: "For you", ko: "추천", zh: "为你推荐" })}</b><span>{tr(lang, { en: "Following", ko: "팔로우 중", zh: "正在关注" })}</span></div>
       <div className="flex-1 overflow-y-auto">
+        {readNewStory().stage === 2 && <button className="w-full text-left flex gap-3 px-4 py-4 border-b bg-muted/40" onClick={() => updateNewStory({ stage: 3 })}>
+          <span className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-semibold">Y</span>
+          <span className="min-w-0 flex-1"><b className="block text-sm">yuna_Yuna</b><span className="block text-sm mt-1">선배, 이 사진 보셨어요? · Yuna sent you a message</span><span className="block text-xs text-muted-foreground mt-1">Anton liked her post</span></span>
+        </button>}
         {sorted.map((t) => (
           <button key={t.id} onClick={() => setOpenId(t.id)} className="w-full text-left flex gap-3 px-4 py-3 border-b">
             <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png" alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
@@ -82,7 +101,11 @@ export default function XApp({ lang, onHome }: AppProps) {
         ))}
         <p className="text-[10px] text-center text-muted-foreground py-3">{label(lang, "fictional")}</p>
       </div>
-      {owner && <button className="x-fab" aria-label={tr(lang, { en: "Post", ko: "게시하기", zh: "发帖" })} onClick={() => setDraft({ id: uid(), text: "", date: "2026-10-26", time: "20:00", likes: 0, rts: 0 })}><Plus /></button>}
+      {owner && <button className="x-fab" aria-label={tr(lang, { en: "Post", ko: "게시하기", zh: "发帖" })} onClick={() => setDraft(readNewStory().stage === 4 ? {
+        id: uid(), text: "나 여자친구 없어. 내가 제일 좋아하는 사람은 따로 있는데, 내 마음도 모르고 오해하네!!!",
+        translations: { zh: "我哪有什么女朋友。明明最爱他。他还不知道我的心意然后乱揣测！！！", en: "I don't have a girlfriend. There's only one person I love, and he still doesn't know how I feel and keeps misunderstanding me!!!" },
+        date: "2026-10-31", time: "21:18", likes: 0, rts: 0,
+      } : { id: uid(), text: "", date: "2026-10-26", time: "20:00", likes: 0, rts: 0 })}><Plus /></button>}
       <nav className="x-nav"><Home strokeWidth={2.6} /><Search /><Bell /><Mail /></nav>
     </div>
   );
