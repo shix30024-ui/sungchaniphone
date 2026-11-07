@@ -292,6 +292,7 @@ export default function Phone() {
   const [banner, setBanner] = useState<Msg | null>(null);
   const [notificationQueue, setNotificationQueue] = useState<Msg[]>([]);
   const lastSoundNotificationId = useRef<string | null>(null);
+  const openingNoticeShown = useRef(false);
   const owner = useOwner();
   const [chatTarget, setChatTarget] = useState<string | null>(null);
   const [instagramTarget, setInstagramTarget] = useState<string | null>(null);
@@ -356,6 +357,26 @@ export default function Phone() {
       if (advanceTimer !== undefined) window.clearTimeout(advanceTimer);
     };
   }, [locked, nextNotificationId]);
+
+  // Also covers previews that are already unlocked when this component mounts.
+  useEffect(() => {
+    if (locked || openingNoticeShown.current || readNewStory().stage !== 0) return;
+    openingNoticeShown.current = true;
+    setBanner({
+      id: "anton-opening-story-notice",
+      contactId: "anton",
+      sender: "them",
+      type: "text",
+      zh: "今天在拉大提琴的时候想到哥了",
+      ko: "오늘 첼로 치다가 형 생각났어",
+      en: "I thought of you while playing the cello today.",
+      date: new Date().toISOString().slice(0, 10),
+      time: tr(lang, { en: "now", ko: "지금", zh: "现在" }),
+      order: 1,
+      read: false,
+    });
+    setUnread((current) => Math.max(current, 1));
+  }, [locked, lang]);
 
   const setLive = (s: LiveSettings) => {
     const prev = live;
@@ -422,24 +443,7 @@ export default function Phone() {
             try { sessionStorage.setItem("phone-unlocked", "1"); } catch { /* ignore */ }
             const pending = unreadLive();
             if (pending.length) setNotificationQueue((queue) => (pending[0] ? [...queue, pending[0]] : queue));
-            // The opening story starts with a tappable in-app KKT banner.
-            // This synthetic notice never writes into the owner's saved messages.
-            if (readNewStory().stage === 0) {
-              setBanner({
-                id: "anton-opening-story-notice",
-                contactId: "anton",
-                sender: "them",
-                type: "text",
-                zh: "今天在拉大提琴的时候想到哥了",
-                ko: "오늘 첼로 치다가 형 생각났어",
-                en: "I thought of you while playing the cello today.",
-                date: new Date().toISOString().slice(0, 10),
-                time: tr(lang, { en: "now", ko: "지금", zh: "现在" }),
-                order: 1,
-                read: false,
-              });
-              setUnread((current) => Math.max(current, 1));
-            }
+            // The unlock effect below shows the opening Anton notice exactly once.
             if (pendingChat) { setPendingChat(false); openChat("anton"); }
           }} />
       ) : (
