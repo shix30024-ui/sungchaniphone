@@ -138,6 +138,21 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   // One-time: move large chat images out of the small browser storage. Text and order are untouched.
   useEffect(() => { void moveKktImagesToDb(); }, []);
   useEffect(() => { setActiveChat(openId); return () => setActiveChat(null); }, [openId]);
+  // Stage 1 begins only when the player opens Anton's existing KKT chat.
+  useEffect(() => {
+    if (openId !== "anton" || newStory.stage !== 0) return;
+    updateNewStory({ stage: 1 });
+    const base = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
+    let anchor = base;
+    for (const line of OPENING_ANTON) {
+      const incoming = temporaryReply(line.zh, lang, anchor);
+      incoming.message.sender = "them";
+      incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
+      setTemporary((old) => [...old, incoming]);
+      anchor = incoming.message;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, newStory.stage]);
   // The KKT-first route begins with a gentle two-message exchange, not the argument.
   useEffect(() => {
     if (openId !== "anton" || scene.phase !== "idle" || scene.openingRoute !== "kkt") return;
