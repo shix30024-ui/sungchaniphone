@@ -99,9 +99,6 @@ export function nextLine(msgs: Msg[], delivered: string[]): LiveLine | undefined
  * there is nothing new to send. Never rewrites existing messages.
  */
 export function deliverLiveMessage(opts: { test?: boolean } = {}): Msg | null {
-  const scene = readAntonScene();
-  // Pause automatic chat drops during the scripted argument, then resume after its ending.
-  if (scene.started && scene.phase !== "done") return null;
   backupPhoneData();
   const msgs = readStored<Msg[]>(MSGS_KEY, MESSAGES);
   const contacts = readStored<Contact[]>(CONTACTS_KEY, CONTACTS);
