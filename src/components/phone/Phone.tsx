@@ -28,7 +28,7 @@ import { usePersist } from "./store";
 import { Button } from "@/components/ui/button";
 import {
   LIVE_CONTACT, LIVE_EVENT, STORE_EVENT, type LiveSettings, DEFAULT_LIVE_SETTINGS,
-  liveContactName, loadLiveSettings, rescheduleLive, saveLiveSettings, tickLive, tickSeoyun, totalUnread, unreadLive,
+  liveContactName, loadLiveSettings, rescheduleLive, saveLiveSettings, tickLive, totalUnread, unreadLive,
 } from "./live";
 import { messageText } from "./chronology";
 import { tickReplies, REPLY_ERROR_EVENT } from "./conversation";
