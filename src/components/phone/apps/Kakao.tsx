@@ -488,7 +488,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     const visibleThread = withTemporaryReplies(fixedThread, readTemporaryReplies("anton"));
     const playerMsg = temporaryReply(text, lang, visibleThread.at(-1), image);
     setTemporary((old) => [...old, playerMsg]);
-    if (open.id === "anton" && newStory.stage === 1 && !image) {
+    if (open.id === "anton" && (newStory.stage === 1 || newStory.stage === 4) && !image) {
       const currentStory = readNewStory();
       const appendAnton = (line: { zh: string; ko: string; en: string }) => {
         const anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
