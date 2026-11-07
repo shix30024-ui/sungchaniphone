@@ -153,6 +153,30 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, newStory.stage]);
+  // Stage 2 is unlocked by viewing Yuna's X post, then appears when KKT is reopened.
+  useEffect(() => {
+    if (openId !== "anton" || newStory.stage !== 3) return;
+    let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
+    for (const line of STAGE2_ANTON) {
+      const incoming = temporaryReply(line.zh, lang, anchor);
+      incoming.message.sender = "them";
+      incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
+      setTemporary((old) => [...old, incoming]); anchor = incoming.message;
+    }
+    updateNewStory({ stage: 4 });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, newStory.stage]);
+  // Stage 3's Seoyun messages stay in the separate temporary Seoyun thread.
+  useEffect(() => {
+    if (openId !== "seoyun" || newStory.stage !== 5 || newStory.seoyunReplies > 0) return;
+    let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "seoyun")), readTemporaryReplies("seoyun")).at(-1);
+    for (const line of SEOYUN_STAGE3) {
+      const incoming = makeSeoyunTemporary(line, "them", anchor);
+      setSeoyunTemporary((old) => [...old, incoming]); anchor = incoming.message;
+    }
+    updateNewStory({ seoyunReplies: SEOYUN_STAGE3.length });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, newStory.stage]);
   // The KKT-first route begins with a gentle two-message exchange, not the argument.
   useEffect(() => {
     if (openId !== "anton" || scene.phase !== "idle" || scene.openingRoute !== "kkt") return;
