@@ -452,7 +452,7 @@ export default function Phone() {
       )}
       {!locked && replyError && <div className="reply-error" role="alert"><span>{replyError}</span><Button variant="ghost" size="icon" aria-label={t(lang, "cancel")} onClick={() => setReplyError(null)}><X /></Button></div>}
       {open && (
-        <AppView onAntonPostViewed={() => { const sceneNotices = startAntonScene(); const notice = sceneNotices[0]; if (notice) { setUnread(totalUnread()); setNotificationQueue((queue) => queue.some((item) => item.id === notice.id) ? queue : [...queue, notice]); } }} initialChat={open.id === "kkt" ? chatTarget : null} apps={apps} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onOpenInstagram={() => { const igApp = translatedApps.find((item) => item.id === "ig"); if (igApp) { setChatTarget(null); setInstagramTarget("anton"); setOpen(igApp); } }} instagramTarget={instagramTarget} onClose={() => setOpen(null)}
+        <AppView onAntonPostViewed={() => {}} initialChat={open.id === "kkt" ? chatTarget : null} apps={apps} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onOpenInstagram={() => { const igApp = translatedApps.find((item) => item.id === "ig"); if (igApp) { setChatTarget(null); setInstagramTarget("anton"); setOpen(igApp); } }} instagramTarget={instagramTarget} onClose={() => setOpen(null)}
           onLock={() => { setOpen(null); setLocked(true); try { sessionStorage.removeItem("phone-unlocked"); } catch { /* ignore */ } }}
           onEditApps={() => { if (!owner) return; setOpen(null); setEditMode(true); }} />
       )}
