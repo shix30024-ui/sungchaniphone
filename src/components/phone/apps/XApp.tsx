@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { type AppProps, tr } from "../i18n";
 import { PROFILE, TWEETS, type Tweet } from "../story";
 import { uid, usePersist } from "../store";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Trash2, MessageCircle, Repeat2, Heart, BarChart2, Share, Home, Search, Bell, Mail, ChevronLeft } from "lucide-react";
 import { xText, editXText } from "../x-language";
 import { useOwner } from "../owner";
-import { readNewStory, updateNewStory } from "../new-story";
+import { readNewStory, updateNewStory, subscribeNewStory } from "../new-story";
 import { LIVE_EVENT } from "../live";
 
 export default function XApp({ lang, onHome }: AppProps) {
@@ -16,8 +16,41 @@ export default function XApp({ lang, onHome }: AppProps) {
   const [tweets, setTweets] = usePersist<Tweet[]>("x-tweets-v2", TWEETS);
   const [draft, setDraft] = useState<Tweet | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
-  const open = tweets.find((tweet) => tweet.id === openId);
-  const sorted = [...tweets].sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+  const [storyStage, setStoryStage] = useState(() => readNewStory().stage);
+  useEffect(() => subscribeNewStory(() => setStoryStage(readNewStory().stage)), []);
+  const story3Post: Tweet = {
+    id: "new-story-stage3-post",
+    text: "나 여자친구 같은 거 없어. 내가 제일 좋아하는 사람은 따로 있는데. 내 마음도 모르면서 멋대로 오해하고 있어!!!",
+    translations: {
+      zh: "我哪有什么女朋友。明明最爱他。他还不知道我的心意然后乱揣测！！！",
+      en: "I don't have a girlfriend. There's someone I love most, and he keeps misunderstanding me without knowing how I feel!!!",
+    },
+    date: "2026-10-31",
+    time: "20:24",
+    likes: 0,
+    rts: 0,
+    replies: [{
+      id: "new-story-stage3-comment",
+      user: "seoyun.zip",
+      text: "빨리 고백해. 뭐 하고 있어?",
+      date: "2026-10-31",
+      time: "20:26",
+      translations: {
+        zh: "你快点表白啊。在等什么呢。",
+        en: "Hurry up and confess. What are you waiting for?",
+      },
+    }],
+  };
+  const story3Reply = {
+    ko: "거절당할까 봐。。。",
+    zh: "怕他拒绝我。。。",
+    en: "I'm afraid he'll reject me...",
+  };
+  const visibleTweets = storyStage >= 5
+    ? [story3Post, ...tweets.filter((tweet) => tweet.id !== story3Post.id)]
+    : tweets;
+  const open = visibleTweets.find((tweet) => tweet.id === openId);
+  const sorted = [...visibleTweets].sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
 
   if (draft) {
     const set = (p: Partial<Tweet>) => setDraft({ ...draft, ...p });
@@ -50,16 +83,6 @@ export default function XApp({ lang, onHome }: AppProps) {
           onCancel={() => setDraft(null)}
           onSave={() => {
             setTweets((current) => exists ? current.map((t) => (t.id === draft.id ? draft : t)) : [draft, ...current]);
-            if (!exists && readNewStory().stage === 5) {
-              updateNewStory({ stage: 6, xPostPublished: true });
-              const now = new Date();
-              window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: {
-                id: "new-story-seoyun-notice", contactId: "seoyun", sender: "them", type: "text",
-                ko: "오늘 동아리에서 앤톤 기분 안 좋아 보이던데", zh: "今天在社团anton情绪不高哦", en: "Anton seemed upset at the club today.",
-                date: "2026-10-31", time: "21:20", order: 900001, live: true, read: false, notified: true,
-                createdAt: now.toISOString(),
-              } }));
-            }
             setDraft(null);
           }} />
       </div>
@@ -76,7 +99,40 @@ export default function XApp({ lang, onHome }: AppProps) {
       <p className="text-sm border-y py-2.5"><b>{open.rts}</b> <span className="text-muted-foreground">{tr(lang, { en: "Reposts", ko: "재게시", zh: "转帖" })}</span>  <b className="ml-3">{open.likes}</b> <span className="text-muted-foreground">{tr(lang, { en: "Likes", ko: "마음에 들어요", zh: "喜欢" })}</span></p>
       <h2 className="text-sm font-semibold border-t pt-4">{label(lang, "replies")}</h2>
       {(open.replies ?? []).map((reply) => <div key={reply.id} className="flex gap-3 border-b pb-3"><span className="x-reply-avatar">{reply.user.slice(0, 1).toUpperCase()}</span><div className="min-w-0"><p className="text-sm"><b>{reply.user}</b> <span className="text-muted-foreground">· {reply.date.replaceAll("-", ".")} {reply.time}</span></p><p className="text-[15px] whitespace-pre-wrap">{xText(reply, lang)}</p></div></div>)}
-      {owner && <Button variant="secondary" onClick={() => setDraft({ ...open, replies: [...(open.replies ?? []), { id: uid(), user: "", text: "", date: "2026-10-26", time: "20:26" }] })}><Plus />{label(lang, "reply")}</Button>}
+      {open.id === "new-story-stage3-post" && storyStage === 5 && (
+        <div className="pt-3">
+          <input
+            aria-label={tr(lang, { en: "Reply", ko: "답글", zh: "回复" })}
+            className="sheet-input"
+            readOnly
+            value={story3Reply[lang]}
+            onClick={() => {
+              updateNewStory({ stage: 6, xPostPublished: true });
+              const now = new Date();
+              window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: {
+                id: "new-story-seoyun-notice", contactId: "seoyun", sender: "them", type: "text",
+                ko: "오늘 동아리에서 앤톤 기분 안 좋아 보이던데",
+                zh: "今天在社团anton情绪不高哦",
+                en: "Anton seemed upset at the club today.",
+                date: "2026-10-31", time: "20:30", order: 900001,
+                live: true, read: false, notified: true, createdAt: now.toISOString(),
+              } }));
+              setOpenId(null);
+            }}
+          />
+          <p className="text-xs text-muted-foreground mt-2">{tr(lang, { en: "Tap the reply field to send", ko: "답글 입력창을 눌러 전송하세요", zh: "点击回复框发送" })}</p>
+        </div>
+      )}
+      {open.id === "new-story-stage3-post" && storyStage >= 6 && (
+        <div className="flex gap-3 border-b pb-3">
+          <span className="x-reply-avatar">O</span>
+          <div className="min-w-0">
+            <p className="text-sm"><b>ontgna</b> <span className="text-muted-foreground">· 2026.10.31 20:27</span></p>
+            <p className="text-[15px] whitespace-pre-wrap">{story3Reply[lang]}</p>
+          </div>
+        </div>
+      )}
+      {owner && open.id !== "new-story-stage3-post" && <Button variant="secondary" onClick={() => setDraft({ ...open, replies: [...(open.replies ?? []), { id: uid(), user: "", text: "", date: "2026-10-26", time: "20:26" }] })}><Plus />{label(lang, "reply")}</Button>}
     </div>
   </div>;
 
@@ -98,11 +154,7 @@ export default function XApp({ lang, onHome }: AppProps) {
         ))}
         <p className="text-[10px] text-center text-muted-foreground py-3">{label(lang, "fictional")}</p>
       </div>
-      {owner && <button className="x-fab" aria-label={tr(lang, { en: "Post", ko: "게시하기", zh: "发帖" })} onClick={() => setDraft(readNewStory().stage === 5 ? {
-        id: uid(), text: "나 여자친구 없어. 내가 제일 좋아하는 사람은 따로 있는데, 내 마음도 모르고 오해하네!!!",
-        translations: { zh: "我哪有什么女朋友。明明最爱他。他还不知道我的心意然后乱揣测！！！", en: "I don't have a girlfriend. There's only one person I love, and he still doesn't know how I feel and keeps misunderstanding me!!!" },
-        date: "2026-10-31", time: "21:18", likes: 0, rts: 0,
-      } : { id: uid(), text: "", date: "2026-10-26", time: "20:00", likes: 0, rts: 0 })}><Plus /></button>}
+      {owner && <button className="x-fab" aria-label={tr(lang, { en: "Post", ko: "게시하기", zh: "发帖" })} onClick={() => setDraft({ id: uid(), text: "", date: "2026-10-26", time: "20:00", likes: 0, rts: 0 })}><Plus /></button>}
       <nav className="x-nav"><Home strokeWidth={2.6} /><Search /><Bell /><Mail /></nav>
     </div>
   );
