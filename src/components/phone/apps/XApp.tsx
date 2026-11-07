@@ -85,19 +85,7 @@ export default function XApp({ lang, onHome }: AppProps) {
       <header className="x-header"><button aria-label={tr(lang, { en: "Back", ko: "뒤로", zh: "返回" })} onClick={onHome} className="x-back"><ChevronLeft size={20} /><img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png" alt="" /></button><span className="x-logo">𝕏</span></header>
       <div className="x-tabs"><b>{tr(lang, { en: "For you", ko: "추천", zh: "为你推荐" })}</b><span>{tr(lang, { en: "Following", ko: "팔로우 중", zh: "正在关注" })}</span></div>
       <div className="flex-1 overflow-y-auto">
-        {readNewStory().stage === 2 && <button className="w-full text-left flex gap-3 px-4 py-4 border-b bg-muted/40" onClick={() => {
-            updateNewStory({ stage: 3 });
-            const now = new Date();
-            window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: {
-              id: "new-story-anton-jealous-notice", contactId: "anton", sender: "them", type: "text",
-              ko: "형, 카톡 좀 봐", zh: "哥，看看KKT", en: "Hyung, check KakaoTalk.",
-              date: "2026-10-31", time: "21:10", order: 900000, live: true, read: false, notified: true,
-              createdAt: now.toISOString(),
-            } }));
-          }}>
-          <span className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-semibold">Y</span>
-          <span className="min-w-0 flex-1"><b className="block text-sm">yuna_Yuna</b><span className="block text-sm mt-1">선배, 이 사진 보셨어요? · Yuna sent you a message</span><span className="block text-xs text-muted-foreground mt-1">Anton liked her post</span></span>
-        </button>}
+
         {sorted.map((t) => (
           <button key={t.id} onClick={() => setOpenId(t.id)} className="w-full text-left flex gap-3 px-4 py-3 border-b">
             <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png" alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
