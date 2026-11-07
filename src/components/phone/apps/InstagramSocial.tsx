@@ -103,7 +103,10 @@ export function InstagramDM({ accounts, lang, onClose, onYunaProfile, initialCon
       const missing = fixed.filter((message) => !current.some((existing) => existing.id === message.id));
       return missing.length || preserved.length !== current.length ? [...preserved, ...missing] : current;
     });
-  }, [setMsgs]);
+  // Seed the fixed Yuna transcript once per DM screen mount. usePersist returns a
+  // fresh setter function on each render, so depending on it re-ran this merge effect.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [queue] = usePersist<PendingReply[]>(QUEUE_KEY, []);
   const contacts = accounts;
   const [search, setSearch] = useState("");
