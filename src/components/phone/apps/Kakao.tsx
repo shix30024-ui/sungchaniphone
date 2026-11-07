@@ -206,8 +206,10 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       }
     };
     addPlayerLines(OPENING_CHOICES, newStory.openingReplies, "story1-player-opening", "story1-opening-3");
-    if (newStory.reassuranceReplies > 0 && saved.some((reply) => reply.message.id === "story1-anton-2")) {
-      addPlayerLines(OPENING_CHOICES_2, newStory.reassuranceReplies, "story1-player-reassurance", "story1-anton-2");
+    const antonSecondPrompt = saved.find((reply) => reply.message.id === "story1-anton-2" ||
+      (reply.message.sender === "them" && (reply.message.zh === OPENING_ANTON_2.zh || reply.message.ko === OPENING_ANTON_2.ko || reply.message.en === OPENING_ANTON_2.en)));
+    if (newStory.reassuranceReplies > 0 && antonSecondPrompt) {
+      addPlayerLines(OPENING_CHOICES_2, newStory.reassuranceReplies, "story1-player-reassurance", antonSecondPrompt.message.id);
     }
     if (additions.length) setTemporary((old) => {
       const ids = new Set(old.map((reply) => reply.message.id));
