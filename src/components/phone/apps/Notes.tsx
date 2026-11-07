@@ -15,14 +15,17 @@ type FolderNote = LocalizedNote;
 export default function Notes({ lang, onHome }: AppProps) {
   const owner = useOwner();
   const [notes, setNotes] = usePersist<FolderNote[]>("notes-v1", NOTES);
-  // Add the authored Anton diary note to existing saved Notes without replacing or
-  // rewriting any notes the owner has already created or edited.
+  // Migrate the earlier combined diary into separate notes. Keep every unrelated
+  // saved note intact, and only add missing entries.
   useEffect(() => {
     if (!owner) return;
-    const diary = NOTES.find((note) => note.id === "n7");
-    if (!diary) return;
-    setNotes((current) => current.some((note) => note.id === diary.id) ? current : [...current, diary]);
-  }, [owner, notes, setNotes]);
+    const diaryNotes = NOTES.filter((note) => note.id.startsWith("n7-"));
+    setNotes((current) => {
+      const withoutCombinedDiary = current.filter((note) => note.id !== "n7");
+      const missing = diaryNotes.filter((note) => !withoutCombinedDiary.some((saved) => saved.id === note.id));
+      return missing.length ? [...withoutCombinedDiary, ...missing] : withoutCombinedDiary;
+    });
+  }, [owner, setNotes]);
   const [folders, setFolders] = usePersist<NoteFolder[]>("phone-note-folders-v1", []);
   const [draft, setDraft] = useState<FolderNote | null>(null);
   const [folderView, setFolderView] = useState(false);
