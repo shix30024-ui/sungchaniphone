@@ -487,6 +487,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     if (open.id !== "anton") { sendChat("kkt", open.id, text, lang, Date.now(), image); return; }
     const visibleThread = withTemporaryReplies(fixedThread, readTemporaryReplies("anton"));
     const playerMsg = temporaryReply(text, lang, visibleThread.at(-1), image);
+    if (open.id === "anton" && newStory.stage === 4 && newStory.stage2Replies >= STAGE2_CHOICES.length) playerMsg.message.read = false;
     setTemporary((old) => [...old, playerMsg]);
     if (open.id === "anton" && (newStory.stage === 1 || newStory.stage === 4) && !image) {
       const currentStory = readNewStory();
