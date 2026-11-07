@@ -37,14 +37,31 @@ const INITIAL: AntonSceneState = {
   freeMessageCount: 0,
 };
 
-// Module memory only: progress survives switching apps, but a page refresh restarts this scene.
-let scene: AntonSceneState = { ...INITIAL };
+// Keep the scene phase alongside its temporary KKT messages so refreshes
+// cannot restart a conversation that the player has already triggered.
+const SCENE_STORAGE_KEY = "anton-scene-progress-v1";
+function loadAntonScene(): AntonSceneState {
+  if (typeof window === "undefined") return { ...INITIAL };
+  try {
+    const raw = localStorage.getItem(SCENE_STORAGE_KEY);
+    return raw ? { ...INITIAL, ...JSON.parse(raw) } : { ...INITIAL };
+  } catch { return { ...INITIAL }; }
+}
+let scene: AntonSceneState = loadAntonScene();
 export const readAntonScene = () => scene;
 export const updateAntonScene = (patch: Partial<AntonSceneState>) => {
   scene = { ...scene, ...patch };
+  if (typeof window !== "undefined") {
+    try { localStorage.setItem(SCENE_STORAGE_KEY, JSON.stringify(scene)); } catch { /* Keep the current scene active if storage is unavailable. */ }
+  }
   return scene;
 };
-export const resetAntonScene = () => { scene = { ...INITIAL }; };
+export const resetAntonScene = () => {
+  scene = { ...INITIAL };
+  if (typeof window !== "undefined") {
+    try { localStorage.setItem(SCENE_STORAGE_KEY, JSON.stringify(scene)); } catch {}
+  }
+};
 
 export const ANTON_WARM_OPENING = [
   { zh: "今天哥在干什么？", ko: "형 오늘 뭐 해?", en: "What are you doing today, hyung?" },
