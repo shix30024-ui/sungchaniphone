@@ -349,7 +349,7 @@ export default function Phone() {
           queue[0]?.id === next.id ? queue.slice(1) : queue
         );
       }, 120);
-    }, next.id.startsWith("anton-scene-") ? 3200 : 850);
+    }, 850);
     return () => {
       window.clearTimeout(hideTimer);
       if (advanceTimer !== undefined) window.clearTimeout(advanceTimer);
