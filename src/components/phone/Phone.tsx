@@ -429,8 +429,13 @@ export default function Phone() {
     else if (!editMode) {
       // After Anton's Instagram story is viewed, reopening KakaoTalk must enter Anton's
       // chat so Plot 4 can begin from the player's first preset message.
-      if (a.id === "kkt" && [0, 3, 8].includes(readNewStory().stage)) setChatTarget("anton");
-      if (a.id === "kkt" && (readNewStory().xReplySent || readNewStory().stage === 6)) setChatTarget("seoyun");
+      // Give the active story stage priority. xReplySent remains true after Plot 3,
+      // so it must not override Anton as the target after his Instagram story is viewed.
+      if (a.id === "kkt") {
+        const storyProgress = readNewStory();
+        if ([0, 3, 8].includes(storyProgress.stage)) setChatTarget("anton");
+        else if (storyProgress.xReplySent || storyProgress.stage === 6) setChatTarget("seoyun");
+      }
       setOpen(a);
     }
   };
