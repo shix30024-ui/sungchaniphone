@@ -37,7 +37,7 @@ import { Wifi, ChevronUp, ChevronDown, X, Search, Plane } from "lucide-react";
 import { SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from "./system";
 import { weatherAppName } from "./x-language";
 import { useSharedPhone, useSharingStatus } from "./shared";
-import { readNewStory } from "./new-story";
+import { readNewStory, updateNewStory } from "./new-story";
 import { isSharedOwner, queueSharedSave } from "./shared-state";
 
 const notifText = (m: Msg, lang: Lang) => (m.type === "image" ? tr(lang, { en: "Sent a photo", ko: "사진을 보냈습니다", zh: "发送了一张照片" }) : messageText(m, lang));
@@ -424,10 +424,10 @@ export default function Phone() {
 
   const tap = (a: App) => {
     setChatTarget(null);
-    setInstagramTarget(null);
+    setInstagramTarget(a.id === "ig" && readNewStory().stage === 2 ? "yuna" : null);
     if (editMode && a.id !== "settings") setEditing(apps.find((original) => original.id === a.id) ?? a);
     else if (!editMode) {
-      if (a.id === "kkt" && readNewStory().stage === 0) setChatTarget("anton");
+      if (a.id === "kkt" && (readNewStory().stage === 0 || readNewStory().stage === 3)) setChatTarget("anton");
       setOpen(a);
     }
   };
@@ -477,7 +477,17 @@ export default function Phone() {
       )}
       {!locked && replyError && <div className="reply-error" role="alert"><span>{replyError}</span><Button variant="ghost" size="icon" aria-label={t(lang, "cancel")} onClick={() => setReplyError(null)}><X /></Button></div>}
       {open && (
-        <AppView onAntonPostViewed={() => {}} initialChat={open.id === "kkt" ? chatTarget : null} apps={apps} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onOpenInstagram={() => { const igApp = translatedApps.find((item) => item.id === "ig"); if (igApp) { setChatTarget(null); setInstagramTarget("anton"); setOpen(igApp); } }} instagramTarget={instagramTarget} onClose={() => setOpen(null)}
+        <AppView onAntonPostViewed={() => {
+            if (readNewStory().stage !== 2) return;
+            updateNewStory({ stage: 3 });
+            const now = new Date();
+            window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: {
+              id: "new-story-anton-jealous-notice", contactId: "anton", sender: "them", type: "text",
+              ko: "형, 카톡 좀 봐", zh: "哥，看看KKT", en: "Hyung, check KakaoTalk.",
+              date: "2026-10-31", time: "21:10", order: 900000, live: true, read: false, notified: true,
+              createdAt: now.toISOString(),
+            } }));
+          } initialChat={open.id === "kkt" ? chatTarget : null} apps={apps} live={live} setLive={setLive} lang={lang} app={open} setLang={setLang} onOpenInstagram={() => { const igApp = translatedApps.find((item) => item.id === "ig"); if (igApp) { setChatTarget(null); setInstagramTarget("anton"); setOpen(igApp); } }} instagramTarget={instagramTarget} onClose={() => setOpen(null)}
           onLock={() => { setOpen(null); setLocked(true); try { sessionStorage.removeItem("phone-unlocked"); } catch { /* ignore */ } }}
           onEditApps={() => { if (!owner) return; setOpen(null); setEditMode(true); }} />
       )}
