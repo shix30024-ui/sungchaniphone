@@ -330,7 +330,11 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   const [emoji, setEmoji] = useState(false);
   // Leaving the chat keeps temporary replies in page memory; only a page
   // refresh or close clears them. Compose/typing UI state still resets.
-  useEffect(() => { setCompose(""); setEmoji(false); setAntonTyping(false); }, [openId, editing, call]);
+  useEffect(() => {
+    setCompose("");
+    setEmoji(false);
+    if (openId !== "anton" || editing || call) setAntonTyping(false);
+  }, [openId, editing, call]);
   const [listTab, setListTab] = useState<"friends" | "chats" | "openchat" | "shopping" | "more">("chats");
   const [listMenu, setListMenu] = useState(false);
   const [gifts, setGifts] = usePersist<{ id: string; title: string }[]>("phone-kkt-gifts-v1", []);
