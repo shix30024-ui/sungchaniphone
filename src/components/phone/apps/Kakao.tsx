@@ -540,6 +540,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       ];
       if (!playerSteps.has(step)) return;
       const choiceIndex = ({0:0,1:1,4:2,5:3,7:4,8:5,9:6,13:7,14:8} as Record<number, number>)[step];
+      if (choiceIndex === undefined) return;
       const line = choices[choiceIndex]!;
       const outgoing = temporaryReply(line.zh, lang, withTemporaryReplies(fixedThread, readTemporaryReplies("anton")).at(-1));
       outgoing.message.sender = "me";
