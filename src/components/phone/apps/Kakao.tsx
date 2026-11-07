@@ -434,7 +434,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       } else if (currentStory.reassuranceReplies < OPENING_CHOICES_2.length) {
         const count = currentStory.reassuranceReplies + 1;
         updateNewStory({ reassuranceReplies: count });
-        if (count === OPENING_CHOICES_2.length) appendAnton(OPENING_ANTON_3);
+        if (count === OPENING_CHOICES_2.length) { appendAnton(OPENING_ANTON_3); updateNewStory({ stage: 2 }); }
       }
     }
     if (flow.waiting) acknowledgeFixedNode(flow.waiting.id);
