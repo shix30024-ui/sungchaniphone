@@ -14,6 +14,7 @@ import { BackBtn, EditBar, Field, ImageField, TopBar, resolveImg } from "../ui";
 import { useOwner } from "../owner";
 import { withLocalInteraction } from "../shared-state";
 import { instagramCaption, editInstagramCaption } from "../instagram-language";
+import { readNewStory } from "../new-story";
 
 export default function Instagram({ lang, onHome, initialDmContactId, onAntonPostViewed }: AppProps & { initialDmContactId?: string | null; onAntonPostViewed?: () => void }) {
   const owner = useOwner();
@@ -60,7 +61,8 @@ export default function Instagram({ lang, onHome, initialDmContactId, onAntonPos
   // This post was explicitly removed. Filter legacy local/shared copies as well
   // as the bundled seed so the deleted Seongsu café entry cannot reappear.
   const visiblePosts = posts.filter((p) => !(p.id === "p7" || (p.date === "2025-09-06" && /성수|咖啡店|cafe/i.test(p.caption))));
-  const sorted = socialFeed(visiblePosts, friendPosts);
+  const storyEndingPost = readNewStory().stage >= 11 ? ({ id: "new-story-anton-ending-post", authorId: "anton", image: "", caption: "我和他。", date: "2026-10-31", time: "21:40", likes: 0, comments: [] } as SocialPost) : null;
+  const sorted = [...socialFeed(visiblePosts, friendPosts), ...(storyEndingPost ? [storyEndingPost] : [])];
   const account = (id: string): Profile => id === SELF_ID ? prof : accounts.find((a) => a.id === id) ?? prof;
   const selectedProfile = account(profileId);
   const isYunaProfile = profileId === "yuna" || selectedProfile.username === "yuna_Yuna";
@@ -211,7 +213,7 @@ export default function Instagram({ lang, onHome, initialDmContactId, onAntonPos
         <div className="flex-1 overflow-y-auto">
           <Button variant="ghost" className="h-auto w-full justify-start gap-2 py-2" onClick={() => showProfile(post.authorId)}><img src={resolveImg(postAuthor.avatar)} alt="" className="w-8 h-8 rounded-full object-cover ig-ring" /><b>{postAuthor.username}</b></Button>
           <div className="relative aspect-square bg-muted">
-            {postImages(post)[imageIndex] && <img src={resolveImg(postImages(post)[imageIndex])} alt="" className="w-full h-full object-contain" />}
+            {postImages(post)[imageIndex] ? <img src={resolveImg(postImages(post)[imageIndex])} alt="" className="w-full h-full object-contain" /> : post.id === "new-story-anton-ending-post" ? <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">照片稍后补上</div> : null}
             {imageIndex > 0 && <Button variant="secondary" size="icon" className="absolute left-2 top-1/2" onClick={() => setImageIndex(imageIndex - 1)}>‹</Button>}
             {imageIndex < postImages(post).length - 1 && <Button variant="secondary" size="icon" className="absolute right-2 top-1/2" onClick={() => setImageIndex(imageIndex + 1)}>›</Button>}
             {postImages(post).length > 1 && <span className="absolute bottom-2 right-2 bg-background text-foreground px-2 text-xs">{imageIndex + 1}/{postImages(post).length}</span>}
@@ -232,7 +234,7 @@ export default function Instagram({ lang, onHome, initialDmContactId, onAntonPos
   if (tab !== "profile") return <div className="app-page bg-background">
     <header className="ig-header"><Button variant="ghost" size="icon" aria-label={C} onClick={onHome}><ChevronLeft /></Button><span className="ig-logo">Instagram</span><span className="flex-1" /><Button variant="ghost" size="icon" className="relative" aria-label={tr(lang, { en: "Notifications", ko: "알림", zh: "通知" })} onClick={() => { setNewFollowerUnread(false); setActivity(true); }}><Heart strokeWidth={1.8} />{newFollowerUnread && yunaFollower && <span className="absolute right-1 top-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-background" />}</Button><Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Messages", ko: "메시지", zh: "私信" })} onClick={() => setDm(true)}><Send strokeWidth={1.8} /></Button></header>
     <div className="flex-1 overflow-y-auto">
-      {tab === "home" ? <><Stories posts={sorted} profile={prof} accounts={accounts} lang={lang} onProfile={showProfile} />{sorted.map((p) => <article key={p.id} className="border-b pb-3">
+      {tab === "home" ? <>{readNewStory().stage >= 11 && <Button variant="ghost" className="w-full justify-start gap-3 px-4 py-3 border-b rounded-none" onClick={() => { setOpenId("new-story-anton-ending-post"); setImageIndex(0); }}><span className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-semibold">A</span><span className="text-left text-sm"><b className="block">antinitony</b><span className="text-muted-foreground">提到了你 · Mentioned you</span></span></Button>}<Stories posts={sorted} profile={prof} accounts={accounts} lang={lang} onProfile={showProfile} />{sorted.map((p) => <article key={p.id} className="border-b pb-3">
         <Button variant="ghost" className="h-auto w-full justify-start gap-2 py-2" onClick={() => showProfile(p.authorId)}><img src={resolveImg(account(p.authorId).avatar)} className="w-8 h-8 rounded-full object-cover ig-ring" alt="" /><b className="text-[13px]">{account(p.authorId).username}</b><MoreHorizontal className="ml-auto" size={18} /></Button>
         <Button variant="ghost" className="ig-feed-photo" aria-label={tr(lang, { en: "Open post", ko: "게시물 열기", zh: "打开帖子" })} onClick={() => { setOpenId(p.id); setImageIndex(0); }}>{postImages(p)[0] && <img src={resolveImg(postImages(p)[0])} alt="" loading="lazy" />}{postImages(p).length > 1 && <span className="ig-image-count">1/{postImages(p).length}</span>}</Button>
         <div className="px-3 text-sm">{interactions(p)}<b>{p.likes.toLocaleString()} {tr(lang, { en: "likes", ko: "좋아요", zh: "次赞" })}</b><p className="whitespace-pre-wrap mt-1"><b>{account(p.authorId).username}</b> {instagramCaption(p, lang)}</p><Button variant="ghost" className="px-0 h-auto text-muted-foreground mt-2" onClick={() => { setOpenId(p.id); setCommentsOpen(true); }}>{tr(lang, { en: `View all ${p.comments.length} comments`, ko: `댓글 ${p.comments.length}개 모두 보기`, zh: `查看全部 ${p.comments.length} 条评论` })}</Button><p className="text-xs text-muted-foreground mt-2">{p.date}</p></div>
