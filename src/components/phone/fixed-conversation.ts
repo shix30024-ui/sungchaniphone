@@ -53,6 +53,12 @@ export function temporaryIncoming(reply: { ko: string; zh: string; en: string },
 const TEMPORARY_KEY_PREFIX = "kkt-temporary-replies-v1:";
 const temporaryStore = new Map<string, TemporaryReply[]>();
 
+// Shared phone content may arrive after the app module has initialized.
+// Drop only this in-memory cache so the next render reads the latest shared thread.
+if (typeof window !== "undefined") {
+  window.addEventListener("phone-shared-refresh", () => temporaryStore.clear());
+}
+
 export function readTemporaryReplies(contactId: string): TemporaryReply[] {
   const cached = temporaryStore.get(contactId);
   if (cached) return cached;
