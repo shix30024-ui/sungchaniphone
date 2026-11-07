@@ -311,7 +311,7 @@ export default function Phone() {
       setNotificationQueue((queue) => queue.some((item) => item.id === message.id) ? queue : [...queue, message]);
     };
     const onReplyError = (event: Event) => setReplyError((event as CustomEvent<string>).detail);
-    const tick = () => { if (document.visibilityState === "visible") { void tickReplies(Date.now(), getActiveChat()).catch(() => setReplyError(tr(lang, { en: "Reply paused. Saved messages remain unchanged.", ko: "답장이 중단됐습니다. 저장된 메시지는 유지됩니다.", zh: "回复已暂停，已保存的消息不会被覆盖。" }))); tickLive(); tickSeoyun(); } };
+    const tick = () => { if (document.visibilityState === "visible") { void tickReplies(Date.now(), getActiveChat()).catch(() => setReplyError(tr(lang, { en: "Reply paused. Saved messages remain unchanged.", ko: "답장이 중단됐습니다. 저장된 메시지는 유지됩니다.", zh: "回复已暂停，已保存的消息不会被覆盖。" }))); tickLive(); } };
     const timer = setInterval(tick, 500);
     window.addEventListener(STORE_EVENT, refresh);
     window.addEventListener("storage", refresh);
