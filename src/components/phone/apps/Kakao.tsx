@@ -19,7 +19,7 @@ import { confirmDelete, label, localeFor } from "../labels";
 import { completeTranslations } from "../translations";
 import { ANTON_PROGRESS_KEY, EMPTY_PROGRESS, fixedFlow, acknowledgeFixedNode, temporaryReply, withTemporaryReplies, readTemporaryReplies, writeTemporaryReplies, type FixedProgress, type TemporaryReply } from "../fixed-conversation";
 import { ANTON_OPENING, ANTON_AFTER_REASSURANCE, FIRST_PLAYER_REPLIES, FINAL_PLAYER_REPLIES, makeAntonSceneMessage, makeAntonSceneSystem, readAntonScene, updateAntonScene, startAntonWarmup, finishAntonWarmup, ANTON_WARM_OPENING, type AntonSceneState } from "../anton-scene";
-import { readNewStory, updateNewStory, subscribeNewStory, OPENING_ANTON, OPENING_CHOICES, OPENING_ANTON_2, OPENING_CHOICES_2, OPENING_ANTON_3, STAGE2_ANTON, STAGE2_CHOICES, STAGE2_REASSURE, SEOYUN_STAGE3, STAGE4_ANTON, STAGE6_ANTON } from "../new-story";
+import { readNewStory, updateNewStory, subscribeNewStory, OPENING_ANTON, OPENING_CHOICES, OPENING_ANTON_2, OPENING_CHOICES_2, OPENING_ANTON_3, STAGE2_ANTON, STAGE2_CHOICES, STAGE2_REASSURE, SEOYUN_STAGE3, SEOYUN_PLAYER_STAGE3, STAGE4_ANTON, STAGE6_ANTON } from "../new-story";
 
 const TODAY = STORY_DATE;
 const sortMsgs = sortMessages<Msg>;
@@ -204,33 +204,43 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     return () => { cancelled = true; if (timer !== undefined) window.clearTimeout(timer); setAntonTyping(false); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, newStory.stage]);
-  // Stage 3's Seoyun messages stay in the separate temporary Seoyun thread.
+  // Story 3 is delivered in stages: Seoyun types, waits for Sungchan,
+  // then continues after the player's messages are sent.
   useEffect(() => {
-    if (openId !== "seoyun" || newStory.stage !== 6 || newStory.seoyunReplies > 0) return;
+    if (openId !== "seoyun" || newStory.stage !== 6) return;
+    const step = newStory.seoyunStep;
+    const lines = step === 0 ? SEOYUN_STAGE3.slice(0, 3)
+      : step === 3 ? SEOYUN_STAGE3.slice(3, 6)
+      : step === 6 ? SEOYUN_STAGE3.slice(6, 10)
+      : null;
+    if (!lines) return;
+    let cancelled = false;
+    let timer: number | undefined;
+    let index = 0;
     let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "seoyun")), readTemporaryReplies("seoyun")).at(-1);
-    const thread: Array<{ sender: "me" | "them"; line: { zh: string; ko: string; en: string } }> = [
-      { sender: "them", line: SEOYUN_STAGE3[0]! },
-      { sender: "them", line: SEOYUN_STAGE3[1]! },
-      { sender: "them", line: SEOYUN_STAGE3[2]! },
-      { sender: "me", line: { ko: "후배가 내 뒷모습 나온 인스타 게시물을 올렸어", zh: "有学妹发了ig是我的背影", en: "A junior posted an Instagram photo of my back." } },
-      { sender: "me", line: { ko: "앤톤은 그걸 여자친구라고 생각했어", zh: "他以为是女朋友", en: "Anton thought she was my girlfriend." } },
-      { sender: "them", line: SEOYUN_STAGE3[3]! },
-      { sender: "them", line: SEOYUN_STAGE3[4]! },
-      { sender: "them", line: SEOYUN_STAGE3[5]! },
-      { sender: "me", line: { ko: "...", zh: "…", en: "..." } },
-      { sender: "me", line: { ko: "이제 나한테 답도 안 해 ㅎㅎ", zh: "他现在都不理我了ㅎㅎ", en: "He isn't replying to me now eitherㅎㅎ" } },
-      { sender: "them", line: SEOYUN_STAGE3[6]! },
-      { sender: "them", line: SEOYUN_STAGE3[7]! },
-      { sender: "them", line: SEOYUN_STAGE3[8]! },
-      { sender: "them", line: SEOYUN_STAGE3[9]! },
-    ];
-    for (const item of thread) {
-      const incoming = makeSeoyunTemporary(item.line, item.sender, anchor);
-      setSeoyunTemporary((old) => [...old, incoming]); anchor = incoming.message;
-    }
-    updateNewStory({ seoyunReplies: thread.length, stage: 7 });
+    const finish = () => {
+      setSeoyunTyping(false);
+      updateNewStory({ seoyunStep: step === 0 ? 1 : step === 3 ? 4 : 7, ...(step === 6 ? { stage: 7 } : {}) });
+    };
+    const deliverNext = () => {
+      if (cancelled) return;
+      const line = lines[index];
+      if (!line) { finish(); return; }
+      setSeoyunTyping(true);
+      timer = window.setTimeout(() => {
+        if (cancelled) return;
+        const incoming = makeSeoyunTemporary(line, "them", anchor);
+        setSeoyunTemporary((old) => [...old, incoming]);
+        anchor = incoming.message;
+        index += 1;
+        if (index < lines.length) deliverNext();
+        else finish();
+      }, 950);
+    };
+    deliverNext();
+    return () => { cancelled = true; if (timer !== undefined) window.clearTimeout(timer); setSeoyunTyping(false); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openId, newStory.stage]);
+  }, [openId, newStory.stage, newStory.seoyunStep]);
   // Viewing Anton's Instagram story unlocks the next KKT conversation.
   useEffect(() => {
     if (openId !== "anton" || newStory.stage !== 8) return;
@@ -512,6 +522,18 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
 
   const send = (text: string, image?: string) => {
     if (open.id === "seoyun" && !image) {
+      if (newStory.stage === 6) {
+        const step = readNewStory().seoyunStep;
+        const playerIndex = step === 1 ? 0 : step === 2 ? 1 : step === 4 ? 2 : step === 5 ? 3 : -1;
+        if (playerIndex < 0) return;
+        const preset = SEOYUN_PLAYER_STAGE3[playerIndex]!;
+        const line = text === preset[lang] ? preset : { zh: text, ko: text, en: text };
+        const currentThread = withTemporaryReplies(fixedThread, readTemporaryReplies("seoyun"));
+        const playerMsg = makeSeoyunTemporary(line, "me", currentThread.at(-1));
+        setSeoyunTemporary((old) => [...old, playerMsg]);
+        updateNewStory({ seoyunStep: step + 1 });
+        return;
+      }
       const introDone = msgs.filter((m) => m.contactId === "seoyun" && m.live && m.notified && m.id.startsWith("seoyun-after-anton-")).length >= 3;
       if (!introDone) { sendChat("kkt", open.id, text, lang, Date.now(), image); return; }
       const currentThread = withTemporaryReplies(fixedThread, seoyunTemporary);
@@ -724,6 +746,11 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     }
     const current = readAntonScene();
     if (open.id === "seoyun") {
+      if (newStory.stage === 6) {
+        const step = newStory.seoyunStep;
+        const playerIndex = step === 1 ? 0 : step === 2 ? 1 : step === 4 ? 2 : step === 5 ? 3 : -1;
+        return playerIndex >= 0 ? SEOYUN_PLAYER_STAGE3[playerIndex]?.[lang] : undefined;
+      }
       const introDone = msgs.filter((m) => m.contactId === "seoyun" && m.live && m.notified && m.id.startsWith("seoyun-after-anton-")).length >= 3;
       if (!introDone) return undefined;
       const replies = readTemporaryReplies("seoyun");
