@@ -48,8 +48,8 @@ export default function XApp({ lang, onHome }: AppProps) {
   };
   const story3Reply = {
     ko: "거절당할까 봐。。。",
-    zh: "怕他拒绝我。。。",
-    en: "I'm afraid he'll reject me...",
+    zh: "怕他拒绝。",
+    en: "I'm afraid he'll reject me.",
   };
   const visibleTweets = [
     ...(storyStage >= 5 ? [story3Post] : []),
