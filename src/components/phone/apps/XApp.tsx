@@ -51,7 +51,7 @@ export default function XApp({ lang, onHome }: AppProps) {
           onSave={() => {
             setTweets((current) => exists ? current.map((t) => (t.id === draft.id ? draft : t)) : [draft, ...current]);
             if (!exists && readNewStory().stage === 4) {
-              updateNewStory({ stage: 5, xPostPublished: true });
+              updateNewStory({ stage: 6, xPostPublished: true });
               const now = new Date();
               window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: {
                 id: "new-story-seoyun-notice", contactId: "seoyun", sender: "them", type: "text",
@@ -101,7 +101,7 @@ export default function XApp({ lang, onHome }: AppProps) {
         ))}
         <p className="text-[10px] text-center text-muted-foreground py-3">{label(lang, "fictional")}</p>
       </div>
-      {owner && <button className="x-fab" aria-label={tr(lang, { en: "Post", ko: "게시하기", zh: "发帖" })} onClick={() => setDraft(readNewStory().stage === 4 ? {
+      {owner && <button className="x-fab" aria-label={tr(lang, { en: "Post", ko: "게시하기", zh: "发帖" })} onClick={() => setDraft(readNewStory().stage === 5 ? {
         id: uid(), text: "나 여자친구 없어. 내가 제일 좋아하는 사람은 따로 있는데, 내 마음도 모르고 오해하네!!!",
         translations: { zh: "我哪有什么女朋友。明明最爱他。他还不知道我的心意然后乱揣测！！！", en: "I don't have a girlfriend. There's only one person I love, and he still doesn't know how I feel and keeps misunderstanding me!!!" },
         date: "2026-10-31", time: "21:18", likes: 0, rts: 0,
