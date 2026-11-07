@@ -11,6 +11,7 @@ import { ImageField, KktAvatar, resolveImg, TopBar, EditBar } from "../ui";
 import { SELF_ID, dmAccount, type SocialAccount } from "../social";
 import { postImages } from "../media";
 import { useOwner } from "../owner";
+import { readNewStory, updateNewStory } from "../new-story";
 
 type Story = { id: string; user: string; image: string; text: string; date: string; authorId?: string };
 export const STORIES_KEY = "ig-stories-v1";
@@ -23,7 +24,8 @@ export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: 
   // Derive a small gallery from existing posts, never altering or copying over the posts themselves.
   const ownStories = stored ?? posts.filter((p) => !p.authorId || p.authorId === SELF_ID).slice(0, 4).map((p) => ({ id: `story-${p.id}`, authorId: SELF_ID, user: profile.username, image: postImages(p)[0] ?? "", text: p.caption, date: p.date }));
   const friendStories = friendStored ?? posts.filter((p, i, all) => p.authorId && p.authorId !== SELF_ID && all.findIndex((other) => other.authorId === p.authorId) === i).map((p) => ({ id: `friend-story-${p.id}`, authorId: p.authorId ?? SELF_ID, user: accounts.find((a) => a.id === p.authorId)?.username ?? "", image: postImages(p)[0] ?? "", text: p.caption, date: p.date }));
-  const stories = [...ownStories, ...friendStories];
+  const newAntonStory: Story[] = readNewStory().stage === 7 ? [{ id: "new-story-anton-20261031", user: "antinitony", image: "", text: "", date: "2026-10-31", authorId: "anton" }] : [];
+  const stories = [...ownStories, ...friendStories, ...newAntonStory];
   const saveStory = (draft: Story) => {
     if (friendStories.some((s) => s.id === draft.id)) setFriendStored(friendStories.map((s) => s.id === draft.id ? draft : s));
     else setStored(ownStories.some((s) => s.id === draft.id) ? ownStories.map((s) => s.id === draft.id ? draft : s) : [...ownStories, draft]);
@@ -33,7 +35,10 @@ export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: 
   const [index, setIndex] = useState<number | null>(null);
   const [draft, setDraft] = useState<Story | null>(null);
   const active = index === null ? undefined : stories[index];
-  useEffect(() => { if (active && !seen.includes(active.id)) setSeen((current) => [...current, active.id]); }, [active?.id]);
+  useEffect(() => {
+    if (active && !seen.includes(active.id)) setSeen((current) => [...current, active.id]);
+    if (active?.id === "new-story-anton-20261031") updateNewStory({ stage: 8, antonStoryViewed: true });
+  }, [active?.id]);
   if (draft) return <div className="ig-overlay app-page bg-background">
     <TopBar title={label(lang, "edit")} /><div className="flex-1 overflow-y-auto p-4 space-y-3">
       <ImageField label={label(lang, "photo")} value={draft.image} onChange={(image) => setDraft({ ...draft, image })} />
@@ -50,7 +55,7 @@ export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: 
     {active && <div className="ig-overlay ig-story-view">
       <div className="flex gap-1 p-3">{stories.map((s, i) => <span key={s.id} className={`ig-progress ${i <= (index ?? 0) ? "ig-progress-done" : ""}`} />)}</div>
       <div className="flex justify-between items-center px-3"><Button variant="ghost" className="text-sm" onClick={() => { const authorId = active.authorId ?? (active.user === profile.username ? SELF_ID : accounts.find((a) => a.username === active.user)?.id); if (authorId) { setIndex(null); onProfile(authorId); } }}>{active.user} · {active.date}</Button><Button variant="ghost" size="icon" aria-label={label(lang, "cancel")} onClick={() => setIndex(null)}><X /></Button></div>
-      <img src={resolveImg(active.image)} className="ig-story-media" alt="" />
+      {active.id === "new-story-anton-20261031" ? <div className="ig-story-media flex items-center justify-center bg-neutral-900 text-white text-sm">사진은 나중에 추가됩니다</div> : <img src={resolveImg(active.image)} className="ig-story-media" alt="" />}
       <p className="text-center p-4 whitespace-pre-wrap">{active.text}</p>
       <div className="flex justify-between px-4 pb-5"><Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Previous story", ko: "이전 스토리", zh: "上一条快拍" })} disabled={index === 0} onClick={() => setIndex((index ?? 0) - 1)}><ChevronLeft /></Button>{owner && <Button variant="ghost" onClick={() => setDraft({ ...active })}>{label(lang, "edit")}</Button>}<Button variant="ghost" size="icon" aria-label={tr(lang, { en: "Next story", ko: "다음 스토리", zh: "下一条快拍" })} onClick={() => setIndex((index ?? 0) < stories.length - 1 ? (index ?? 0) + 1 : null)}><ChevronRight /></Button></div>
     </div>}
