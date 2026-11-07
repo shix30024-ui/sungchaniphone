@@ -620,7 +620,11 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
               setTemporary((old) => [...old, incoming]);
               anchor = incoming.message;
               if (index < followUps.length) deliverNext();
-              else setAntonTyping(false);
+              else {
+                setAntonTyping(false);
+                // Let Anton's last jealous message appear before opening the outgoing call screen.
+                window.setTimeout(() => startCall("outgoing"), 350);
+              }
             }, 950);
           };
           deliverNext();
@@ -628,7 +632,6 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       } else if (currentStory.stage === 4 && currentStory.stage2Reassurance < STAGE2_REASSURE.length) {
         const count = currentStory.stage2Reassurance + 1;
         updateNewStory({ stage2Reassurance: count, ...(count === STAGE2_REASSURE.length ? { stage: 5 } : {}) });
-        if (count === STAGE2_REASSURE.length) window.setTimeout(() => startCall("outgoing"), 250);
       }
     }
     if (flow.waiting) acknowledgeFixedNode(flow.waiting.id);
@@ -674,7 +677,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       patchScene({ ending, phase: "anton-typing", antonReplyCount: 0 });
     }
   };
-  if (call) return <Call contact={open} lang={lang} incoming={call === "incoming"} simulateFailure={(scene.ending === "blocked" || newStory.stage === 5) && call === "outgoing"} onClose={() => setCall(null)} onComplete={(result) => { setRecents((current) => [{ id: uid(), contactId: open.id, name: open.name, time: callStarted.current || new Date().toISOString(), simulated: true, ...result }, ...current]); if (open.id === "anton" && newStory.stage === 5 && result.outcome !== "connected") { const anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1); const missed = makeAntonSceneSystem(tr(lang, { en: "Voice call unanswered", ko: "보이스톡 부재중", zh: "语音通话未接通" }), lang, anchor); setTemporary((old) => [...old, missed]); } }} />;
+  if (call) return <Call contact={open} lang={lang} incoming={call === "incoming"} simulateFailure={(scene.ending === "blocked" || (newStory.stage === 4 && newStory.stage2Replies >= STAGE2_CHOICES.length)) && call === "outgoing"} onClose={() => setCall(null)} onComplete={(result) => { setRecents((current) => [{ id: uid(), contactId: open.id, name: open.name, time: callStarted.current || new Date().toISOString(), simulated: true, ...result }, ...current]); if (open.id === "anton" && newStory.stage === 4 && newStory.stage2Replies >= STAGE2_CHOICES.length && result.outcome !== "connected") { const anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1); const missed = makeAntonSceneSystem(tr(lang, { en: "Voice call unanswered", ko: "보이스톡 부재중", zh: "语音通话未接通" }), lang, anchor); setTemporary((old) => [...old, missed]); } }} />;
   const startEdit = () => { editIds.current = new Set(savedThread.map((m) => m.id)); setDraft(savedThread.map((m) => ({ ...m }))); setDraftC({ ...open }); setEditing(true); };
   const save = () => {
     const ok = setMsgs((current) => [...current.filter((m) => m.contactId !== open.id || !editIds.current.has(m.id)), ...draft.map((m, i) => ({ ...m, order: i }))]);
