@@ -50,7 +50,7 @@ export default function XApp({ lang, onHome }: AppProps) {
           onCancel={() => setDraft(null)}
           onSave={() => {
             setTweets((current) => exists ? current.map((t) => (t.id === draft.id ? draft : t)) : [draft, ...current]);
-            if (!exists && readNewStory().stage === 4) {
+            if (!exists && readNewStory().stage === 5) {
               updateNewStory({ stage: 6, xPostPublished: true });
               const now = new Date();
               window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: {
