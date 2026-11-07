@@ -5,6 +5,8 @@ export type NewStoryState = {
   stage: number;
   openingReplies: number;
   reassuranceReplies: number;
+  stage2Replies: number;
+  stage2Reassurance: number;
   finalReplies: number;
   seoyunReplies: number;
   yunaDmSent: boolean;
@@ -15,7 +17,7 @@ export type NewStoryState = {
 };
 
 const INITIAL: NewStoryState = {
-  stage: 0, openingReplies: 0, reassuranceReplies: 0, finalReplies: 0,
+  stage: 0, openingReplies: 0, reassuranceReplies: 0, stage2Replies: 0, stage2Reassurance: 0, finalReplies: 0,
   seoyunReplies: 0, yunaDmSent: false, xPostPublished: false,
   antonStoryViewed: false, yunaPostRemoved: false, endingPosted: false,
 };
