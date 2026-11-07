@@ -50,17 +50,33 @@ export function temporaryIncoming(reply: { ko: string; zh: string; en: string },
 // Module-memory temporary replies: they survive leaving and re-entering the
 // chat inside the app, and disappear naturally when the page refreshes or
 // closes. They are never written to localStorage or any persistent storage.
+const TEMPORARY_KEY_PREFIX = "kkt-temporary-replies-v1:";
 const temporaryStore = new Map<string, TemporaryReply[]>();
 
 export function readTemporaryReplies(contactId: string): TemporaryReply[] {
-  return temporaryStore.get(contactId) ?? [];
+  const cached = temporaryStore.get(contactId);
+  if (cached) return cached;
+  let saved: TemporaryReply[] = [];
+  if (typeof window !== "undefined") {
+    try {
+      const raw = localStorage.getItem(`${TEMPORARY_KEY_PREFIX}${contactId}`);
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(parsed)) saved = parsed as TemporaryReply[];
+    } catch { /* Keep the current conversation usable if this optional cache is unreadable. */ }
+  }
+  temporaryStore.set(contactId, saved);
+  return saved;
 }
 
 export function writeTemporaryReplies(contactId: string, replies: TemporaryReply[]) {
   temporaryStore.set(contactId, replies);
+  if (typeof window !== "undefined") {
+    try { localStorage.setItem(`${TEMPORARY_KEY_PREFIX}${contactId}`, JSON.stringify(replies)); }
+    catch { /* A storage failure must not interrupt the open conversation. */ }
+  }
 }
 
-/** Test helper: simulates a page refresh by clearing module memory. */
+/** Test helper: clears only the in-memory cache; saved conversation history remains intact. */
 export function resetTemporaryReplies() { temporaryStore.clear(); }
 
 export function withTemporaryReplies(fixed: Msg[], temporary: TemporaryReply[]): Msg[] {
