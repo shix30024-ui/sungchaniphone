@@ -19,7 +19,7 @@ import { confirmDelete, label, localeFor } from "../labels";
 import { completeTranslations } from "../translations";
 import { ANTON_PROGRESS_KEY, EMPTY_PROGRESS, fixedFlow, acknowledgeFixedNode, temporaryReply, withTemporaryReplies, readTemporaryReplies, writeTemporaryReplies, type FixedProgress, type TemporaryReply } from "../fixed-conversation";
 import { ANTON_OPENING, ANTON_AFTER_REASSURANCE, FIRST_PLAYER_REPLIES, FINAL_PLAYER_REPLIES, makeAntonSceneMessage, makeAntonSceneSystem, readAntonScene, updateAntonScene, startAntonWarmup, finishAntonWarmup, ANTON_WARM_OPENING, type AntonSceneState } from "../anton-scene";
-import { readNewStory, updateNewStory, subscribeNewStory, OPENING_ANTON, OPENING_CHOICES, OPENING_ANTON_2, OPENING_CHOICES_2, OPENING_ANTON_3, STAGE2_ANTON, STAGE2_CHOICES, STAGE2_REASSURE, SEOYUN_STAGE3, STAGE4_ANTON } from "../new-story";
+import { readNewStory, updateNewStory, subscribeNewStory, OPENING_ANTON, OPENING_CHOICES, OPENING_ANTON_2, OPENING_CHOICES_2, OPENING_ANTON_3, STAGE2_ANTON, STAGE2_CHOICES, STAGE2_REASSURE, SEOYUN_STAGE3, STAGE4_ANTON, STAGE6_ANTON } from "../new-story";
 
 const TODAY = STORY_DATE;
 const sortMsgs = sortMessages<Msg>;
@@ -206,6 +206,21 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       setTemporary((old) => [...old, incoming]); anchor = incoming.message;
     }
     updateNewStory({ stage: 9 });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, newStory.stage]);
+  // The Yuna DM resolution unlocks the final KKT conversation.
+  useEffect(() => {
+    if (openId !== "anton" || newStory.stage !== 10) return;
+    let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
+    const speakers: Array<"me" | "them"> = ["them","them","me","me","them","me","me","me","them","them","them"];
+    for (let i = 0; i < STAGE6_ANTON.length; i++) {
+      const line = STAGE6_ANTON[i]!;
+      const incoming = temporaryReply(line.zh, lang, anchor);
+      incoming.message.sender = speakers[i] ?? "them";
+      incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
+      setTemporary((old) => [...old, incoming]); anchor = incoming.message;
+    }
+    updateNewStory({ stage: 11 });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, newStory.stage]);
   // The KKT-first route begins with a gentle two-message exchange, not the argument.
