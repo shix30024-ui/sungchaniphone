@@ -38,7 +38,16 @@ export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: 
   const active = index === null ? undefined : stories[index];
   useEffect(() => {
     if (active && !seen.includes(active.id)) setSeen((current) => [...current, active.id]);
-    if (active?.id === "new-story-anton-20261031") updateNewStory({ stage: 8, antonStoryViewed: true });
+    if (active?.id === "new-story-anton-20261031") {
+      updateNewStory({ stage: 8, antonStoryViewed: true });
+      const now = new Date();
+      window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: {
+        id: "new-story-anton-story-notice", contactId: "anton", sender: "them", type: "text",
+        ko: "형, 나랑 얘기 좀 해", zh: "哥，我想和你聊聊", en: "Hyung, can we talk?",
+        date: "2026-10-31", time: "21:25", order: 900001, live: true, read: false, notified: true,
+        createdAt: now.toISOString(),
+      } }));
+    }
   }, [active?.id]);
   if (draft) return <div className="ig-overlay app-page bg-background">
     <TopBar title={label(lang, "edit")} /><div className="flex-1 overflow-y-auto p-4 space-y-3">
