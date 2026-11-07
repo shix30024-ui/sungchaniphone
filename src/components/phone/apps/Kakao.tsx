@@ -241,21 +241,6 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     return () => { cancelled = true; if (timer !== undefined) window.clearTimeout(timer); setSeoyunTyping(false); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, newStory.stage, newStory.seoyunStep]);
-  // Viewing Anton's Instagram story unlocks the next KKT conversation.
-  useEffect(() => {
-    if (openId !== "anton" || newStory.stage !== 8) return;
-    let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
-    const speakers: Array<"me" | "them"> = ["me","them","me","me","me","them","me","me","me","me","them","them","them","them","them","me","me","me","me","me","them","them"];
-    for (let i = 0; i < STAGE4_ANTON.length; i++) {
-      const line = STAGE4_ANTON[i]!;
-      const incoming = temporaryReply(line.zh, lang, anchor);
-      incoming.message.sender = speakers[i] ?? "them";
-      incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
-      setTemporary((old) => [...old, incoming]); anchor = incoming.message;
-    }
-    updateNewStory({ stage: 9 });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openId, newStory.stage]);
   // The Yuna DM resolution unlocks the final KKT conversation.
   useEffect(() => {
     if (openId !== "anton" || newStory.stage !== 10) return;
@@ -548,6 +533,47 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       }
       return;
     }
+    if (open.id === "anton" && newStory.stage === 8 && !image) {
+      const step = readNewStory().stage4Step;
+      const preset = STAGE4_PLAYER_CHOICES[step];
+      if (!preset) return;
+      const line = text === preset[lang] ? preset : { zh: text, ko: text, en: text };
+      const currentThread = withTemporaryReplies(fixedThread, readTemporaryReplies("anton"));
+      const playerMsg = temporaryReply(line.zh, lang, currentThread.at(-1));
+      playerMsg.message.sender = "me";
+      playerMsg.message.ko = line.ko; playerMsg.message.zh = line.zh; playerMsg.message.en = line.en;
+      setTemporary((old) => [...old, playerMsg]);
+      const nextStep = step + 1;
+      updateNewStory({ stage4Step: nextStep });
+      const incomingLines = nextStep === 1 ? [STAGE4_ANTON[1]!] 
+        : nextStep === 4 ? [{ ko: "응", zh: "응", en: "Yeah." }]
+        : nextStep === 8 ? STAGE4_ANTON.slice(7, 12)
+        : nextStep === 13 ? STAGE4_ANTON.slice(17, 19) : [];
+      if (incomingLines.length) {
+        let anchor = playerMsg.message;
+        let index = 0;
+        const deliverNext = () => {
+          const incomingLine = incomingLines[index];
+          if (!incomingLine) { setAntonTyping(false); return; }
+          setAntonTyping(true);
+          window.setTimeout(() => {
+            const incoming = temporaryReply(incomingLine.zh, lang, anchor);
+            incoming.message.sender = "them";
+            incoming.message.ko = incomingLine.ko; incoming.message.zh = incomingLine.zh; incoming.message.en = incomingLine.en;
+            setTemporary((old) => [...old, incoming]);
+            anchor = incoming.message;
+            index += 1;
+            if (index < incomingLines.length) deliverNext();
+            else {
+              setAntonTyping(false);
+              if (nextStep === 13) updateNewStory({ stage: 9 });
+            }
+          }, 950);
+        };
+        deliverNext();
+      }
+      return;
+    }
     if (open.id !== "anton") { sendChat("kkt", open.id, text, lang, Date.now(), image); return; }
     const visibleThread = withTemporaryReplies(fixedThread, readTemporaryReplies("anton"));
     const playerMsg = temporaryReply(text, lang, visibleThread.at(-1), image);
@@ -763,6 +789,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       if (playerCount === 5 && replyCount >= 3 && current.ending !== "blocked") return SEOYUN_OPEN_LAST[lang];
       return undefined;
     }
+    if (open.id === "anton" && newStory.stage === 8) return STAGE4_PLAYER_CHOICES[newStory.stage4Step]?.[lang];
     if (open.id !== "anton") return undefined;
     if (current.phase === "first-replies") return FIRST_PLAYER_REPLIES[current.firstReplyCount]?.[lang];
     if (current.phase === "final-replies") return FINAL_PLAYER_REPLIES[current.finalReplyCount]?.[lang];
