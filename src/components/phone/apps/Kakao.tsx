@@ -234,7 +234,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "seoyun")), readTemporaryReplies("seoyun")).at(-1);
     const finish = () => {
       setSeoyunTyping(false);
-      updateNewStory({ seoyunStep: step === 0 ? 1 : step === 3 ? 4 : 7, ...(step === 6 && newStory.stage === 6 ? { stage: 7 } : {}) });
+      updateNewStory({ seoyunStep: step === 0 ? 1 : step === 3 ? 4 : 7, ...(step === 6 ? { stage: 7 } : {}) });
     };
     const deliverNext = () => {
       if (cancelled) return;
