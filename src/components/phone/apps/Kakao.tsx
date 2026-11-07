@@ -131,6 +131,8 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       return next;
     });
   const [scene, setScene] = useState<AntonSceneState>(() => readAntonScene());
+  const [newStory, setNewStory] = useState(() => readNewStory());
+  useEffect(() => subscribeNewStory(() => setNewStory(readNewStory())), []);
   const patchScene = (patch: Partial<AntonSceneState>) => setScene(updateAntonScene(patch));
   const [progress] = usePersist<FixedProgress>(ANTON_PROGRESS_KEY, EMPTY_PROGRESS);
   // One-time: move large chat images out of the small browser storage. Text and order are untouched.
