@@ -11,7 +11,7 @@ import { ImageField, KktAvatar, resolveImg, TopBar, EditBar } from "../ui";
 import { SELF_ID, dmAccount, type SocialAccount } from "../social";
 import { postImages } from "../media";
 import { useOwner } from "../owner";
-import { readNewStory, updateNewStory, STAGE5_YUNA_REPLY } from "../new-story";
+import { readNewStory, updateNewStory, subscribeNewStory, STAGE5_YUNA_REPLY } from "../new-story";
 import { LIVE_EVENT } from "../live";
 
 type Story = { id: string; user: string; image: string; text: string; date: string; authorId?: string };
@@ -20,12 +20,15 @@ const SEEN_KEY = "ig-story-seen-v1";
 
 export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: (Post & { authorId?: string })[]; profile: Profile; accounts: SocialAccount[]; lang: Lang; onProfile: (id: string) => void }) {
   const owner = useOwner();
+  const [, refreshStoryProgress] = useState(0);
+  useEffect(() => subscribeNewStory(() => refreshStoryProgress((value) => value + 1)), []);
   const [stored, setStored] = usePersist<Story[] | null>(STORIES_KEY, null);
   const [friendStored, setFriendStored] = usePersist<Story[] | null>("ig-friend-stories-v1", null);
   // Derive a small gallery from existing posts, never altering or copying over the posts themselves.
   const ownStories = stored ?? posts.filter((p) => !p.authorId || p.authorId === SELF_ID).slice(0, 4).map((p) => ({ id: `story-${p.id}`, authorId: SELF_ID, user: profile.username, image: postImages(p)[0] ?? "", text: p.caption, date: p.date }));
   const friendStories = friendStored ?? posts.filter((p, i, all) => p.authorId && p.authorId !== SELF_ID && all.findIndex((other) => other.authorId === p.authorId) === i).map((p) => ({ id: `friend-story-${p.id}`, authorId: p.authorId ?? SELF_ID, user: accounts.find((a) => a.id === p.authorId)?.username ?? "", image: postImages(p)[0] ?? "", text: p.caption, date: p.date }));
-  const newAntonStory: Story[] = readNewStory().stage >= 7 ? [{ id: "new-story-anton-20261031", user: "antinitony", image: "", text: "", date: "2026-10-31", authorId: "anton" }] : [];
+  const storyProgress = readNewStory();
+  const newAntonStory: Story[] = storyProgress.stage >= 7 || storyProgress.seoyunStep >= 7 ? [{ id: "new-story-anton-20261031", user: "antinitony", image: "", text: "", date: "2026-10-31", authorId: "anton" }] : [];
   const stories = [...ownStories, ...friendStories, ...newAntonStory];
   const saveStory = (draft: Story) => {
     if (friendStories.some((s) => s.id === draft.id)) setFriendStored(friendStories.map((s) => s.id === draft.id ? draft : s));
