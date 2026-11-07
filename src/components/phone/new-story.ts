@@ -81,6 +81,14 @@ function loadStoryState(): NewStoryState {
     loaded = mergeStoryState(loaded, { stage: 10, yunaDmSent: true, yunaPostRemoved: true });
   }
 
+  // If Seoyun's final incoming message was already saved but the progress
+  // flag was interrupted (for example by leaving the chat mid-delivery),
+  // recover the completed stage from that durable message ID.
+  const seoyunReplies = readSavedArray("kkt-temporary-replies-v1:seoyun") as Array<{ message?: { id?: string } }>;
+  if (seoyunReplies.some((reply) => reply.message?.id === "story3-seoyun-in-6-4")) {
+    loaded = mergeStoryState(loaded, { stage: 7, seoyunStep: 7 });
+  }
+
   const seenStories = readSavedArray("ig-story-seen-v1") as string[];
   if (seenStories.includes("new-story-anton-20261031")) {
     loaded = mergeStoryState(loaded, { stage: 8, antonStoryViewed: true });
