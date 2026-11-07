@@ -591,7 +591,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       patchScene({ ending, phase: "anton-typing", antonReplyCount: 0 });
     }
   };
-  if (call) return <Call contact={open} lang={lang} incoming={call === "incoming"} simulateFailure={(scene.ending === "blocked" || newStory.stage === 5) && call === "outgoing"} onClose={() => setCall(null)} onComplete={(result) => setRecents((current) => [{ id: uid(), contactId: open.id, name: open.name, time: callStarted.current || new Date().toISOString(), simulated: true, ...result }, ...current])} />;
+  if (call) return <Call contact={open} lang={lang} incoming={call === "incoming"} simulateFailure={(scene.ending === "blocked" || newStory.stage === 5) && call === "outgoing"} onClose={() => setCall(null)} onComplete={(result) => { setRecents((current) => [{ id: uid(), contactId: open.id, name: open.name, time: callStarted.current || new Date().toISOString(), simulated: true, ...result }, ...current]); if (open.id === "anton" && newStory.stage === 5 && result.outcome !== "connected") { const anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1); const missed = makeAntonSceneSystem(tr(lang, { en: "Voice call unanswered", ko: "보이스톡 부재중", zh: "语音通话未接通" }), lang, anchor); setTemporary((old) => [...old, missed]); } }} />;
   const startEdit = () => { editIds.current = new Set(savedThread.map((m) => m.id)); setDraft(savedThread.map((m) => ({ ...m }))); setDraftC({ ...open }); setEditing(true); };
   const save = () => {
     const ok = setMsgs((current) => [...current.filter((m) => m.contactId !== open.id || !editIds.current.has(m.id)), ...draft.map((m, i) => ({ ...m, order: i }))]);
@@ -743,10 +743,10 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
           const prev = thread[i - 1];
           const head = !mine && (!prev || prev.sender !== "them" || prev.date !== m.date || prev.type === "system" || (open.id === "group-family" && prev.speaker !== m.speaker));
           if (m.type === "date") { /* The date heading above already displays this divider. */ }
-          else if (m.type === "system" && text.includes("통화")) parts.push(
+          else if (m.type === "system" && (text.includes("통화") || text.includes("通话") || text.toLowerCase().includes("voice"))) parts.push(
             <div key={m.id} className="flex justify-center py-2">
               <div className="flex items-center gap-3 rounded-2xl bg-card/90 border px-4 py-3 shadow-sm">
-                <div className="rounded-full bg-primary/10 p-2"><Phone size={18} /></div>
+                <div className={`rounded-full p-2 ${text.includes("부재중") || text.includes("未接通") || text.toLowerCase().includes("unanswered") ? "bg-destructive/10 text-destructive" : "bg-primary/10"}`}><Phone size={18} /></div>
                 <div className="text-sm"><div className="font-medium">{text}</div><div className="text-xs opacity-60">{fmt12(m.time, lang)}</div></div>
               </div>
             </div>
