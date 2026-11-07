@@ -9,6 +9,7 @@ export type NewStoryState = {
   stage2Reassurance: number;
   finalReplies: number;
   seoyunReplies: number;
+  seoyunStep: number;
   yunaDmSent: boolean;
   xPostPublished: boolean;
   antonStoryViewed: boolean;
@@ -18,7 +19,7 @@ export type NewStoryState = {
 
 const INITIAL: NewStoryState = {
   stage: 0, openingReplies: 0, reassuranceReplies: 0, stage2Replies: 0, stage2Reassurance: 0, finalReplies: 0,
-  seoyunReplies: 0, yunaDmSent: false, xPostPublished: false,
+  seoyunReplies: 0, seoyunStep: 0, yunaDmSent: false, xPostPublished: false,
   antonStoryViewed: false, yunaPostRemoved: false, endingPosted: false,
 };
 
@@ -87,6 +88,13 @@ export const SEOYUN_STAGE3: StoryText[] = [
   { ko: "완전 상처 주네", zh: "简直杀人诛心", en: "That's honestly brutal." },
   { ko: "내 CP 이제 끝이야?", zh: "我的cp要be了", en: "Is my favorite ship over?" },
   { ko: "나 너랑 말 안 해", zh: "我不跟你好了", en: "I'm not talking to you." },
+];
+
+export const SEOYUN_PLAYER_STAGE3: StoryText[] = [
+  { ko: "후배가 내 뒷모습 나온 인스타 게시물을 올렸어", zh: "有学妹发了ig是我的背影", en: "A junior posted an Instagram photo of my back." },
+  { ko: "앤톤은 그걸 여자친구라고 생각했어", zh: "他以为是女朋友", en: "Anton thought she was my girlfriend." },
+  { ko: "...", zh: "…", en: "..." },
+  { ko: "이제 나한테 답도 안 해 ㅎㅎ", zh: "他现在都不理我了ㅎㅎ", en: "He isn't replying to me now eitherㅎㅎ" },
 ];
 
 export const STAGE4_ANTON: StoryText[] = [
