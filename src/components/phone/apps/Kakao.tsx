@@ -169,7 +169,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     return () => { cancelled = true; if (timer !== undefined) window.clearTimeout(timer); setAntonTyping(false); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, newStory.stage]);
-  // Stage 2 is unlocked by viewing Yuna's X post, then appears when KKT is reopened.
+  // Stage 2 is unlocked by viewing Yuna's Instagram post, then appears when KKT is reopened.
   useEffect(() => {
     if (openId !== "anton" || newStory.stage !== 3) return;
     let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
