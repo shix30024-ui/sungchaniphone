@@ -169,17 +169,39 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     return () => { cancelled = true; if (timer !== undefined) window.clearTimeout(timer); setAntonTyping(false); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, newStory.stage]);
-  // Stage 2 is unlocked by viewing Yuna's Instagram post, then appears when KKT is reopened.
+  // Stage 2 messages arrive one at a time, with Anton's typing indicator before each one.
   useEffect(() => {
     if (openId !== "anton" || newStory.stage !== 3) return;
     let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
-    for (const line of STAGE2_ANTON.slice(0, 3)) {
-      const incoming = temporaryReply(line.zh, lang, anchor);
-      incoming.message.sender = "them";
-      incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
-      setTemporary((old) => [...old, incoming]); anchor = incoming.message;
-    }
-    updateNewStory({ stage: 4, stage2Replies: 0, stage2Reassurance: 0 });
+    let index = 0;
+    let cancelled = false;
+    let timer: number | undefined;
+    const deliverNext = () => {
+      if (cancelled) return;
+      setAntonTyping(true);
+      timer = window.setTimeout(() => {
+        if (cancelled) return;
+        const line = STAGE2_ANTON[index];
+        if (!line || index >= 3) {
+          setAntonTyping(false);
+          updateNewStory({ stage: 4, stage2Replies: 0, stage2Reassurance: 0 });
+          return;
+        }
+        const incoming = temporaryReply(line.zh, lang, anchor);
+        incoming.message.sender = "them";
+        incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
+        setTemporary((old) => [...old, incoming]);
+        anchor = incoming.message;
+        index += 1;
+        if (index < 3) deliverNext();
+        else {
+          setAntonTyping(false);
+          updateNewStory({ stage: 4, stage2Replies: 0, stage2Reassurance: 0 });
+        }
+      }, 950);
+    };
+    deliverNext();
+    return () => { cancelled = true; if (timer !== undefined) window.clearTimeout(timer); setAntonTyping(false); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, newStory.stage]);
   // Stage 3's Seoyun messages stay in the separate temporary Seoyun thread.
@@ -535,12 +557,25 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
         const count = currentStory.stage2Replies + 1;
         updateNewStory({ stage2Replies: count });
         if (count === STAGE2_CHOICES.length) {
+          const followUps = STAGE2_ANTON.slice(3);
+          let index = 0;
           let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
-          for (const line of STAGE2_ANTON.slice(3)) {
-            const incoming = temporaryReply(line.zh, lang, anchor);
-            incoming.message.sender = "them"; incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
-            setTemporary((old) => [...old, incoming]); anchor = incoming.message;
-          }
+          const deliverNext = () => {
+            if (index >= followUps.length) return;
+            setAntonTyping(true);
+            window.setTimeout(() => {
+              if (openId !== "anton") { setAntonTyping(false); return; }
+              const line = followUps[index++];
+              if (!line) { setAntonTyping(false); return; }
+              const incoming = temporaryReply(line.zh, lang, anchor);
+              incoming.message.sender = "them"; incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
+              setTemporary((old) => [...old, incoming]);
+              anchor = incoming.message;
+              if (index < followUps.length) deliverNext();
+              else setAntonTyping(false);
+            }, 950);
+          };
+          deliverNext();
         }
       } else if (currentStory.stage === 4 && currentStory.stage2Reassurance < STAGE2_REASSURE.length) {
         const count = currentStory.stage2Reassurance + 1;
@@ -804,14 +839,14 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       {open.id === "anton" && scene.phase === "choose-ending" && <div className="flex gap-2 px-3 py-3 border-t bg-background"><Button className="flex-1" variant="outline" onClick={() => chooseEnding("blocked")}>{tr(lang, { en: "Blocked", ko: "차단됨", zh: "被拉黑" })}</Button><Button className="flex-1" onClick={() => chooseEnding("not-blocked")}>{tr(lang, { en: "Not blocked", ko: "차단되지 않음", zh: "没有被拉黑" })}</Button></div>}
 
       {emoji && <div className="kkt-emoji-panel">{["😊", "ㅋㅋ", "❤️", "👍", "😭", "😂"].map((face) => <Button variant="ghost" key={face} onClick={() => { setCompose((text) => text + face); setEmoji(false); }}>{face}</Button>)}</div>}
-      {open.id === "anton" && suggestedReply() && <div className="px-3 pt-2 bg-background border-t"><Button type="button" variant="outline" className="w-full justify-start text-left whitespace-normal h-auto min-h-10" onClick={() => setCompose(suggestedReply() ?? "")}>{suggestedReply()}</Button></div>}
+
       <form className="kkt-input" onSubmit={(event) => {
         event.preventDefault();
         submitMessage();
       }}>
         <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Send photo", ko: "사진 보내기", zh: "发送图片" })} onClick={() => upload.current?.click()}><SquarePlus /></Button>
         <input ref={upload} type="file" accept="image/*" className="hidden" onChange={async (e) => { const input = e.currentTarget; const file = input.files?.[0]; try { if (file) { const image = await fileToDataUrl(file); send(compose, image); setCompose(""); } } catch { alert(tr(lang, { en: "Could not send photo", ko: "사진을 보낼 수 없습니다", zh: "图片未发送，请重试" })); } finally { input.value = ""; } }} />
-        <input ref={composeInput} aria-label={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} placeholder={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} disabled={open.id === "anton" && ["warm-opening", "anger-opening", "choose-ending", "anton-typing", "blocked"].includes(scene.phase)} className="kkt-compose" value={compose} onPointerDown={fillSuggestedReply} onFocus={fillSuggestedReply} onChange={(event) => setCompose(event.target.value)} />
+        <input ref={composeInput} aria-label={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} placeholder={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} disabled={open.id === "anton" && ["warm-opening", "anger-opening", "choose-ending", "anton-typing", "blocked"].includes(scene.phase)} className="kkt-compose" value={compose} onClick={fillSuggestedReply} onChange={(event) => setCompose(event.target.value)} />
         <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Emoji", ko: "이모티콘", zh: "表情" })} aria-expanded={emoji} onClick={() => setEmoji(!emoji)}><Smile size={21} /></Button>
         <Button type="button" size="icon" aria-label={tr(lang, { en: "Send message", ko: "메시지 보내기", zh: "发送消息" })} className="kkt-send" onClick={submitMessage} disabled={!compose.trim() || (open.id === "anton" && ["warm-opening", "anger-opening", "choose-ending", "anton-typing", "blocked"].includes(scene.phase))}><Send size={17} /></Button>
       </form>
