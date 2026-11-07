@@ -17,7 +17,12 @@ export default function XApp({ lang, onHome }: AppProps) {
   const [draft, setDraft] = useState<Tweet | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [story3ReplySent, setStory3ReplySent] = useState(() => readNewStory().xReplySent);
-  useEffect(() => subscribeNewStory(() => setStory3ReplySent(readNewStory().xReplySent)), []);
+  const [storyStage, setStoryStage] = useState(() => readNewStory().stage);
+  useEffect(() => subscribeNewStory(() => {
+    const progress = readNewStory();
+    setStory3ReplySent(progress.xReplySent);
+    setStoryStage(progress.stage);
+  }), []);
   const story3Post: Tweet = {
     id: "new-story-stage3-post",
     text: "나 여자친구 같은 거 없어. 내가 제일 좋아하는 사람은 따로 있는데. 내 마음도 모르면서 멋대로 오해하고 있어!!!",
@@ -46,7 +51,10 @@ export default function XApp({ lang, onHome }: AppProps) {
     zh: "怕他拒绝我。。。",
     en: "I'm afraid he'll reject me...",
   };
-  const visibleTweets = [story3Post, ...tweets.filter((tweet) => tweet.id !== story3Post.id)];
+  const visibleTweets = [
+    ...(storyStage >= 5 ? [story3Post] : []),
+    ...tweets.filter((tweet) => tweet.id !== story3Post.id),
+  ];
   const open = visibleTweets.find((tweet) => tweet.id === openId);
   const sorted = [...visibleTweets].sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
 
