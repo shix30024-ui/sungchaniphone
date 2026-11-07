@@ -241,20 +241,11 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     return () => { cancelled = true; if (timer !== undefined) window.clearTimeout(timer); setSeoyunTyping(false); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, newStory.stage, newStory.seoyunStep]);
-  // The Yuna DM resolution unlocks the final KKT conversation.
+  // Stage 6 is player-led: the player sends each preset from the compose field.
+  // Anton's replies are delivered only after the matching player messages.
   useEffect(() => {
     if (openId !== "anton" || newStory.stage !== 10) return;
-    let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
-    const speakers: Array<"me" | "them"> = ["them","them","me","me","them","me","me","me","them","them","them"];
-    for (let i = 0; i < STAGE6_ANTON.length; i++) {
-      const line = STAGE6_ANTON[i]!;
-      const incoming = temporaryReply(line.zh, lang, anchor);
-      incoming.message.sender = speakers[i] ?? "them";
-      incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
-      setTemporary((old) => [...old, incoming]); anchor = incoming.message;
-    }
-    updateNewStory({ stage: 11 });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Keep the stage active until the player sends the final voice-call prompt.
   }, [openId, newStory.stage]);
   // The KKT-first route begins with a gentle two-message exchange, not the argument.
   useEffect(() => {
@@ -533,6 +524,63 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       }
       return;
     }
+    if (open.id === "anton" && newStory.stage === 10 && !image) {
+      const step = readNewStory().stage6Step;
+      const playerSteps = new Set([0, 1, 4, 5, 7, 8, 9, 13, 14]);
+      const choices = [
+        { ko: "학妹 게시물은 삭제해 달라고 했어", zh: "学妹的那条帖子已经让她删除了", en: "I asked her to take the post down." },
+        { ko: "내 남자친구가 화났다고도 했고", zh: "也告诉他我的小男朋友生气了", en: "And I told her my boyfriend was upset." },
+        { ko: "천사", zh: "天使", en: "Angel." },
+        { ko: "그래서 형이랑 사귈래?", zh: "所以愿意和哥在一起吗？", en: "So, will you be with me?" },
+        { ko: "뭐야", zh: "什么啊", en: "What?" },
+        { ko: "형이 너 얼마나 아끼는지 알지?", zh: "知道哥很珍惜你吧？", en: "You know how much I treasure you, right?" },
+        { ko: "그만 애태워", zh: "别折磨我了", en: "Don't keep me waiting." },
+        { ko: "?", zh: "？", en: "?" },
+        { ko: "보이스톡", zh: "语音电话", en: "Voice call" },
+      ];
+      if (!playerSteps.has(step)) return;
+      const choiceIndex = ({0:0,1:1,4:2,5:3,7:4,8:5,9:6,13:7,14:8} as Record<number, number>)[step];
+      const line = choices[choiceIndex]!;
+      const outgoing = temporaryReply(line.zh, lang, withTemporaryReplies(fixedThread, readTemporaryReplies("anton")).at(-1));
+      outgoing.message.sender = "me";
+      outgoing.message.ko = line.ko; outgoing.message.zh = line.zh; outgoing.message.en = line.en;
+      setTemporary((old) => [...old, outgoing]);
+      if (step === 14) {
+        updateNewStory({ stage: 11, stage6Step: 15 });
+        window.setTimeout(() => startCall("outgoing"), 350);
+        return;
+      }
+      const next = step + 1;
+      if (next === 2 || next === 6 || next === 10) {
+        const replyIndexes = next === 2 ? [0, 1] : next === 6 ? [4] : [8, 9, 10];
+        let index = 0;
+        let anchor = outgoing.message;
+        const deliver = () => {
+          const reply = STAGE6_ANTON[replyIndexes[index]!];
+          if (!reply) {
+            updateNewStory({ stage6Step: next === 2 ? 4 : next === 6 ? 7 : 13 });
+            setAntonTyping(false);
+            return;
+          }
+          setAntonTyping(true);
+          window.setTimeout(() => {
+            const incoming = temporaryReply(reply.zh, lang, anchor);
+            incoming.message.sender = "them";
+            incoming.message.ko = reply.ko; incoming.message.zh = reply.zh; incoming.message.en = reply.en;
+            setTemporary((old) => [...old, incoming]);
+            anchor = incoming.message;
+            index += 1;
+            if (index < replyIndexes.length) deliver();
+            else {
+              setAntonTyping(false);
+              updateNewStory({ stage6Step: next === 2 ? 4 : next === 6 ? 7 : 13 });
+            }
+          }, 950);
+        };
+        deliver();
+      } else updateNewStory({ stage6Step: next });
+      return;
+    }
     if (open.id === "anton" && newStory.stage === 8 && !image) {
       const step = readNewStory().stage4Step;
       const preset = STAGE4_PLAYER_CHOICES[step];
@@ -677,7 +725,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       patchScene({ ending, phase: "anton-typing", antonReplyCount: 0 });
     }
   };
-  if (call) return <Call contact={open} lang={lang} incoming={call === "incoming"} simulateFailure={(scene.ending === "blocked" || (newStory.stage === 4 && newStory.stage2Replies >= STAGE2_CHOICES.length)) && call === "outgoing"} onClose={() => setCall(null)} onComplete={(result) => { setRecents((current) => [{ id: uid(), contactId: open.id, name: open.name, time: callStarted.current || new Date().toISOString(), simulated: true, ...result }, ...current]); if (open.id === "anton" && newStory.stage === 4 && newStory.stage2Replies >= STAGE2_CHOICES.length && result.outcome !== "connected") { const anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1); const missed = makeAntonSceneSystem(tr(lang, { en: "Voice call unanswered", ko: "보이스톡 부재중", zh: "语音通话未接通" }), lang, anchor); setTemporary((old) => [...old, missed]); } }} />;
+  if (call) return <Call contact={open} lang={lang} incoming={call === "incoming"} simulateFailure={(scene.ending === "blocked" || (newStory.stage === 4 && newStory.stage2Replies >= STAGE2_CHOICES.length)) && call === "outgoing"} onClose={() => setCall(null)} onComplete={(result) => { setRecents((current) => [{ id: uid(), contactId: open.id, name: open.name, time: callStarted.current || new Date().toISOString(), simulated: true, ...result }, ...current]); if (open.id === "anton" && ((newStory.stage === 4 && newStory.stage2Replies >= STAGE2_CHOICES.length) || (newStory.stage === 11 && newStory.stage6Step >= 15)) && result.outcome !== "connected") { const anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1); const missed = makeAntonSceneSystem(tr(lang, { en: "Voice call unanswered", ko: "보이스톡 부재중", zh: "语音通话未接通" }), lang, anchor); setTemporary((old) => [...old, missed]); } }} />;
   const startEdit = () => { editIds.current = new Set(savedThread.map((m) => m.id)); setDraft(savedThread.map((m) => ({ ...m }))); setDraftC({ ...open }); setEditing(true); };
   const save = () => {
     const ok = setMsgs((current) => [...current.filter((m) => m.contactId !== open.id || !editIds.current.has(m.id)), ...draft.map((m, i) => ({ ...m, order: i }))]);
@@ -791,6 +839,22 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       if (playerCount === 5 && replyCount >= 3 && current.ending === "blocked") return SEOYUN_BLOCKED_LAST[lang];
       if (playerCount === 5 && replyCount >= 3 && current.ending !== "blocked") return SEOYUN_OPEN_LAST[lang];
       return undefined;
+    }
+    if (open.id === "anton" && newStory.stage === 10) {
+      const map: Record<number, number> = {0:0,1:1,4:2,5:3,7:4,8:5,9:6,13:7,14:8};
+      const labels = [
+        { zh: "学妹的那条帖子已经让她删除了", ko: "학妹 게시물은 삭제해 달라고 했어", en: "I asked her to take the post down." },
+        { zh: "也告诉他我的小男朋友生气了", ko: "내 남자친구가 화났다고도 했고", en: "And I told her my boyfriend was upset." },
+        { zh: "天使", ko: "천사", en: "Angel." },
+        { zh: "所以愿意和哥在一起吗？", ko: "그래서 형이랑 사귈래?", en: "So, will you be with me?" },
+        { zh: "什么啊", ko: "뭐야", en: "What?" },
+        { zh: "知道哥很珍惜你吧？", ko: "형이 너 얼마나 아끼는지 알지?", en: "You know how much I treasure you, right?" },
+        { zh: "别折磨我了", ko: "그만 애태워", en: "Don't keep me waiting." },
+        { zh: "？", ko: "?", en: "?" },
+        { zh: "语音电话", ko: "보이스톡", en: "Voice call" },
+      ];
+      const index = map[newStory.stage6Step];
+      return index === undefined ? undefined : labels[index]?.[lang];
     }
     if (open.id === "anton" && newStory.stage === 8) return STAGE4_PLAYER_CHOICES[newStory.stage4Step]?.[lang];
     if (open.id !== "anton") return undefined;
