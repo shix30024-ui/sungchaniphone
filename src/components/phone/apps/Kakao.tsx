@@ -141,7 +141,6 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   // Stage 1 begins only when the player opens Anton's existing KKT chat.
   useEffect(() => {
     if (openId !== "anton" || newStory.stage !== 0) return;
-    updateNewStory({ stage: 1 });
     let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
     let index = 0;
     let cancelled = false;
@@ -160,7 +159,10 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
         anchor = incoming.message;
         index += 1;
         if (index < OPENING_ANTON.length) deliverNext();
-        else setAntonTyping(false);
+        else {
+          setAntonTyping(false);
+          updateNewStory({ stage: 1 });
+        }
       }, 950);
     };
     deliverNext();
