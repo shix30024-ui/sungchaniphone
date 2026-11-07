@@ -18,6 +18,8 @@ import { readNewStory } from "../new-story";
 
 export default function Instagram({ lang, onHome, initialDmContactId, onAntonPostViewed }: AppProps & { initialDmContactId?: string | null; onAntonPostViewed?: () => void }) {
   const owner = useOwner();
+  const [storyStage, setStoryStage] = useState(() => readNewStory().stage);
+  useEffect(() => subscribeNewStory(() => setStoryStage(readNewStory().stage)), []);
   const [tab, setTab] = useState<"home" | "search" | "profile">("home");
   const [dm, setDm] = useState(false);
   useEffect(() => { if (initialDmContactId) setDm(true); }, [initialDmContactId]);
@@ -62,7 +64,7 @@ export default function Instagram({ lang, onHome, initialDmContactId, onAntonPos
   // as the bundled seed so the deleted Seongsu café entry cannot reappear.
   const visiblePosts = posts.filter((p) => !(p.id === "p7" || (p.date === "2025-09-06" && /성수|咖啡店|cafe/i.test(p.caption))));
   const storyEndingPost = readNewStory().stage >= 11 ? ({ id: "new-story-anton-ending-post", authorId: "anton", image: "", caption: "我和他。", captionTranslations: { ko: "나와 그 사람.", zh: "我和他。", en: "Me and him." }, date: "2026-10-31", time: "21:40", likes: 0, comments: [] } as SocialPost) : null;
-  const storyFriendPosts = friendPosts.filter((p) => !(readNewStory().yunaPostRemoved && p.id === "friend-yuna-back-20261031"));
+  const storyFriendPosts = friendPosts.filter((p) => p.id !== "friend-yuna-back-20261031" || (storyStage >= 2 && !readNewStory().yunaPostRemoved));
   const sorted = [...socialFeed(visiblePosts, storyFriendPosts), ...(storyEndingPost ? [storyEndingPost] : [])];
   const account = (id: string): Profile => id === SELF_ID ? prof : accounts.find((a) => a.id === id) ?? prof;
   const selectedProfile = account(profileId);
