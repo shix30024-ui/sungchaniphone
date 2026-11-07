@@ -142,15 +142,29 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   useEffect(() => {
     if (openId !== "anton" || newStory.stage !== 0) return;
     updateNewStory({ stage: 1 });
-    const base = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
-    let anchor = base;
-    for (const line of OPENING_ANTON) {
-      const incoming = temporaryReply(line.zh, lang, anchor);
-      incoming.message.sender = "them";
-      incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
-      setTemporary((old) => [...old, incoming]);
-      anchor = incoming.message;
-    }
+    let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
+    let index = 0;
+    let cancelled = false;
+    let timer: number | undefined;
+    const deliverNext = () => {
+      if (cancelled) return;
+      setAntonTyping(true);
+      timer = window.setTimeout(() => {
+        if (cancelled) return;
+        const line = OPENING_ANTON[index];
+        if (!line) { setAntonTyping(false); return; }
+        const incoming = temporaryReply(line.zh, lang, anchor);
+        incoming.message.sender = "them";
+        incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
+        setTemporary((old) => [...old, incoming]);
+        anchor = incoming.message;
+        index += 1;
+        if (index < OPENING_ANTON.length) deliverNext();
+        else setAntonTyping(false);
+      }, 950);
+    };
+    deliverNext();
+    return () => { cancelled = true; if (timer !== undefined) window.clearTimeout(timer); setAntonTyping(false); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, newStory.stage]);
   // Stage 2 is unlocked by viewing Yuna's X post, then appears when KKT is reopened.
@@ -492,11 +506,16 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     if (open.id === "anton" && (newStory.stage === 1 || newStory.stage === 4) && !image) {
       const currentStory = readNewStory();
       const appendAnton = (line: { zh: string; ko: string; en: string }) => {
-        const anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
-        const incoming = temporaryReply(line.zh, lang, anchor);
-        incoming.message.sender = "them";
-        incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
-        setTemporary((old) => [...old, incoming]);
+        setAntonTyping(true);
+        window.setTimeout(() => {
+          if (openId !== "anton") { setAntonTyping(false); return; }
+          const anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
+          const incoming = temporaryReply(line.zh, lang, anchor);
+          incoming.message.sender = "them";
+          incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
+          setTemporary((old) => [...old, incoming]);
+          setAntonTyping(false);
+        }, 950);
       };
       if (currentStory.stage === 1 && currentStory.openingReplies < OPENING_CHOICES.length) {
         const count = currentStory.openingReplies + 1;
@@ -779,7 +798,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       {open.id === "anton" && scene.phase === "choose-ending" && <div className="flex gap-2 px-3 py-3 border-t bg-background"><Button className="flex-1" variant="outline" onClick={() => chooseEnding("blocked")}>{tr(lang, { en: "Blocked", ko: "차단됨", zh: "被拉黑" })}</Button><Button className="flex-1" onClick={() => chooseEnding("not-blocked")}>{tr(lang, { en: "Not blocked", ko: "차단되지 않음", zh: "没有被拉黑" })}</Button></div>}
 
       {emoji && <div className="kkt-emoji-panel">{["😊", "ㅋㅋ", "❤️", "👍", "😭", "😂"].map((face) => <Button variant="ghost" key={face} onClick={() => { setCompose((text) => text + face); setEmoji(false); }}>{face}</Button>)}</div>}
-      {open.id === "anton" && suggestedReply() && <div className="px-3 pt-2 bg-background border-t"><Button type="button" variant="outline" className="w-full justify-start text-left whitespace-normal h-auto min-h-10" onClick={() => setCompose(suggestedReply() ?? "")}>{suggestedReply()}</Button></div>}
+      {open.id === "anton" && !(newStory.stage === 1) && suggestedReply() && <div className="px-3 pt-2 bg-background border-t"><Button type="button" variant="outline" className="w-full justify-start text-left whitespace-normal h-auto min-h-10" onClick={() => setCompose(suggestedReply() ?? "")}>{suggestedReply()}</Button></div>}
       <form className="kkt-input" onSubmit={(event) => {
         event.preventDefault();
         submitMessage();
