@@ -515,10 +515,19 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   };
 
   const send = (text: string, image?: string) => {
+    // Plot 2 requires the player to initiate the missed voice call manually.
+    // The three follow-up texts become available only after the call attempt ends.
+    if (open.id === "anton" && newStory.stage === 4 &&
+      newStory.stage2Replies >= STAGE2_CHOICES.length && newStory.stage2Reassurance === 0 &&
+      text === tr(lang, { en: "Voice call", ko: "보이스톡", zh: "语音电话" })) {
+      updateNewStory({ stage2Reassurance: 1 });
+      startCall("outgoing");
+      return;
+    }
     if (open.id === "seoyun" && !image) {
       if (newStory.xReplySent || newStory.stage === 6) {
         const step = readNewStory().seoyunStep;
-        const playerIndex = step === 1 ? 0 : step === 2 ? 1 : step === 4 ? 2 : step === 5 ? 3 : -1;
+        const playerIndex = step === 1 ? 0 : step === 2 ? 1 : step === 4 ? 2 : -1;
         if (playerIndex < 0) return;
         const preset = SEOYUN_PLAYER_STAGE3[playerIndex]!;
         const line = text === preset[lang] ? preset : { zh: text, ko: text, en: text };
@@ -529,7 +538,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
         playerMsg.message.date = "2026-10-31";
         playerMsg.message.time = `20:${String(playerMinute).padStart(2, "0")}`;
         setMsgs((old) => old.some((message) => message.id === playerMsg.message.id) ? old : [...old, playerMsg.message]);
-        updateNewStory({ seoyunStep: step + 1 });
+        updateNewStory({ seoyunStep: step === 4 ? 6 : step + 1 });
         return;
       }
       const introDone = msgs.filter((m) => m.contactId === "seoyun" && m.live && m.notified && m.id.startsWith("seoyun-after-anton-")).length >= 3;
@@ -702,16 +711,16 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
               if (index < followUps.length) deliverNext();
               else {
                 setAntonTyping(false);
-                // Let Anton's last jealous message appear before opening the outgoing call screen.
-                window.setTimeout(() => startCall("outgoing"), 350);
+                // Wait for the player to tap the voice-call preset after Anton's two messages.
               }
             }, 950);
           };
           deliverNext();
         }
-      } else if (currentStory.stage === 4 && currentStory.stage2Reassurance < STAGE2_REASSURE.length) {
+      } else if (currentStory.stage === 4 && currentStory.stage2Replies >= STAGE2_CHOICES.length &&
+        currentStory.stage2Reassurance >= 1 && currentStory.stage2Reassurance < STAGE2_REASSURE.length + 1) {
         const count = currentStory.stage2Reassurance + 1;
-        updateNewStory({ stage2Reassurance: count, ...(count === STAGE2_REASSURE.length ? { stage: 5 } : {}) });
+        updateNewStory({ stage2Reassurance: count, ...(count === STAGE2_REASSURE.length + 1 ? { stage: 5 } : {}) });
       }
     }
     if (flow.waiting) acknowledgeFixedNode(flow.waiting.id);
@@ -851,13 +860,14 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     }
     if (open.id === "anton" && newStory.stage === 4) {
       if (newStory.stage2Replies < STAGE2_CHOICES.length) return STAGE2_CHOICES[newStory.stage2Replies]?.[lang];
-      if (newStory.stage2Reassurance < STAGE2_REASSURE.length) return STAGE2_REASSURE[newStory.stage2Reassurance]?.[lang];
+      if (newStory.stage2Reassurance === 0) return tr(lang, { en: "Voice call", ko: "보이스톡", zh: "语音电话" });
+      if (newStory.stage2Reassurance <= STAGE2_REASSURE.length) return STAGE2_REASSURE[newStory.stage2Reassurance - 1]?.[lang];
     }
     const current = readAntonScene();
     if (open.id === "seoyun") {
       if (newStory.xReplySent || newStory.stage === 6) {
         const step = newStory.seoyunStep;
-        const playerIndex = step === 1 ? 0 : step === 2 ? 1 : step === 4 ? 2 : step === 5 ? 3 : -1;
+        const playerIndex = step === 1 ? 0 : step === 2 ? 1 : step === 4 ? 2 : -1;
         return playerIndex >= 0 ? SEOYUN_PLAYER_STAGE3[playerIndex]?.[lang] : undefined;
       }
       const introDone = msgs.filter((m) => m.contactId === "seoyun" && m.live && m.notified && m.id.startsWith("seoyun-after-anton-")).length >= 3;
