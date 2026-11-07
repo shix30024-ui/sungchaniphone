@@ -24,14 +24,37 @@ const INITIAL: NewStoryState = {
   antonStoryViewed: false, stage4Step: 0, yunaPostRemoved: false, endingPosted: false,
 };
 
-// Story progress is deliberately session-local. It never rewrites the owner's saved phone data.
-let state: NewStoryState = { ...INITIAL };
+// Story progress is stored separately from the owner's phone content.
+// This keeps the story stage across refreshes without rewriting chats, posts, or contacts.
+const STORAGE_KEY = "fiction-story-progress-v1";
 const EVENT = "fiction-story-update";
+function loadStoryState(): NewStoryState {
+  if (typeof window === "undefined") return { ...INITIAL };
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return { ...INITIAL, ...JSON.parse(raw) };
+    // Recover the unlock if the final Yuna DM was already saved before progress persistence existed.
+    const dmRaw = localStorage.getItem("ig-dm-messages-v1");
+    if (dmRaw) {
+      const messages = JSON.parse(dmRaw) as Array<{ id?: string }>;
+      if (messages.some((message) => message.id === "new-story-yuna-reply-4")) {
+        const recovered = { ...INITIAL, stage: 10, yunaDmSent: true, yunaPostRemoved: true };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(recovered));
+        return recovered;
+      }
+    }
+  } catch { /* Keep the safe initial state if stored progress is unreadable. */ }
+  return { ...INITIAL };
+}
+let state: NewStoryState = loadStoryState();
 
 export const readNewStory = () => ({ ...state });
 export function updateNewStory(patch: Partial<NewStoryState>) {
   state = { ...state, ...patch };
-  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(EVENT, { detail: readNewStory() }));
+  if (typeof window !== "undefined") {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* Story progress must not block phone data. */ }
+    window.dispatchEvent(new CustomEvent(EVENT, { detail: readNewStory() }));
+  }
   return readNewStory();
 }
 export function subscribeNewStory(listener: () => void) {
