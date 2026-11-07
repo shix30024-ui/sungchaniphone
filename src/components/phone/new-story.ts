@@ -1,0 +1,144 @@
+import type { Lang } from "./i18n";
+
+export type StoryText = Record<Lang, string>;
+export type NewStoryState = {
+  stage: number;
+  openingReplies: number;
+  reassuranceReplies: number;
+  finalReplies: number;
+  seoyunReplies: number;
+  yunaDmSent: boolean;
+  xPostPublished: boolean;
+  antonStoryViewed: boolean;
+  yunaPostRemoved: boolean;
+  endingPosted: boolean;
+};
+
+const INITIAL: NewStoryState = {
+  stage: 0, openingReplies: 0, reassuranceReplies: 0, finalReplies: 0,
+  seoyunReplies: 0, yunaDmSent: false, xPostPublished: false,
+  antonStoryViewed: false, yunaPostRemoved: false, endingPosted: false,
+};
+
+// Story progress is deliberately session-local. It never rewrites the owner's saved phone data.
+let state: NewStoryState = { ...INITIAL };
+const EVENT = "fiction-story-update";
+
+export const readNewStory = () => ({ ...state });
+export function updateNewStory(patch: Partial<NewStoryState>) {
+  state = { ...state, ...patch };
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(EVENT, { detail: readNewStory() }));
+  return readNewStory();
+}
+export function subscribeNewStory(listener: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener(EVENT, listener);
+  return () => window.removeEventListener(EVENT, listener);
+}
+export const NEW_STORY_EVENT = EVENT;
+
+export const OPENING_ANTON: StoryText[] = [
+  { ko: "오늘 대금 치다가 형 생각났어", zh: "今天拉大提琴的时候想起哥了", en: "I thought of you while playing cello today." },
+  { ko: "형 너무 바쁜 것 같아", zh: "哥好像很忙", en: "You seem really busy." },
+  { ko: "연락도 안 하고", zh: "都不怎么联系我", en: "You barely even text me." },
+];
+export const OPENING_CHOICES: StoryText[] = [
+  { ko: "어디가 바빠 ㅎㅎ", zh: "哪有", en: "I'm not that busy." },
+  { ko: "우리 천사가 오랜만에 보고 싶다고 하네", zh: "我们天使久违地说想我啊", en: "Our angel finally says he misses me." },
+  { ko: "형도 많이 보고 싶었어", zh: "哥也好想你了", en: "I missed you too." },
+];
+export const OPENING_ANTON_2: StoryText = { ko: "형 요즘 뭐 해?", zh: "哥最近在忙什么", en: "What have you been busy with lately?" };
+export const OPENING_CHOICES_2: StoryText[] = [
+  { ko: "요즘 축제 준비하느라 바빠", zh: "最近在忙校庆", en: "I've been busy preparing for the campus festival." },
+  { ko: "너무 피곤해", zh: "好累", en: "I'm exhausted." },
+  { ko: "천사 안고 충전하고 싶어", zh: "想抱着天使充电", en: "I want to recharge by hugging you." },
+];
+export const OPENING_ANTON_3: StoryText = { ko: "이따 우리 집 올래?:)", zh: "待会来家里吧:)", en: "Want to come over later?:)" };
+
+export const STAGE2_ANTON: StoryText[] = [
+  { ko: "형 오늘 축제 누구랑 같이 있었어?", zh: "哥今天和谁在一起去校庆了？", en: "Who were you with at the festival today?" },
+  { ko: "나한테는 말 안 해 주네 hh", zh: "不告诉我啊hh", en: "You won't tell me, huh hh." },
+  { ko: "형은 누구한테나 그렇게 다정해?", zh: "哥跟谁都这么亲近吗？", en: "Are you that affectionate with everyone?" },
+  { ko: "여자친구야?", zh: "是女朋友吗", en: "Is she your girlfriend?" },
+  { ko: "됐어 나도 알고 싶지 않아", zh: "算了我也不想知道", en: "Forget it. I don't want to know." },
+];
+export const STAGE2_CHOICES: StoryText[] = [
+  { ko: "?", zh: "？", en: "?" },
+  { ko: "나 혼자였어", zh: "我一个人啊", en: "I was alone." },
+  { ko: "무슨 말이야", zh: "你在说什么", en: "What are you talking about?" },
+  { ko: "무슨 말인지 모르겠어", zh: "我听不懂", en: "I don't understand." },
+];
+export const STAGE2_REASSURE: StoryText[] = [
+  { ko: "왜 전화 안 받아", zh: "为什么不接电话", en: "Why aren't you answering?" },
+  { ko: "여자친구 같은 거 없어", zh: "哪有什么女朋友", en: "I don't have a girlfriend." },
+  { ko: "그 게시물 본 거지?", zh: "是你看到那个帖子了吧？", en: "You saw that post, didn't you?" },
+];
+
+export const SEOYUN_STAGE3: StoryText[] = [
+  { ko: "오늘 동아리에서 앤톤 기분 안 좋아 보이던데", zh: "今天在社团anton情绪不高哦", en: "Anton seemed upset at the club today." },
+  { ko: "너희 무슨 일 있어? 너 여자친구 생겼어???", zh: "你们怎么了？你有女朋友？？？", en: "What happened between you two? Do you have a girlfriend???" },
+  { ko: "첼로 연주하다가 음도 몇 번 틀렸어!", zh: "他拉琴拉错好几个音！", en: "He even missed several notes while playing cello!" },
+  { ko: "ㅅㅂ", zh: "ㅅㅂ", en: "Damn." },
+  { ko: "너 뭐 하는 거야!", zh: "你搞什么!", en: "What are you doing!" },
+  { ko: "도촬 당한 것도 몰랐어?", zh: "被人偷拍都不知道", en: "You didn't even know someone took that photo?" },
+  { ko: "너 진짜 웃음이 나와?", zh: "你居然笑得出来？", en: "You can actually laugh right now?" },
+  { ko: "완전 상처 주네", zh: "简直杀人诛心", en: "That's honestly brutal." },
+  { ko: "내 CP 이제 끝이야?", zh: "我的cp要be了", en: "Is my favorite ship over?" },
+  { ko: "나 너랑 말 안 해", zh: "我不跟你好了", en: "I'm not talking to you." },
+];
+
+export const STAGE4_ANTON: StoryText[] = [
+  { ko: "스토리 올리면서 내 메시지는 안 읽어?", zh: "发快拍都不回我信息？", en: "You can post a story but not reply to me?" },
+  { ko: "그냥 답하기 싫었어", zh: "就是不想", en: "I just didn't want to." },
+  { ko: "응", zh: "嗯？", en: "Yeah?" },
+  { ko: "형은 원래 먼저 다가가는 사람 아니잖아", zh: "哥不算主动的人", en: "You're not usually the one to make the first move." },
+  { ko: "근데 너한테는 예외였어", zh: "可是对你破例了啊..", en: "But I made an exception for you.." },
+  { ko: "형이 너 좋아하는 거 알잖아", zh: "哥喜欢你你是知道的啊", en: "You know I like you." },
+  { ko: "왜 그런 착각을 하게 됐어?", zh: "怎么还会出现这样的错觉", en: "Why would you think otherwise?" },
+  { ko: "형 주변엔 여자애들이 많잖아", zh: "哥身边有好多女孩子", en: "There are so many girls around you." },
+  { ko: "그래서 자꾸 헷갈렸어", zh: "所以总是会产生错觉", en: "So I kept getting confused." },
+  { ko: "형은 어떤 여자가 좋아? 나한텐 어떤 마음이야?", zh: "哥喜欢什么样的女生？哥对我又是什么想法", en: "What kind of girl do you like? What do you feel for me?" },
+  { ko: "그런 생각 자주 했어", zh: "经常这样想", en: "I think about that a lot." },
+  { ko: "물어보기가 무서웠어", zh: "不敢问", en: "I was afraid to ask." },
+  { ko: "나 봐", zh: "看看", en: "Look at me." },
+  { ko: "천사가 형 좋아하는 거", zh: "天使喜欢我", en: "You like me." },
+  { ko: "맞지?", zh: "对吗？", en: "Right?" },
+  { ko: "그냥 그런 거 말고", zh: "不是那种喜欢", en: "Not just that kind of like." },
+  { ko: "무슨 말인지 알잖아", zh: "你知道哥再说什么", en: "You know what I mean." },
+  { ko: "eh", zh: "eh", en: "eh" },
+  { ko: "응", zh: "응", en: "Yeah." },
+];
+
+export const STAGE5_YUNA_REPLY: StoryText[] = [
+  { ko: "남자친구…?", zh: "男朋友…?", en: "Boyfriend…?" },
+  { ko: "미안해요 몰랐어요", zh: "抱歉我不知道", en: "I'm sorry, I didn't know." },
+  { ko: "성찬 선배는 여자 좋아하는 줄 알았어요", zh: "一直以为成灿哥性取向是女生来着", en: "I always thought you liked girls, sunbaenim." },
+  { ko: "삭제할게요!", zh: "我会删除的！", en: "I'll delete it!" },
+];
+
+export const STAGE6_ANTON: StoryText[] = [
+  { ko: "?", zh: "？", en: "?" },
+  { ko: "형 남자친구가 누구야?", zh: "谁是男朋友", en: "Who is your boyfriend?" },
+  { ko: "천사", zh: "天使", en: "Angel." },
+  { ko: "형이랑 사귈래?", zh: "所以愿意和哥在一起吗？", en: "Will you be my boyfriend?" },
+  { ko: ":)", zh: ":)", en: ":)" },
+  { ko: "뭐야", zh: "什么啊", en: "What?" },
+  { ko: "형이 너 얼마나 아끼는지 알지?", zh: "知道哥很珍惜你吧？", en: "You know how much I treasure you, right?" },
+  { ko: "그만 애태워", zh: "别折磨我了", en: "Don't keep me waiting." },
+  { ko: "알았어", zh: "知道了", en: "I know." },
+  { ko: "남자친구", zh: "男朋友", en: "Boyfriend." },
+  { ko: "보고 싶어", zh: "想你了", en: "I miss you." },
+];
+
+export const PLAYER_CHOICES_STAGE2 = STAGE2_CHOICES;
+export const PLAYER_CHOICES_STAGE4: StoryText[] = [
+  { ko: "천사", zh: "天使", en: "Angel." },
+  { ko: "우리 얘기 좀 하자", zh: "我们要把话说开啊", en: "We need to talk this through." },
+  { ko: "응?", zh: "嗯？", en: "Hm?" },
+];
+export const PLAYER_CHOICES_STAGE6: StoryText[] = [
+  { ko: "학妹 게시물은 삭제해 달라고 했어", zh: "学妹的那条帖子已经让她删除了", en: "I asked her to take the post down." },
+  { ko: "내 남자친구가 화났다고도 했고", zh: "也告诉他我的小男朋友生气了", en: "And I told her my boyfriend was upset." },
+  { ko: "천사", zh: "天使", en: "Angel." },
+  { ko: "그래서 형이랑 사귈래?", zh: "所以愿意和哥在一起吗？", en: "So, will you be with me?" },
+];
