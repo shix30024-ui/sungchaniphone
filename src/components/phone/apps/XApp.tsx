@@ -55,7 +55,7 @@ export default function XApp({ lang, onHome }: AppProps) {
               const now = new Date();
               window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: {
                 id: "new-story-seoyun-notice", contactId: "seoyun", sender: "them", type: "text",
-                ko: "성찬아, 카톡 봐. 서윤이야.", zh: "成灿，看看KKT。是 Seoyun。", en: "Sungchan, check KakaoTalk. It's Seoyun.",
+                ko: "오늘 동아리에서 앤톤 기분 안 좋아 보이던데", zh: "今天在社团anton情绪不高哦", en: "Anton seemed upset at the club today.",
                 date: "2026-10-31", time: "21:20", order: 900001, live: true, read: false, notified: true,
                 createdAt: now.toISOString(),
               } }));
