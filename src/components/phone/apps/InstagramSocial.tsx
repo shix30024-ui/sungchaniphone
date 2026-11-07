@@ -25,7 +25,7 @@ export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: 
   // Derive a small gallery from existing posts, never altering or copying over the posts themselves.
   const ownStories = stored ?? posts.filter((p) => !p.authorId || p.authorId === SELF_ID).slice(0, 4).map((p) => ({ id: `story-${p.id}`, authorId: SELF_ID, user: profile.username, image: postImages(p)[0] ?? "", text: p.caption, date: p.date }));
   const friendStories = friendStored ?? posts.filter((p, i, all) => p.authorId && p.authorId !== SELF_ID && all.findIndex((other) => other.authorId === p.authorId) === i).map((p) => ({ id: `friend-story-${p.id}`, authorId: p.authorId ?? SELF_ID, user: accounts.find((a) => a.id === p.authorId)?.username ?? "", image: postImages(p)[0] ?? "", text: p.caption, date: p.date }));
-  const newAntonStory: Story[] = readNewStory().stage === 7 ? [{ id: "new-story-anton-20261031", user: "antinitony", image: "", text: "", date: "2026-10-31", authorId: "anton" }] : [];
+  const newAntonStory: Story[] = readNewStory().stage >= 7 ? [{ id: "new-story-anton-20261031", user: "antinitony", image: "", text: "", date: "2026-10-31", authorId: "anton" }] : [];
   const stories = [...ownStories, ...friendStories, ...newAntonStory];
   const saveStory = (draft: Story) => {
     if (friendStories.some((s) => s.id === draft.id)) setFriendStored(friendStories.map((s) => s.id === draft.id ? draft : s));
@@ -38,7 +38,7 @@ export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: 
   const active = index === null ? undefined : stories[index];
   useEffect(() => {
     if (active && !seen.includes(active.id)) setSeen((current) => [...current, active.id]);
-    if (active?.id === "new-story-anton-20261031") {
+    if (active?.id === "new-story-anton-20261031" && !readNewStory().antonStoryViewed) {
       updateNewStory({ stage: 8, antonStoryViewed: true });
       const now = new Date();
       window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: {
