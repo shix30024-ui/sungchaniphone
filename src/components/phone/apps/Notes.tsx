@@ -21,9 +21,9 @@ export default function Notes({ lang, onHome }: AppProps) {
     if (!owner) return;
     const diaryNotes = NOTES.filter((note) => note.id.startsWith("n7-"));
     setNotes((current) => {
-      const withoutCombinedDiary = current.filter((note) => note.id !== "n7");
-      const missing = diaryNotes.filter((note) => !withoutCombinedDiary.some((saved) => saved.id === note.id));
-      return missing.length ? [...withoutCombinedDiary, ...missing] : withoutCombinedDiary;
+      const withoutRemovedNotes = current.filter((note) => !["n7", "n7-9", "n7-10"].includes(note.id));
+      const missing = diaryNotes.filter((note) => !withoutRemovedNotes.some((saved) => saved.id === note.id));
+      return missing.length ? [...withoutRemovedNotes, ...missing] : withoutRemovedNotes;
     });
   }, [owner, setNotes]);
   const [folders, setFolders] = usePersist<NoteFolder[]>("phone-note-folders-v1", []);
