@@ -194,10 +194,10 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
         const line = lines[i];
         if (!line) continue;
         const id = `${prefix}-${i + 1}`;
-        const alreadyThere = saved.some((reply) => reply.message.id === id ||
-          (reply.message.sender === "me" && (reply.message.zh === line.zh || reply.message.ko === line.ko || reply.message.en === line.en)))
-          || additions.some((reply) => reply.message.id === id);
-        if (alreadyThere) { anchorId = id; continue; }
+        const existing = saved.find((reply) => reply.message.id === id ||
+          (reply.message.sender === "me" && (reply.message.zh === line.zh || reply.message.ko === line.ko || reply.message.en === line.en)));
+        if (existing) { anchorId = existing.message.id; continue; }
+        if (additions.some((reply) => reply.message.id === id)) { anchorId = id; continue; }
         const outgoing = temporaryReply(line.zh, lang);
         outgoing.message.id = id; outgoing.message.sender = "me";
         outgoing.message.ko = line.ko; outgoing.message.zh = line.zh; outgoing.message.en = line.en;
