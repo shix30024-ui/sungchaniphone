@@ -58,9 +58,10 @@ export function readTemporaryReplies(contactId: string): TemporaryReply[] {
   let saved: TemporaryReply[] = [];
   if (typeof window !== "undefined") {
     try {
-      const raw = localStorage.getItem(`${TEMPORARY_KEY_PREFIX}${contactId}`);
-      const parsed = raw ? JSON.parse(raw) : [];
-      if (Array.isArray(parsed)) saved = parsed as TemporaryReply[];
+      // Read through the shared phone store first, while retaining compatibility
+      // with temporary conversations saved by earlier local-only versions.
+      const stored = readStored<TemporaryReply[]>(`${TEMPORARY_KEY_PREFIX}${contactId}`, []);
+      if (Array.isArray(stored)) saved = stored;
     } catch { /* Keep the current conversation usable if this optional cache is unreadable. */ }
   }
   temporaryStore.set(contactId, saved);
@@ -70,8 +71,11 @@ export function readTemporaryReplies(contactId: string): TemporaryReply[] {
 export function writeTemporaryReplies(contactId: string, replies: TemporaryReply[]) {
   temporaryStore.set(contactId, replies);
   if (typeof window !== "undefined") {
-    try { localStorage.setItem(`${TEMPORARY_KEY_PREFIX}${contactId}`, JSON.stringify(replies)); }
-    catch { /* A storage failure must not interrupt the open conversation. */ }
+    try {
+      // The same shared persistence path as story progress prevents the two
+      // records from drifting between the editor and the published phone.
+      updateStored<TemporaryReply[]>(`${TEMPORARY_KEY_PREFIX}${contactId}`, [], () => replies);
+    } catch { /* A storage failure must not interrupt the open conversation. */ }
   }
 }
 
