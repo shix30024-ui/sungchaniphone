@@ -81,21 +81,27 @@ export function InstagramDM({ accounts, lang, onClose, onYunaProfile, initialCon
   // Yuna's messages are a fixed story thread. Merge by ID so player replies and edits survive.
   useEffect(() => {
     const fixed: Msg[] = [
-      { id: "ig-yuna-hello-20261028", contactId: "yuna", sender: "them", type: "text", ko: "성찬 선배 안녕하세요!", zh: "成灿学长你好！", en: "Hello, Sungchan sunbaenim!", date: "2026-10-28", time: "19:38", order: 1, read: true },
-      { id: "ig-yuna-got-ig-20261028", contactId: "yuna", sender: "them", type: "text", ko: "드디어 인스타 맞팔했네요ㅎㅎ", zh: "终于要到ig了呢哈哈", en: "Finally got your Instagramㅎㅎ", date: "2026-10-28", time: "19:40", order: 2, read: true },
-      { id: "ig-yuna-confession-20261028", contactId: "yuna", sender: "them", type: "text", ko: "선배 좋아한 지 오래됐어요~", zh: "喜欢学长好久了～", en: "I've liked you for a long time, sunbaenim~", date: "2026-10-28", time: "19:42", order: 4, read: true },
-      { id: "ig-yuna-day2-20261029", contactId: "yuna", sender: "them", type: "text", ko: "선배 오늘 수업 잘 끝났어요? 저는 방금 끝났어요ㅎㅎ", zh: "学长今天课程顺利结束了吗？我刚刚下课ㅎㅎ", en: "Did your classes go well today, sunbaenim? I just finished mineㅎㅎ", date: "2026-10-29", time: "18:16", order: 5, read: true },
-      { id: "ig-yuna-day3-20261030", contactId: "yuna", sender: "them", type: "text", ko: "오늘 학교에서 선배 본 것 같은데 인사할까 하다가 못 했어요ㅋㅋ", zh: "今天好像在学校看到学长了，本来想打招呼，结果没敢ㅋㅋ", en: "I think I saw you at school today. I wanted to say hi but got shyㅋㅋ", date: "2026-10-30", time: "20:04", order: 6, read: true },
-      { id: "ig-yuna-festival-1-20261031", contactId: "yuna", sender: "them", type: "text", ko: "성찬 오빠 실제로 보니까 사진보다 더 잘생겼어요", zh: "成灿哥真人比照片帅多了", en: "Sungchan oppa, you look even better in person than in photos.", date: "2026-10-31", time: "21:06", order: 7, read: true },
-      { id: "ig-yuna-festival-2-20261031", contactId: "yuna", sender: "them", type: "text", ko: "근데 왜 답장 안 해요? 아까는 인사도 해줬으면서ㅠㅠ", zh: "但是为什么不回信息呢？明明在线下都跟我打招呼了ㅠㅠ", en: "But why aren't you replying? You said hi to me in person earlierㅠㅠ", date: "2026-10-31", time: "21:08", order: 8, read: true },
-      { id: "ig-yuna-sungchan-busy-20261031", contactId: "yuna", sender: "me", type: "text", ko: "아 요즘 너무 바빠서 인스타를 잘 못 봤어 미안해", zh: "啊 最近太忙了不太看ig 抱歉", en: "Ah, I've been really busy lately and haven't checked Instagram much. Sorry.", date: "2026-10-31", time: "21:12", order: 9, read: true },
-      { id: "ig-yuna-kkt-ask-20261031", contactId: "yuna", sender: "them", type: "text", ko: "그럼 오빠 카톡 알려주면 안 돼요?", zh: "那给我哥哥的kkt吧？", en: "Then could you give me your KakaoTalk?", date: "2026-10-31", time: "21:13", order: 10, read: true },
+      { id: "ig-yuna-hello-20260923", contactId: "yuna", sender: "them", type: "text", ko: "성찬 선배 안녕하세요!", zh: "成灿学长你好", en: "Hello, Sungchan sunbaenim.", date: "2026-09-23", time: "19:38", order: 1, read: true },
+      { id: "ig-yuna-got-ig-20260923", contactId: "yuna", sender: "them", type: "text", ko: "드디어 인스타 아이디 받았네요ㅎㅎ", zh: "终于要到ig了呢哈哈", en: "I finally got your Instagramㅎㅎ", date: "2026-09-23", time: "19:40", order: 2, read: true },
+      { id: "ig-yuna-sungchan-hello-20260923", contactId: "yuna", sender: "me", type: "text", ko: "안녕하세요", zh: "你好", en: "Hello.", date: "2026-09-23", time: "19:41", order: 3, read: true },
+      { id: "ig-yuna-sungchan-junior-20260923", contactId: "yuna", sender: "me", type: "text", ko: "후배구나", zh: "是学妹啊", en: "Oh, you're my junior.", date: "2026-09-23", time: "19:42", order: 4, read: true },
+      { id: "ig-yuna-confession-20260923", contactId: "yuna", sender: "them", type: "text", ko: "선배 좋아한 지 오래됐어요~", zh: "喜欢学长好久了～", en: "I've liked you for a long time, sunbaenim~", date: "2026-09-23", time: "19:43", order: 5, read: true },
+      { id: "ig-yuna-festival-1-20261031", contactId: "yuna", sender: "them", type: "text", ko: "성찬 오빠 실제로 보니까 사진보다 더 잘생겼어요", zh: "成灿哥真人比照片帅多了", en: "Sungchan oppa, you look even better in person than in photos.", date: "2026-10-31", time: "21:06", order: 6, read: true },
+      { id: "ig-yuna-festival-2-20261031", contactId: "yuna", sender: "them", type: "text", ko: "근데 왜 답장 안 해요? 아까는 인사도 해줬으면서ㅠㅠ", zh: "但是为什么不回信息呢？明明在线下都跟我打招呼了ㅠㅠ", en: "But why aren't you replying? You said hi to me in person earlierㅠㅠ", date: "2026-10-31", time: "21:08", order: 7, read: true },
+      { id: "ig-yuna-sungchan-busy-20261031", contactId: "yuna", sender: "me", type: "text", ko: "아 요즘 너무 바빠서 인스타를 잘 못 봤어 미안해", zh: "啊 最近太忙了不太看ig 抱歉", en: "Ah, I've been really busy lately and haven't checked Instagram much. Sorry.", date: "2026-10-31", time: "21:12", order: 8, read: true },
+      { id: "ig-yuna-kkt-ask-20261031", contactId: "yuna", sender: "them", type: "text", ko: "그럼 오빠 카톡 알려주면 안 돼요?", zh: "那给我哥哥的kkt吧？", en: "Then could you give me your KakaoTalk?", date: "2026-10-31", time: "21:13", order: 9, read: true },
     ];
     setMsgs((current) => {
-      const existing = new Set(current.map((m) => m.id));
-      const missing = fixed.filter((m) => !existing.has(m.id));
-      const withoutOldSeed = current.filter((m) => m.id !== "ig-yuna-first-dm-20261028");
-      return missing.length || withoutOldSeed.length !== current.length ? [...withoutOldSeed, ...missing] : current;
+      const fixedIds = new Set(fixed.map((message) => message.id));
+      const obsoleteSeedIds = new Set([
+        "ig-yuna-hello-20261028", "ig-yuna-got-ig-20261028", "ig-yuna-confession-20261028",
+        "ig-yuna-day2-20261029", "ig-yuna-day3-20261030", "ig-yuna-festival-1-20261031",
+        "ig-yuna-festival-2-20261031", "ig-yuna-sungchan-busy-20261031", "ig-yuna-kkt-ask-20261031",
+        "ig-yuna-first-dm-20261028",
+      ]);
+      const preserved = current.filter((message) => !obsoleteSeedIds.has(message.id) && !fixedIds.has(message.id));
+      const missing = fixed.filter((message) => !current.some((existing) => existing.id === message.id));
+      return missing.length || preserved.length !== current.length ? [...preserved, ...missing] : current;
     });
   }, [setMsgs]);
   const [queue] = usePersist<PendingReply[]>(QUEUE_KEY, []);
@@ -120,9 +126,7 @@ export function InstagramDM({ accounts, lang, onClose, onYunaProfile, initialCon
   const typing = queue.some((q) => !q.failed && q.channel === "ig" && q.contactId === open);
   const thread = msgs.filter((m) => m.contactId === open).sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`) || a.order - b.order);
   useEffect(() => { setShowYunaHistory(false); }, [open]);
-  const yunaReplyTexts = ["你好", "是学妹啊"];
-  const sentYunaReplies = thread.filter((m) => m.sender === "me" && yunaReplyTexts.includes(m.originalText ?? messageText(m, "zh")));
-  const yunaHistoryIds = new Set(["ig-yuna-day2-20261029", "ig-yuna-day3-20261030", "ig-yuna-festival-1-20261031", "ig-yuna-festival-2-20261031", "ig-yuna-sungchan-busy-20261031", "ig-yuna-kkt-ask-20261031"]);
+  const yunaHistoryIds = new Set<string>();
   const newStoryChoices = [
     { zh: "那个", ko: "저기", en: "Um..." },
     { zh: "可以把帖子删除吗？", ko: "게시물 삭제해 줄 수 있어요?", en: "Could you delete the post?" },
@@ -133,24 +137,6 @@ export function InstagramDM({ accounts, lang, onClose, onYunaProfile, initialCon
   const visibleThread = open === "yuna" && !showYunaHistory
     ? thread.filter((m) => !yunaHistoryIds.has(m.id))
     : thread;
-  const startYunaTyping = () => {
-    if (open !== "yuna" || scriptedTyping || typingTimer.current) return;
-    const next = yunaReplyTexts[sentYunaReplies.length];
-    if (!next) return;
-    setKeyboardOpen(true);
-    setScriptedTyping(true);
-    setText("");
-    let index = 0;
-    typingTimer.current = setInterval(() => {
-      index += 1;
-      setText(next.slice(0, index));
-      if (index >= next.length) {
-        if (typingTimer.current) clearInterval(typingTimer.current);
-        typingTimer.current = null;
-        setScriptedTyping(false);
-      }
-    }, 170);
-  };
   useEffect(() => () => { if (typingTimer.current) clearInterval(typingTimer.current); }, []);
   useEffect(() => {
     if (!open) return;
@@ -192,7 +178,7 @@ export function InstagramDM({ accounts, lang, onClose, onYunaProfile, initialCon
             createdAt: now.toISOString(),
           } }));
         }
-      } else sendChat("ig", contact.id, outgoingText, lang); const finishesYunaIntro = open === "yuna" && sentYunaReplies.length === 1 && outgoingText === "是学妹啊"; setText(""); setKeyboardOpen(false); if (finishesYunaIntro) setOpen(null); }}><span className="ig-dm-cam"><Camera size={18} /></span><input aria-label={tr(lang, { en: "DM message", ko: "메시지 입력", zh: "输入私信" })} placeholder={tr(lang, { en: "Message...", ko: "메시지 보내기...", zh: "发消息…" })} value={text} onFocus={() => { setKeyboardOpen(true); if (open === "yuna" && readNewStory().stage !== 9 && sentYunaReplies.length < 2 && !text) startYunaTyping(); }} onChange={(e) => setText(e.target.value)} /><Button variant="ghost" size="sm" className="ig-dm-send" disabled={!text.trim() || scriptedTyping} aria-label={tr(lang, { en: "Send DM", ko: "메시지 보내기", zh: "发送私信" })}>{tr(lang, { en: "Send", ko: "보내기", zh: "发送" })}</Button></form>
+      } else sendChat("ig", contact.id, outgoingText, lang); setText(""); setKeyboardOpen(false); }}><span className="ig-dm-cam"><Camera size={18} /></span><input aria-label={tr(lang, { en: "DM message", ko: "메시지 입력", zh: "输入私信" })} placeholder={tr(lang, { en: "Message...", ko: "메시지 보내기...", zh: "发消息…" })} value={text} onFocus={() => { setKeyboardOpen(true);  }} onChange={(e) => setText(e.target.value)} /><Button variant="ghost" size="sm" className="ig-dm-send" disabled={!text.trim() || scriptedTyping} aria-label={tr(lang, { en: "Send DM", ko: "메시지 보내기", zh: "发送私信" })}>{tr(lang, { en: "Send", ko: "보내기", zh: "发送" })}</Button></form>
       {keyboardOpen && <div className="border-t bg-muted/80 px-2 py-3 space-y-2" aria-label={tr(lang, { en: "On-screen keyboard", ko: "화면 키보드", zh: "屏幕键盘" })}>
         {["qwertyuiop", "asdfghjkl", "zxcvbnm"].map((row, index) => <div className="flex justify-center gap-1" key={row}>{row.split("").map((key) => <button type="button" className="h-10 min-w-0 flex-1 rounded-md bg-card text-foreground shadow-sm text-sm font-medium active:bg-accent" key={key} onMouseDown={(e) => e.preventDefault()} onClick={() => setText((value) => value + key)}>{key}</button>)}{index === 2 && <button type="button" className="h-10 min-w-0 flex-1 rounded-md bg-secondary text-foreground shadow-sm text-sm font-medium active:bg-accent" onMouseDown={(e) => e.preventDefault()} onClick={() => setText((value) => value.slice(0, -1))}>⌫</button>}</div>)}
         <div className="ig-key-row"><button type="button" className="ig-key ig-key-wide" onClick={() => setText((value) => value + ",")}>,</button><button type="button" className="h-10 min-w-0 flex-[5] rounded-md bg-card text-foreground shadow-sm text-xs font-medium active:bg-accent" onClick={() => setText((value) => value + " ")}>{tr(lang, { en: "space", ko: "공백", zh: "空格" })}</button><button type="button" className="ig-key ig-key-wide" onClick={() => setText((value) => value + ".")}>.</button><button type="button" className="ig-key ig-key-wide" onClick={() => setKeyboardOpen(false)}>⌄</button></div>
