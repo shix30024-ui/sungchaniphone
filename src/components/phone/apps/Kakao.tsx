@@ -165,6 +165,8 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
         if (!line) { setAntonTyping(false); return; }
         const incoming = temporaryReply(line.zh, lang, anchor);
         incoming.message.id = `story1-opening-${index + 1}`;
+        incoming.message.date = "2026-10-31";
+        incoming.message.time = `17:${String(30 + index).padStart(2, "0")}`;
         incoming.message.sender = "them";
         incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
         setTemporary((old) => old.some((reply) => reply.message.id === incoming.message.id) ? old : [...old, incoming]);
@@ -646,6 +648,13 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     if (open.id !== "anton") { sendChat("kkt", open.id, text, lang, Date.now(), image); return; }
     const visibleThread = withTemporaryReplies(fixedThread, readTemporaryReplies("anton"));
     const playerMsg = temporaryReply(text, lang, visibleThread.at(-1), image);
+    if (open.id === "anton" && newStory.stage === 1 && !image) {
+      playerMsg.message.date = "2026-10-31";
+      const minute = newStory.openingReplies < OPENING_CHOICES.length
+        ? 33 + newStory.openingReplies
+        : 37 + newStory.reassuranceReplies;
+      playerMsg.message.time = `17:${String(minute).padStart(2, "0")}`;
+    }
     if (open.id === "anton" && newStory.stage === 4 && newStory.stage2Replies >= STAGE2_CHOICES.length) playerMsg.message.read = false;
     setTemporary((old) => [...old, playerMsg]);
     if (open.id === "anton" && (newStory.stage === 1 || newStory.stage === 4) && !image) {
@@ -658,8 +667,8 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
           const incoming = temporaryReply(line.zh, lang, anchor);
           incoming.message.sender = "them";
           incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
-          if (line === OPENING_ANTON_2) incoming.message.id = "story1-anton-2";
-          if (line === OPENING_ANTON_3) incoming.message.id = "story1-anton-3";
+          if (line === OPENING_ANTON_2) { incoming.message.id = "story1-anton-2"; incoming.message.date = "2026-10-31"; incoming.message.time = "17:36"; }
+          if (line === OPENING_ANTON_3) { incoming.message.id = "story1-anton-3"; incoming.message.date = "2026-10-31"; incoming.message.time = "17:40"; }
           setTemporary((old) => old.some((reply) => reply.message.id === incoming.message.id) ? old : [...old, incoming]);
           setAntonTyping(false);
         }, 950);
