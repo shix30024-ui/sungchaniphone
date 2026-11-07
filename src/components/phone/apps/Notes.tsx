@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Folder, FolderPlus, Search, SquarePen, Trash2 } from "lucide-react";
 import { type AppProps, tr } from "../i18n";
@@ -15,6 +15,14 @@ type FolderNote = LocalizedNote;
 export default function Notes({ lang, onHome }: AppProps) {
   const owner = useOwner();
   const [notes, setNotes] = usePersist<FolderNote[]>("notes-v1", NOTES);
+  // Add the authored Anton diary note to existing saved Notes without replacing or
+  // rewriting any notes the owner has already created or edited.
+  useEffect(() => {
+    if (!owner) return;
+    const diary = NOTES.find((note) => note.id === "n7");
+    if (!diary) return;
+    setNotes((current) => current.some((note) => note.id === diary.id) ? current : [...current, diary]);
+  }, [owner, notes, setNotes]);
   const [folders, setFolders] = usePersist<NoteFolder[]>("phone-note-folders-v1", []);
   const [draft, setDraft] = useState<FolderNote | null>(null);
   const [folderView, setFolderView] = useState(false);
