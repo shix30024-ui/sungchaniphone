@@ -2,6 +2,7 @@ import { STORY_DATE, sortMessages } from "./chronology";
 import type { Lang } from "./i18n";
 import type { Msg } from "./story";
 import { readStored, updateStored, uid } from "./store";
+import { queueSharedSave } from "./shared-state";
 
 export const ANTON_PROGRESS_KEY = "kkt-anton-fixed-progress-v1";
 export type FixedProgress = { answeredIds: string[] };
@@ -74,7 +75,9 @@ export function writeTemporaryReplies(contactId: string, replies: TemporaryReply
     try {
       // The same shared persistence path as story progress prevents the two
       // records from drifting between the editor and the published phone.
-      updateStored<TemporaryReply[]>(`${TEMPORARY_KEY_PREFIX}${contactId}`, [], () => replies);
+      const key = `${TEMPORARY_KEY_PREFIX}${contactId}`;
+      updateStored<TemporaryReply[]>(key, [], () => replies);
+      queueSharedSave(key, replies);
     } catch { /* A storage failure must not interrupt the open conversation. */ }
   }
 }
