@@ -428,6 +428,7 @@ export default function Phone() {
     if (editMode && a.id !== "settings") setEditing(apps.find((original) => original.id === a.id) ?? a);
     else if (!editMode) {
       if (a.id === "kkt" && (readNewStory().stage === 0 || readNewStory().stage === 3)) setChatTarget("anton");
+      if (a.id === "kkt" && readNewStory().stage === 6) setChatTarget("seoyun");
       setOpen(a);
     }
   };
