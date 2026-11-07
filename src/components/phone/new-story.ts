@@ -13,6 +13,7 @@ export type NewStoryState = {
   yunaDmSent: boolean;
   xPostPublished: boolean;
   antonStoryViewed: boolean;
+  stage4Step: number;
   yunaPostRemoved: boolean;
   endingPosted: boolean;
 };
@@ -20,7 +21,7 @@ export type NewStoryState = {
 const INITIAL: NewStoryState = {
   stage: 0, openingReplies: 0, reassuranceReplies: 0, stage2Replies: 0, stage2Reassurance: 0, finalReplies: 0,
   seoyunReplies: 0, seoyunStep: 0, yunaDmSent: false, xPostPublished: false,
-  antonStoryViewed: false, yunaPostRemoved: false, endingPosted: false,
+  antonStoryViewed: false, stage4Step: 0, yunaPostRemoved: false, endingPosted: false,
 };
 
 // Story progress is deliberately session-local. It never rewrites the owner's saved phone data.
@@ -117,6 +118,22 @@ export const STAGE4_ANTON: StoryText[] = [
   { ko: "무슨 말인지 알잖아", zh: "你知道哥再说什么", en: "You know what I mean." },
   { ko: "eh", zh: "eh", en: "eh" },
   { ko: "응", zh: "응", en: "Yeah." },
+];
+
+export const STAGE4_PLAYER_CHOICES: StoryText[] = [
+  { ko: "스토리 올리면서 내 메시지는 안 읽어?", zh: "发快拍都不回我信息？", en: "You can post a story but not reply to me?" },
+  { ko: "천사", zh: "天使", en: "Angel." },
+  { ko: "우리 얘기 좀 하자", zh: "我们要把话说开啊", en: "We need to talk this through." },
+  { ko: "응?", zh: "嗯？", en: "Hm?" },
+  { ko: "형은 원래 먼저 다가가는 사람 아니잖아", zh: "哥不算主动的人", en: "You're not usually the one to make the first move." },
+  { ko: "근데 너한테는 예외였어..", zh: "可是对你破例了啊..", en: "But I made an exception for you.." },
+  { ko: "형이 너 좋아하는 거 알잖아", zh: "哥喜欢你你是知道的啊", en: "You know I like you." },
+  { ko: "왜 그런 착각을 하게 됐어?", zh: "怎么还会出现这样的错觉", en: "Why would you think otherwise?" },
+  { ko: "나 봐", zh: "看看", en: "Look at me." },
+  { ko: "천사가 형 좋아하는 거", zh: "天使喜欢我", en: "You like me." },
+  { ko: "맞지?", zh: "对吗？", en: "Right?" },
+  { ko: "그냥 그런 거 말고", zh: "不是那种喜欢", en: "Not just that kind of like." },
+  { ko: "무슨 말인지 알잖아", zh: "你知道哥再说什么", en: "You know what I mean." },
 ];
 
 export const STAGE5_YUNA_REPLY: StoryText[] = [
