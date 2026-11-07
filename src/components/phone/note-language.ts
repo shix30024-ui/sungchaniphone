@@ -17,8 +17,6 @@ const translated: Record<string, { en: NoteContent; zh: NoteContent }> = {
   "n7-6": { en: { title: "I'll be his microphone", body: "His voice is so quiet. Cute. Such a contrast. I should be his microphone!!" }, zh: { title: "我要当他的麦克风", body: "讲话声音好小，可爱，好反差。我要当他的麦克风！！" } },
   "n7-7": { en: { title: "Got him on KakaoTalk", body: "I got him on KakaoTalkㅋㅋ Jung Sungchan, make your move." }, zh: { title: "加到 KKT 了", body: "加到 KKT 了啊哈哈，郑成灿进攻吧。" } },
   "n7-8": { en: { title: "Seoyun", body: "Why does Seoyun keep observing us every day? It's embarrassing." }, zh: { title: "Seoyun", body: "Seoyun 怎么天天都在观察我们？让人怪不好意思的。" } },
-  "n7-9": { en: { title: "Baby came over", body: "Baby came over to my place today. I'm so happy." }, zh: { title: "宝宝今天来家里了", body: "宝宝今天来家里了，我好幸福。" } },
-  "n7-10": { en: { title: "To-do", body: "□ Finish the PPT\n□ Play soccer\n□ Help baby move" }, zh: { title: "待办", body: "□ 完成 PPT\n□ 踢球\n□ 帮宝宝搬家" } },
 };
 export function noteContent(note: LocalizedNote, lang: Lang): NoteContent {
  const explicit = note.translations?.[lang];
