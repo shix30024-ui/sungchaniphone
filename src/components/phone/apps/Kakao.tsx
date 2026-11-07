@@ -568,6 +568,10 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     );
 
   const suggestedReply = () => {
+    if (open.id === "anton" && newStory.stage === 1) {
+      if (newStory.openingReplies < OPENING_CHOICES.length) return OPENING_CHOICES[newStory.openingReplies]?.[lang];
+      if (newStory.reassuranceReplies < OPENING_CHOICES_2.length) return OPENING_CHOICES_2[newStory.reassuranceReplies]?.[lang];
+    }
     const current = readAntonScene();
     if (open.id === "seoyun") {
       const introDone = msgs.filter((m) => m.contactId === "seoyun" && m.live && m.notified && m.id.startsWith("seoyun-after-anton-")).length >= 3;
