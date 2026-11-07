@@ -19,6 +19,7 @@ import { confirmDelete, label, localeFor } from "../labels";
 import { completeTranslations } from "../translations";
 import { ANTON_PROGRESS_KEY, EMPTY_PROGRESS, fixedFlow, acknowledgeFixedNode, temporaryReply, withTemporaryReplies, readTemporaryReplies, writeTemporaryReplies, type FixedProgress, type TemporaryReply } from "../fixed-conversation";
 import { ANTON_OPENING, ANTON_AFTER_REASSURANCE, FIRST_PLAYER_REPLIES, FINAL_PLAYER_REPLIES, makeAntonSceneMessage, makeAntonSceneSystem, readAntonScene, updateAntonScene, startAntonWarmup, finishAntonWarmup, ANTON_WARM_OPENING, type AntonSceneState } from "../anton-scene";
+import { readNewStory, updateNewStory, subscribeNewStory, OPENING_ANTON, OPENING_CHOICES, OPENING_ANTON_2, OPENING_CHOICES_2, OPENING_ANTON_3 } from "../new-story";
 
 const TODAY = STORY_DATE;
 const sortMsgs = sortMessages<Msg>;
