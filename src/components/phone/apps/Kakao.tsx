@@ -197,7 +197,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   useEffect(() => {
     if (openId !== "anton" || newStory.stage !== 8) return;
     let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
-    const speakers: Array<"me" | "them"> = ["me","them","me","me","me","them","me","me","me","them","them","them","them","them","me","me","me","me","them","them"];
+    const speakers: Array<"me" | "them"> = ["me","them","me","me","me","them","me","me","me","me","them","them","them","them","them","me","me","me","me","me","them","them"];
     for (let i = 0; i < STAGE4_ANTON.length; i++) {
       const line = STAGE4_ANTON[i]!;
       const incoming = temporaryReply(line.zh, lang, anchor);
