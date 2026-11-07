@@ -47,9 +47,8 @@ export function temporaryIncoming(reply: { ko: string; zh: string; en: string },
   } };
 }
 
-// Module-memory temporary replies: they survive leaving and re-entering the
-// chat inside the app, and disappear naturally when the page refreshes or
-// closes. They are never written to localStorage or any persistent storage.
+// Temporary replies stay separate from authored KKT records, while their
+// local cache preserves already-triggered conversations across page refreshes.
 const TEMPORARY_KEY_PREFIX = "kkt-temporary-replies-v1:";
 const temporaryStore = new Map<string, TemporaryReply[]>();
 
