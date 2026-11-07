@@ -37,6 +37,7 @@ import { Wifi, ChevronUp, ChevronDown, X, Search, Plane } from "lucide-react";
 import { SYSTEM_KEY, DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from "./system";
 import { weatherAppName } from "./x-language";
 import { useSharedPhone, useSharingStatus } from "./shared";
+import { readNewStory } from "./new-story";
 import { isSharedOwner, queueSharedSave } from "./shared-state";
 
 const notifText = (m: Msg, lang: Lang) => (m.type === "image" ? tr(lang, { en: "Sent a photo", ko: "사진을 보냈습니다", zh: "发送了一张照片" }) : messageText(m, lang));
@@ -404,6 +405,7 @@ export default function Phone() {
     setInstagramTarget(null);
     if (editMode && a.id !== "settings") setEditing(apps.find((original) => original.id === a.id) ?? a);
     else if (!editMode) {
+      if (a.id === "kkt" && readNewStory().stage === 0) setChatTarget("anton");
       setOpen(a);
     }
   };
