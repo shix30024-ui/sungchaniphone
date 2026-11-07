@@ -298,7 +298,6 @@ export default function Phone() {
   const [contactName, setContactName] = useState("");
   const [homeSearch, setHomeSearch] = useState<string | null>(null);
   const [replyError, setReplyError] = useState<string | null>(null);
-  const firstAppRef = useRef<string | null>(null);
 
   useEffect(() => {
     const refresh = () => { setContactName(liveContactName()); setUnread(totalUnread()); setLiveState(loadLiveSettings()); };
