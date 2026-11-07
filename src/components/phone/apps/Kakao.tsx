@@ -181,6 +181,40 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     return () => { cancelled = true; if (timer !== undefined) window.clearTimeout(timer); setAntonTyping(false); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, newStory.stage]);
+  // Restore Sungchan's preset replies for Plot 1 when progress counters survived
+  // but the temporary KKT thread did not. Stable IDs make this idempotent.
+  useEffect(() => {
+    if (openId !== "anton" || newStory.stage < 1) return;
+    const saved = readTemporaryReplies("anton");
+    if (!saved.some((reply) => reply.message.id === "story1-opening-3")) return;
+    const additions: TemporaryReply[] = [];
+    const addPlayerLines = (lines: typeof OPENING_CHOICES, count: number, prefix: string, afterId: string) => {
+      let anchorId = afterId;
+      for (let i = 0; i < count; i++) {
+        const line = lines[i];
+        if (!line) continue;
+        const id = `${prefix}-${i + 1}`;
+        const alreadyThere = saved.some((reply) => reply.message.id === id ||
+          (reply.message.sender === "me" && (reply.message.zh === line.zh || reply.message.ko === line.ko || reply.message.en === line.en)))
+          || additions.some((reply) => reply.message.id === id);
+        if (alreadyThere) { anchorId = id; continue; }
+        const outgoing = temporaryReply(line.zh, lang);
+        outgoing.message.id = id; outgoing.message.sender = "me";
+        outgoing.message.ko = line.ko; outgoing.message.zh = line.zh; outgoing.message.en = line.en;
+        additions.push({ ...outgoing, afterId: anchorId });
+        anchorId = id;
+      }
+    };
+    addPlayerLines(OPENING_CHOICES, newStory.openingReplies, "story1-player-opening", "story1-opening-3");
+    if (newStory.reassuranceReplies > 0 && saved.some((reply) => reply.message.id === "story1-anton-2")) {
+      addPlayerLines(OPENING_CHOICES_2, newStory.reassuranceReplies, "story1-player-reassurance", "story1-anton-2");
+    }
+    if (additions.length) setTemporary((old) => {
+      const ids = new Set(old.map((reply) => reply.message.id));
+      return [...old, ...additions.filter((reply) => !ids.has(reply.message.id))];
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, newStory.stage, newStory.openingReplies, newStory.reassuranceReplies, temporary.length]);
   // Stage 2 messages arrive one at a time, with Anton's typing indicator before each one.
   useEffect(() => {
     if (openId !== "anton" || newStory.stage !== 3) return;
@@ -658,7 +692,9 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
           const incoming = temporaryReply(line.zh, lang, anchor);
           incoming.message.sender = "them";
           incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
-          setTemporary((old) => [...old, incoming]);
+          if (line === OPENING_ANTON_2) incoming.message.id = "story1-anton-2";
+          if (line === OPENING_ANTON_3) incoming.message.id = "story1-anton-3";
+          setTemporary((old) => old.some((reply) => reply.message.id === incoming.message.id) ? old : [...old, incoming]);
           setAntonTyping(false);
         }, 950);
       };
