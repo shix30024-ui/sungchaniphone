@@ -427,7 +427,9 @@ export default function Phone() {
     setInstagramTarget(a.id === "ig" && readNewStory().stage === 2 ? "yuna" : null);
     if (editMode && a.id !== "settings") setEditing(apps.find((original) => original.id === a.id) ?? a);
     else if (!editMode) {
-      if (a.id === "kkt" && (readNewStory().stage === 0 || readNewStory().stage === 3)) setChatTarget("anton");
+      // After Anton's Instagram story is viewed, reopening KakaoTalk must enter Anton's
+      // chat so Plot 4 can begin from the player's first preset message.
+      if (a.id === "kkt" && [0, 3, 8].includes(readNewStory().stage)) setChatTarget("anton");
       if (a.id === "kkt" && (readNewStory().xReplySent || readNewStory().stage === 6)) setChatTarget("seoyun");
       setOpen(a);
     }
