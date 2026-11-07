@@ -7,6 +7,7 @@ import { CONTACTS, MESSAGES, type Contact, type Msg } from "./story";
 import { STORY_DATE } from "./chronology";
 import { backupPhoneData, readStored, updateStored } from "./store";
 import { fixedFlow, readFixedProgress, readTemporaryReplies } from "./fixed-conversation";
+import { readAntonScene } from "./anton-scene";
 
 export const MSGS_KEY = "kkt-msgs-v1";
 export const CONTACTS_KEY = "kkt-contacts-v1";
