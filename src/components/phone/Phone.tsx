@@ -340,7 +340,6 @@ export default function Phone() {
     if (lastSoundNotificationId.current !== next.id) {
       lastSoundNotificationId.current = next.id;
       playKktSound();
-      if (next.id.startsWith("anton-scene-")) { try { navigator.vibrate?.([120, 60, 160]); } catch { /* vibration is optional */ } }
     }
     let advanceTimer: number | undefined;
     const hideTimer = window.setTimeout(() => {
