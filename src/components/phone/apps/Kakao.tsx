@@ -418,6 +418,25 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     const visibleThread = withTemporaryReplies(fixedThread, readTemporaryReplies("anton"));
     const playerMsg = temporaryReply(text, lang, visibleThread.at(-1), image);
     setTemporary((old) => [...old, playerMsg]);
+    if (open.id === "anton" && newStory.stage === 1 && !image) {
+      const currentStory = readNewStory();
+      const appendAnton = (line: { zh: string; ko: string; en: string }) => {
+        const anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
+        const incoming = temporaryReply(line.zh, lang, anchor);
+        incoming.message.sender = "them";
+        incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
+        setTemporary((old) => [...old, incoming]);
+      };
+      if (currentStory.openingReplies < OPENING_CHOICES.length) {
+        const count = currentStory.openingReplies + 1;
+        updateNewStory({ openingReplies: count });
+        if (count === OPENING_CHOICES.length) appendAnton(OPENING_ANTON_2);
+      } else if (currentStory.reassuranceReplies < OPENING_CHOICES_2.length) {
+        const count = currentStory.reassuranceReplies + 1;
+        updateNewStory({ reassuranceReplies: count });
+        if (count === OPENING_CHOICES_2.length) appendAnton(OPENING_ANTON_3);
+      }
+    }
     if (flow.waiting) acknowledgeFixedNode(flow.waiting.id);
     const current = readAntonScene();
     if (current.phase === "awaiting-instagram" || current.phase === "warm-opening") {
