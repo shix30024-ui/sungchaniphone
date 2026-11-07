@@ -133,6 +133,17 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   const [scene, setScene] = useState<AntonSceneState>(() => readAntonScene());
   const [newStory, setNewStory] = useState(() => readNewStory());
   useEffect(() => subscribeNewStory(() => setNewStory(readNewStory())), []);
+  // The final Seoyun line is stored in the durable KKT message collection.
+  // Recover the story unlock from that exact message if progress was interrupted.
+  useEffect(() => {
+    if (!msgsReady) return;
+    const seoyunEndingDelivered = msgs.some((message) =>
+      message.contactId === "seoyun" && message.id === "story3-seoyun-in-6-4"
+    );
+    if (seoyunEndingDelivered && (newStory.stage < 7 || newStory.seoyunStep < 7)) {
+      updateNewStory({ stage: 7, seoyunStep: 7 });
+    }
+  }, [msgs, msgsReady, newStory.stage, newStory.seoyunStep]);
   const patchScene = (patch: Partial<AntonSceneState>) => setScene(updateAntonScene(patch));
   const [progress] = usePersist<FixedProgress>(ANTON_PROGRESS_KEY, EMPTY_PROGRESS);
   // One-time: move large chat images out of the small browser storage. Text and order are untouched.
