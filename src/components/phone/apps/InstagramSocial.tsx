@@ -111,6 +111,13 @@ export function InstagramDM({ accounts, lang, onClose, initialContactId }: { acc
   const yunaReplyTexts = ["你好", "是学妹啊"];
   const sentYunaReplies = thread.filter((m) => m.sender === "me" && yunaReplyTexts.includes(m.originalText ?? messageText(m, "zh")));
   const yunaHistoryIds = new Set(["ig-yuna-day2-20261029", "ig-yuna-day3-20261030", "ig-yuna-festival-1-20261031", "ig-yuna-festival-2-20261031", "ig-yuna-sungchan-busy-20261031", "ig-yuna-kkt-ask-20261031"]);
+  const newStoryChoices = [
+    { zh: "那个", ko: "저기", en: "Um..." },
+    { zh: "可以把帖子删除吗？", ko: "게시물 삭제해 줄 수 있어요?", en: "Could you delete the post?" },
+    { zh: "抱歉我不喜欢女生", ko: "미안하지만 저는 여자를 좋아하지 않아요", en: "I'm sorry, but I don't like girls." },
+    { zh: "因为你的帖子让我男朋友误会我了啊", ko: "네 게시물 때문에 제 남자친구가 오해했어요", en: "Your post made my boyfriend misunderstand." },
+  ];
+
   const visibleThread = open === "yuna" && !showYunaHistory
     ? thread.filter((m) => !yunaHistoryIds.has(m.id))
     : thread;
@@ -154,6 +161,7 @@ export function InstagramDM({ accounts, lang, onClose, initialContactId }: { acc
       return <Button key={c.id} variant="ghost" className="w-full h-auto justify-start py-2.5 px-4 gap-3 rounded-none" onClick={() => setOpen(c.id)}><span className="ig-dm-avatar"><KktAvatar src={c.avatar} /></span><span className="min-w-0 text-left flex-1"><span className={`block text-sm ${unread ? "font-bold" : "font-normal"}`}>{c.name}</span><span className={`block truncate text-xs ${unread ? "text-foreground font-semibold" : "text-muted-foreground"}`}>{latest ? `${messageText(latest, lang)} · ${latest.time}` : ""}</span></span>{unread > 0 ? <span className="ig-dm-dot" /> : <Camera size={20} className="text-muted-foreground" />}</Button>;
     })}</div> : <>
       <div ref={scroll} className="flex-1 overflow-y-auto p-3 space-y-1.5">{open === "yuna" && !showYunaHistory && thread.some((m) => yunaHistoryIds.has(m.id)) && <div className="flex justify-center py-2"><Button variant="outline" size="sm" onClick={() => setShowYunaHistory(true)}>{tr(lang, { en: "View previous messages", ko: "이전 메시지 보기", zh: "查看历史消息" })}</Button></div>}{visibleThread.map((m) => <div key={m.id} className={`flex flex-col ${m.sender === "me" ? "items-end" : "items-start"}`}><div className="ig-dm-message-row">{m.sender === "them" && <span className="ig-dm-message-avatar"><KktAvatar src={contact.avatar} size={26} /></span>}<Button variant="ghost" className={`ig-dm-bubble ${m.sender === "me" ? "ig-dm-mine" : ""}`} aria-label={`${label(lang, "edit")} ${messageText(m, lang)}`} title={m.time} onClick={() => owner && setEditing({ ...m })}>{messageText(m, lang)}</Button></div></div>)}{thread.at(-1)?.sender === "me" && thread.at(-1)?.read !== false && <span className="block text-right text-[11px] text-muted-foreground">{tr(lang, { en: "Seen", ko: "읽음", zh: "已读" })}</span>}{typing && <span role="status" aria-label={tr(lang, { en: "Typing", ko: "입력 중", zh: "正在输入" })} className="typing-dots"><i /><i /><i /></span>}</div>
+      {contact.id === "yuna" && readNewStory().stage === 9 && <div className="flex flex-wrap gap-2 px-3 py-2 border-t bg-background">{newStoryChoices.slice(thread.filter((m) => m.id.startsWith("new-story-yuna-player-")).length, thread.filter((m) => m.id.startsWith("new-story-yuna-player-")).length + 1).map((choice) => <Button key={choice.zh} type="button" variant="outline" size="sm" onClick={() => setText(choice[lang])}>{choice[lang]}</Button>)}</div>}
       <form className="ig-dm-compose" onSubmit={(e) => { e.preventDefault(); if (!text.trim() || scriptedTyping) return; const outgoingText = text.trim(); if (contact.id === "anton") { const now = new Date(); setMsgs((current) => [...current, { id: `ig-anton-player-${uid()}`, contactId: "anton", sender: "me", type: "text", ko: lang === "ko" ? outgoingText : "", zh: lang === "zh" ? outgoingText : "", en: lang === "en" ? outgoingText : "", originalText: outgoingText, date: STORY_DATE, time: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`, order: current.filter((m) => m.contactId === "anton").length + 1, read: false }]); }
       else if (contact.id === "yuna" && readNewStory().stage === 9) {
         const currentCount = thread.filter((m) => m.id.startsWith("new-story-yuna-player-")).length;
