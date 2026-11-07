@@ -1,4 +1,5 @@
 import type { Lang } from "./i18n";
+import { sharedRead } from "./shared-state";
 
 export type StoryText = Record<Lang, string>;
 export type NewStoryState = {
@@ -48,7 +49,24 @@ function loadStoryState(): NewStoryState {
 }
 let state: NewStoryState = loadStoryState();
 
-export const readNewStory = () => ({ ...state });
+function recoverYunaUnlock(): boolean {
+  if (state.stage >= 7 || state.seoyunStep >= 7) return false;
+  try {
+    const sharedDm = sharedRead("ig-dm-messages-v1");
+    const rawDm = sharedDm.found ? sharedDm.value : localStorage.getItem("ig-dm-messages-v1");
+    const messages = typeof rawDm === "string" ? JSON.parse(rawDm) : rawDm;
+    if (!Array.isArray(messages) || !messages.some((message) => message?.id === "new-story-yuna-reply-4")) return false;
+    state = { ...state, stage: Math.max(state.stage, 10), yunaDmSent: true, yunaPostRemoved: true };
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+    if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(EVENT, { detail: { ...state } }));
+    return true;
+  } catch { return false; }
+}
+
+export const readNewStory = () => {
+  recoverYunaUnlock();
+  return { ...state };
+};
 export function updateNewStory(patch: Partial<NewStoryState>) {
   state = { ...state, ...patch };
   if (typeof window !== "undefined") {
