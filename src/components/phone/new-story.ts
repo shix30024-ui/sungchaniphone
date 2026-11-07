@@ -13,6 +13,7 @@ export type NewStoryState = {
   seoyunStep: number;
   yunaDmSent: boolean;
   xPostPublished: boolean;
+  xReplySent: boolean;
   antonStoryViewed: boolean;
   stage4Step: number;
   stage6Step: number;
@@ -22,7 +23,7 @@ export type NewStoryState = {
 
 const INITIAL: NewStoryState = {
   stage: 0, openingReplies: 0, reassuranceReplies: 0, stage2Replies: 0, stage2Reassurance: 0, finalReplies: 0,
-  seoyunReplies: 0, seoyunStep: 0, yunaDmSent: false, xPostPublished: false,
+  seoyunReplies: 0, seoyunStep: 0, yunaDmSent: false, xPostPublished: false, xReplySent: false,
   antonStoryViewed: false, stage4Step: 0, stage6Step: 0, yunaPostRemoved: false, endingPosted: false,
 };
 
