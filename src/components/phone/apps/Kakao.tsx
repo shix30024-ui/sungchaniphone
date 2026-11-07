@@ -138,13 +138,24 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   // One-time: move large chat images out of the small browser storage. Text and order are untouched.
   useEffect(() => { void moveKktImagesToDb(); }, []);
   useEffect(() => { setActiveChat(openId); return () => setActiveChat(null); }, [openId]);
-  // Stage 1 begins only when the player opens Anton's existing KKT chat.
+  // Stage 1 starts when Anton's chat is opened. If its temporary messages were
+  // lost while the progress flag survived, restore the opening without resetting later progress.
   useEffect(() => {
-    if (openId !== "anton" || newStory.stage !== 0) return;
-    let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
+    if (openId !== "anton") return;
+    const savedTemporary = readTemporaryReplies("anton");
+    const hasOpening = savedTemporary.some((reply) =>
+      reply.message.id.startsWith("story1-opening-") ||
+      OPENING_ANTON.some((line) =>
+        reply.message.sender === "them" &&
+        (reply.message.zh === line.zh || reply.message.ko === line.ko || reply.message.en === line.en)
+      )
+    );
+    if (hasOpening) return;
+    let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), savedTemporary).at(-1);
     let index = 0;
     let cancelled = false;
     let timer: number | undefined;
+    const restoringExistingProgress = newStory.stage >= 1;
     const deliverNext = () => {
       if (cancelled) return;
       setAntonTyping(true);
@@ -153,15 +164,16 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
         const line = OPENING_ANTON[index];
         if (!line) { setAntonTyping(false); return; }
         const incoming = temporaryReply(line.zh, lang, anchor);
+        incoming.message.id = `story1-opening-${index + 1}`;
         incoming.message.sender = "them";
         incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
-        setTemporary((old) => [...old, incoming]);
+        setTemporary((old) => old.some((reply) => reply.message.id === incoming.message.id) ? old : [...old, incoming]);
         anchor = incoming.message;
         index += 1;
         if (index < OPENING_ANTON.length) deliverNext();
         else {
           setAntonTyping(false);
-          updateNewStory({ stage: 1 });
+          if (!restoringExistingProgress) updateNewStory({ stage: 1 });
         }
       }, 950);
     };
