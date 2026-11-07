@@ -244,7 +244,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     deliverNext();
     return () => { cancelled = true; if (timer !== undefined) window.clearTimeout(timer); setSeoyunTyping(false); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openId, newStory.stage, newStory.seoyunStep]);
+  }, [openId, newStory.stage, newStory.xReplySent, newStory.seoyunStep]);
   // Stage 6 is player-led: the player sends each preset from the compose field.
   // Anton's replies are delivered only after the matching player messages.
   useEffect(() => {
@@ -832,7 +832,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     }
     const current = readAntonScene();
     if (open.id === "seoyun") {
-      if (newStory.stage === 6) {
+      if (newStory.xReplySent || newStory.stage === 6) {
         const step = newStory.seoyunStep;
         const playerIndex = step === 1 ? 0 : step === 2 ? 1 : step === 4 ? 2 : step === 5 ? 3 : -1;
         return playerIndex >= 0 ? SEOYUN_PLAYER_STAGE3[playerIndex]?.[lang] : undefined;
