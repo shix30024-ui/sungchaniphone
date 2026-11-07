@@ -40,9 +40,9 @@ export function subscribeNewStory(listener: () => void) {
 export const NEW_STORY_EVENT = EVENT;
 
 export const OPENING_ANTON: StoryText[] = [
-  { ko: "오늘 대금 치다가 형 생각났어", zh: "今天拉大提琴的时候想起哥了", en: "I thought of you while playing cello today." },
-  { ko: "형 너무 바쁜 것 같아", zh: "哥好像很忙", en: "You seem really busy." },
-  { ko: "연락도 안 하고", zh: "都不怎么联系我", en: "You barely even text me." },
+  { ko: "오늘 첼로 치다가 형 생각났어", zh: "今天在拉大提琴的时候想到哥了", en: "I thought of you while playing the cello today." },
+  { ko: "형 요즘 너무 바쁜 것 같아", zh: "感觉你好忙", en: "You seem so busy lately." },
+  { ko: "연락도 안 하고", zh: "都不联系我", en: "You don't even text me." },
 ];
 export const OPENING_CHOICES: StoryText[] = [
   { ko: "어디가 바빠 ㅎㅎ", zh: "哪有", en: "I'm not that busy." },
