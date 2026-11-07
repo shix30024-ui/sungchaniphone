@@ -157,13 +157,13 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   useEffect(() => {
     if (openId !== "anton" || newStory.stage !== 3) return;
     let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
-    for (const line of STAGE2_ANTON) {
+    for (const line of STAGE2_ANTON.slice(0, 3)) {
       const incoming = temporaryReply(line.zh, lang, anchor);
       incoming.message.sender = "them";
       incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
       setTemporary((old) => [...old, incoming]); anchor = incoming.message;
     }
-    updateNewStory({ stage: 4 });
+    updateNewStory({ stage: 4, stage2Replies: 0, stage2Reassurance: 0 });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, newStory.stage]);
   // Stage 3's Seoyun messages stay in the separate temporary Seoyun thread.
@@ -451,14 +451,28 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
         incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
         setTemporary((old) => [...old, incoming]);
       };
-      if (currentStory.openingReplies < OPENING_CHOICES.length) {
+      if (currentStory.stage === 1 && currentStory.openingReplies < OPENING_CHOICES.length) {
         const count = currentStory.openingReplies + 1;
         updateNewStory({ openingReplies: count });
         if (count === OPENING_CHOICES.length) appendAnton(OPENING_ANTON_2);
-      } else if (currentStory.reassuranceReplies < OPENING_CHOICES_2.length) {
+      } else if (currentStory.stage === 1 && currentStory.reassuranceReplies < OPENING_CHOICES_2.length) {
         const count = currentStory.reassuranceReplies + 1;
         updateNewStory({ reassuranceReplies: count });
         if (count === OPENING_CHOICES_2.length) { appendAnton(OPENING_ANTON_3); updateNewStory({ stage: 2 }); }
+      } else if (currentStory.stage === 4 && currentStory.stage2Replies < STAGE2_CHOICES.length) {
+        const count = currentStory.stage2Replies + 1;
+        updateNewStory({ stage2Replies: count });
+        if (count === STAGE2_CHOICES.length) {
+          let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
+          for (const line of STAGE2_ANTON.slice(3)) {
+            const incoming = temporaryReply(line.zh, lang, anchor);
+            incoming.message.sender = "them"; incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
+            setTemporary((old) => [...old, incoming]); anchor = incoming.message;
+          }
+        }
+      } else if (currentStory.stage === 4 && currentStory.stage2Reassurance < STAGE2_REASSURE.length) {
+        const count = currentStory.stage2Reassurance + 1;
+        updateNewStory({ stage2Reassurance: count, ...(count === STAGE2_REASSURE.length ? { stage: 5 } : {}) });
       }
     }
     if (flow.waiting) acknowledgeFixedNode(flow.waiting.id);
@@ -595,6 +609,10 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     if (open.id === "anton" && newStory.stage === 1) {
       if (newStory.openingReplies < OPENING_CHOICES.length) return OPENING_CHOICES[newStory.openingReplies]?.[lang];
       if (newStory.reassuranceReplies < OPENING_CHOICES_2.length) return OPENING_CHOICES_2[newStory.reassuranceReplies]?.[lang];
+    }
+    if (open.id === "anton" && newStory.stage === 4) {
+      if (newStory.stage2Replies < STAGE2_CHOICES.length) return STAGE2_CHOICES[newStory.stage2Replies]?.[lang];
+      if (newStory.stage2Reassurance < STAGE2_REASSURE.length) return STAGE2_REASSURE[newStory.stage2Reassurance]?.[lang];
     }
     const current = readAntonScene();
     if (open.id === "seoyun") {
