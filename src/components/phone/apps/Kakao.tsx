@@ -207,7 +207,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   // Story 3 is delivered in stages: Seoyun types, waits for Sungchan,
   // then continues after the player's messages are sent.
   useEffect(() => {
-    if (openId !== "seoyun" || newStory.stage !== 6) return;
+    if (openId !== "seoyun" || (!newStory.xReplySent && newStory.stage !== 6)) return;
     const step = newStory.seoyunStep;
     const lines = step === 0 ? SEOYUN_STAGE3.slice(0, 3)
       : step === 3 ? SEOYUN_STAGE3.slice(3, 6)
@@ -220,7 +220,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "seoyun")), readTemporaryReplies("seoyun")).at(-1);
     const finish = () => {
       setSeoyunTyping(false);
-      updateNewStory({ seoyunStep: step === 0 ? 1 : step === 3 ? 4 : 7, ...(step === 6 ? { stage: 7 } : {}) });
+      updateNewStory({ seoyunStep: step === 0 ? 1 : step === 3 ? 4 : 7, ...(step === 6 && newStory.stage === 6 ? { stage: 7 } : {}) });
     };
     const deliverNext = () => {
       if (cancelled) return;
@@ -498,7 +498,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
 
   const send = (text: string, image?: string) => {
     if (open.id === "seoyun" && !image) {
-      if (newStory.stage === 6) {
+      if (newStory.xReplySent || newStory.stage === 6) {
         const step = readNewStory().seoyunStep;
         const playerIndex = step === 1 ? 0 : step === 2 ? 1 : step === 4 ? 2 : step === 5 ? 3 : -1;
         if (playerIndex < 0) return;
