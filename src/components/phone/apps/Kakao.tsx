@@ -584,7 +584,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       }
       const next = step + 1;
       if (next === 2 || next === 6 || next === 10) {
-        const replyIndexes = next === 2 ? [0, 1] : next === 6 ? [4] : [8, 9, 10];
+        const replyIndexes = next === 2 ? [0, 1, 2, 3] : next === 6 ? [4] : [5, 6, 7];
         let index = 0;
         let anchor = outgoing.message;
         const deliver = () => {
