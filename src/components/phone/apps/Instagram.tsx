@@ -14,7 +14,7 @@ import { BackBtn, EditBar, Field, ImageField, TopBar, resolveImg } from "../ui";
 import { useOwner } from "../owner";
 import { withLocalInteraction } from "../shared-state";
 import { instagramCaption, editInstagramCaption } from "../instagram-language";
-import { readNewStory } from "../new-story";
+import { readNewStory, subscribeNewStory } from "../new-story";
 
 export default function Instagram({ lang, onHome, initialDmContactId, onAntonPostViewed }: AppProps & { initialDmContactId?: string | null; onAntonPostViewed?: () => void }) {
   const owner = useOwner();
