@@ -131,9 +131,6 @@ export function deliverLiveMessage(opts: { test?: boolean } = {}): Msg | null {
 
 /** Called on a timer: sends at most one message when due, then schedules the next. */
 export function tickLive(now = Date.now()): Msg | null {
-  // Keep the scripted argument uninterrupted; resume ordinary messages after the scene ends.
-  const scene = readAntonScene();
-  if (scene.started && scene.phase !== "done") return null;
   const settings = loadLiveSettings();
   if (!settings.enabled) return null;
   // Let the current conversation finish instead of interrupting with an unrelated story node.
