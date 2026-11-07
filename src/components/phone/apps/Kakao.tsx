@@ -187,20 +187,20 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     if (openId !== "seoyun" || newStory.stage !== 6 || newStory.seoyunReplies > 0) return;
     let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "seoyun")), readTemporaryReplies("seoyun")).at(-1);
     const thread: Array<{ sender: "me" | "them"; line: { zh: string; ko: string; en: string } }> = [
-      { sender: "them", line: SEOYUN_STAGE3[0] },
-      { sender: "them", line: SEOYUN_STAGE3[1] },
-      { sender: "them", line: SEOYUN_STAGE3[2] },
+      { sender: "them", line: SEOYUN_STAGE3[0]! },
+      { sender: "them", line: SEOYUN_STAGE3[1]! },
+      { sender: "them", line: SEOYUN_STAGE3[2]! },
       { sender: "me", line: { ko: "후배가 내 뒷모습 나온 인스타 게시물을 올렸어", zh: "有学妹发了ig是我的背影", en: "A junior posted an Instagram photo of my back." } },
       { sender: "me", line: { ko: "앤톤은 그걸 여자친구라고 생각했어", zh: "他以为是女朋友", en: "Anton thought she was my girlfriend." } },
-      { sender: "them", line: SEOYUN_STAGE3[3] },
-      { sender: "them", line: SEOYUN_STAGE3[4] },
-      { sender: "them", line: SEOYUN_STAGE3[5] },
+      { sender: "them", line: SEOYUN_STAGE3[3]! },
+      { sender: "them", line: SEOYUN_STAGE3[4]! },
+      { sender: "them", line: SEOYUN_STAGE3[5]! },
       { sender: "me", line: { ko: "...", zh: "…", en: "..." } },
       { sender: "me", line: { ko: "이제 나한테 답도 안 해 ㅎㅎ", zh: "他现在都不理我了ㅎㅎ", en: "He isn't replying to me now eitherㅎㅎ" } },
-      { sender: "them", line: SEOYUN_STAGE3[6] },
-      { sender: "them", line: SEOYUN_STAGE3[7] },
-      { sender: "them", line: SEOYUN_STAGE3[8] },
-      { sender: "them", line: SEOYUN_STAGE3[9] },
+      { sender: "them", line: SEOYUN_STAGE3[6]! },
+      { sender: "them", line: SEOYUN_STAGE3[7]! },
+      { sender: "them", line: SEOYUN_STAGE3[8]! },
+      { sender: "them", line: SEOYUN_STAGE3[9]! },
     ];
     for (const item of thread) {
       const incoming = makeSeoyunTemporary(item.line, item.sender, anchor);
