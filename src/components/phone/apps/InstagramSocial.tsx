@@ -81,11 +81,11 @@ export function InstagramDM({ accounts, lang, onClose, onYunaProfile, initialCon
   // Yuna's messages are a fixed story thread. Merge by ID so player replies and edits survive.
   useEffect(() => {
     const fixed: Msg[] = [
-      { id: "ig-yuna-hello-20260923", contactId: "yuna", sender: "them", type: "text", ko: "성찬 선배 안녕하세요!", zh: "成灿学长你好", en: "Hello, Sungchan sunbaenim.", date: "2026-09-23", time: "19:38", order: 1, read: true },
-      { id: "ig-yuna-got-ig-20260923", contactId: "yuna", sender: "them", type: "text", ko: "드디어 인스타 아이디 받았네요ㅎㅎ", zh: "终于要到ig了呢哈哈", en: "I finally got your Instagramㅎㅎ", date: "2026-09-23", time: "19:40", order: 2, read: true },
-      { id: "ig-yuna-sungchan-hello-20260923", contactId: "yuna", sender: "me", type: "text", ko: "안녕하세요", zh: "你好", en: "Hello.", date: "2026-09-23", time: "19:41", order: 3, read: true },
-      { id: "ig-yuna-sungchan-junior-20260923", contactId: "yuna", sender: "me", type: "text", ko: "후배구나", zh: "是学妹啊", en: "Oh, you're my junior.", date: "2026-09-23", time: "19:42", order: 4, read: true },
-      { id: "ig-yuna-confession-20260923", contactId: "yuna", sender: "them", type: "text", ko: "선배 좋아한 지 오래됐어요~", zh: "喜欢学长好久了～", en: "I've liked you for a long time, sunbaenim~", date: "2026-09-23", time: "19:43", order: 5, read: true },
+      { id: "ig-yuna-hello-20260930", contactId: "yuna", sender: "them", type: "text", ko: "성찬 선배 안녕하세요!", zh: "成灿学长你好", en: "Hello, Sungchan sunbaenim.", date: "2026-09-30", time: "19:38", order: 1, read: true },
+      { id: "ig-yuna-got-ig-20260930", contactId: "yuna", sender: "them", type: "text", ko: "드디어 인스타 아이디 받았네요ㅎㅎ", zh: "终于要到ig了呢哈哈", en: "I finally got your Instagramㅎㅎ", date: "2026-09-30", time: "19:40", order: 2, read: true },
+      { id: "ig-yuna-sungchan-hello-20260930", contactId: "yuna", sender: "me", type: "text", ko: "안녕하세요", zh: "你好", en: "Hello.", date: "2026-09-30", time: "19:41", order: 3, read: true },
+      { id: "ig-yuna-sungchan-junior-20260930", contactId: "yuna", sender: "me", type: "text", ko: "후배구나", zh: "是学妹啊", en: "Oh, you're my junior.", date: "2026-09-30", time: "19:42", order: 4, read: true },
+      { id: "ig-yuna-confession-20260930", contactId: "yuna", sender: "them", type: "text", ko: "선배 좋아한 지 오래됐어요~", zh: "喜欢学长好久了～", en: "I've liked you for a long time, sunbaenim~", date: "2026-09-30", time: "19:43", order: 5, read: true },
       { id: "ig-yuna-festival-1-20261031", contactId: "yuna", sender: "them", type: "text", ko: "성찬 오빠 실제로 보니까 사진보다 더 잘생겼어요", zh: "成灿哥真人比照片帅多了", en: "Sungchan oppa, you look even better in person than in photos.", date: "2026-10-31", time: "21:06", order: 6, read: true },
       { id: "ig-yuna-festival-2-20261031", contactId: "yuna", sender: "them", type: "text", ko: "근데 왜 답장 안 해요? 아까는 인사도 해줬으면서ㅠㅠ", zh: "但是为什么不回信息呢？明明在线下都跟我打招呼了ㅠㅠ", en: "But why aren't you replying? You said hi to me in person earlierㅠㅠ", date: "2026-10-31", time: "21:08", order: 7, read: true },
       { id: "ig-yuna-sungchan-busy-20261031", contactId: "yuna", sender: "me", type: "text", ko: "아 요즘 너무 바빠서 인스타를 잘 못 봤어 미안해", zh: "啊 最近太忙了不太看ig 抱歉", en: "Ah, I've been really busy lately and haven't checked Instagram much. Sorry.", date: "2026-10-31", time: "21:12", order: 8, read: true },
@@ -98,6 +98,9 @@ export function InstagramDM({ accounts, lang, onClose, onYunaProfile, initialCon
         "ig-yuna-day2-20261029", "ig-yuna-day3-20261030", "ig-yuna-festival-1-20261031",
         "ig-yuna-festival-2-20261031", "ig-yuna-sungchan-busy-20261031", "ig-yuna-kkt-ask-20261031",
         "ig-yuna-first-dm-20261028",
+        "ig-yuna-hello-20260923", "ig-yuna-got-ig-20260923",
+        "ig-yuna-sungchan-hello-20260923", "ig-yuna-sungchan-junior-20260923",
+        "ig-yuna-confession-20260923",
       ]);
       const preserved = current.filter((message) => !obsoleteSeedIds.has(message.id) && !fixedIds.has(message.id));
       const missing = fixed.filter((message) => !current.some((existing) => existing.id === message.id));
