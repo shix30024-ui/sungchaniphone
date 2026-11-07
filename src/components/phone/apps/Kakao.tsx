@@ -230,10 +230,11 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       timer = window.setTimeout(() => {
         if (cancelled) return;
         const incoming = makeSeoyunTemporary(line, "them", anchor);
+        incoming.message.id = `story3-seoyun-in-${step}-${index + 1}`;
         const minuteOffset = step === 0 ? index : step === 3 ? index + 5 : index + 10;
         incoming.message.date = "2026-10-31";
         incoming.message.time = `20:${String(30 + minuteOffset).padStart(2, "0")}`;
-        setSeoyunTemporary((old) => [...old, incoming]);
+        setMsgs((old) => old.some((message) => message.id === incoming.message.id) ? old : [...old, incoming.message]);
         anchor = incoming.message;
         index += 1;
         if (index < lines.length) deliverNext();
@@ -509,10 +510,11 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
         const line = text === preset[lang] ? preset : { zh: text, ko: text, en: text };
         const currentThread = withTemporaryReplies(fixedThread, readTemporaryReplies("seoyun"));
         const playerMsg = makeSeoyunTemporary(line, "me", currentThread.at(-1));
+        playerMsg.message.id = `story3-seoyun-player-${step}`;
         const playerMinute = step === 1 ? 33 : step === 2 ? 34 : step === 4 ? 38 : 39;
         playerMsg.message.date = "2026-10-31";
         playerMsg.message.time = `20:${String(playerMinute).padStart(2, "0")}`;
-        setSeoyunTemporary((old) => [...old, playerMsg]);
+        setMsgs((old) => old.some((message) => message.id === playerMsg.message.id) ? old : [...old, playerMsg.message]);
         updateNewStory({ seoyunStep: step + 1 });
         return;
       }
