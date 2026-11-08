@@ -81,11 +81,11 @@ function loadStoryState(): NewStoryState {
     loaded = mergeStoryState(loaded, { stage: 10, yunaDmSent: true, yunaPostRemoved: true });
   }
 
-  // If Seoyun's final incoming message was already saved but the progress
-  // flag was interrupted (for example by leaving the chat mid-delivery),
-  // recover the completed stage from that durable message ID.
-  const seoyunReplies = readSavedArray("kkt-temporary-replies-v1:seoyun") as Array<{ message?: { id?: string } }>;
-  if (seoyunReplies.some((reply) => reply.message?.id === "story3-seoyun-in-6-4")) {
+  // Seoyun's scripted plot messages are saved in the durable KKT message
+  // collection (not the temporary-reply cache). Recover only from the final
+  // incoming message so an interrupted progress write cannot hide Anton's story.
+  const savedKktMessages = readSavedArray("kkt-msgs-v1") as Array<{ id?: string; contactId?: string }>;
+  if (savedKktMessages.some((message) => message.contactId === "seoyun" && message.id === "story3-seoyun-in-6-4")) {
     loaded = mergeStoryState(loaded, { stage: 7, seoyunStep: 7 });
   }
 
