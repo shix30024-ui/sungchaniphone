@@ -100,6 +100,12 @@ function loadStoryState(): NewStoryState {
     loaded.seoyunStep = 5;
   }
 
+  // Older builds recorded the X reply flag without advancing the stage.
+  // Keep the active-chat router in sync after refreshes.
+  if (loaded.xReplySent && loaded.stage < 6) {
+    loaded = mergeStoryState(loaded, { stage: 6 });
+  }
+
   const seenStories = readSavedArray("ig-story-seen-v1") as string[];
   if (seenStories.includes("new-story-anton-20261031")) {
     loaded = mergeStoryState(loaded, { stage: 8, antonStoryViewed: true });
