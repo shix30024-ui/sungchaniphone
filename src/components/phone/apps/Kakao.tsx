@@ -133,8 +133,8 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   const [scene, setScene] = useState<AntonSceneState>(() => readAntonScene());
   const [newStory, setNewStory] = useState(() => readNewStory());
   useEffect(() => subscribeNewStory(() => setNewStory(readNewStory())), []);
-  // The final Seoyun line is stored in the durable KKT message collection.
-  // Recover the story unlock from that exact message if progress was interrupted.
+  // KKT messages are cloud-backed rows, so recover Seoyun progress from the
+  // hydrated message list rather than trying to read a legacy local snapshot.
   useEffect(() => {
     if (!msgsReady) return;
     const seoyunEndingDelivered = msgs.some((message) =>
@@ -144,6 +144,19 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       updateNewStory({ stage: 7, seoyunStep: 7 });
     }
   }, [msgs, msgsReady, newStory.stage, newStory.seoyunStep]);
+  // One-time migration for users whose previous build skipped the fourth
+  // Sungchan reply and left Seoyun at step 6 without saving that player line.
+  const seoyunLegacyMigrationChecked = useRef(false);
+  useEffect(() => {
+    if (!msgsReady || seoyunLegacyMigrationChecked.current) return;
+    seoyunLegacyMigrationChecked.current = true;
+    const fourthPlayerReplyExists = msgs.some((message) =>
+      message.contactId === "seoyun" && message.id === "story3-seoyun-player-5"
+    );
+    if (newStory.stage === 6 && newStory.seoyunStep === 6 && !fourthPlayerReplyExists) {
+      updateNewStory({ seoyunStep: 5 });
+    }
+  }, [msgsReady]);
   const patchScene = (patch: Partial<AntonSceneState>) => setScene(updateAntonScene(patch));
   const [progress] = usePersist<FixedProgress>(ANTON_PROGRESS_KEY, EMPTY_PROGRESS);
   // One-time: move large chat images out of the small browser storage. Text and order are untouched.
