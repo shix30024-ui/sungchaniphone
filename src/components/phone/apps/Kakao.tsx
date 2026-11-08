@@ -538,7 +538,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     if (open.id === "seoyun" && !image) {
       if (newStory.xReplySent || newStory.stage === 6) {
         const step = readNewStory().seoyunStep;
-        const playerIndex = step === 1 ? 0 : step === 2 ? 1 : step === 4 ? 2 : -1;
+        const playerIndex = step === 1 ? 0 : step === 2 ? 1 : step === 4 ? 2 : step === 5 ? 3 : -1;
         if (playerIndex < 0) return;
         const preset = SEOYUN_PLAYER_STAGE3[playerIndex]!;
         const line = text === preset[lang] ? preset : { zh: text, ko: text, en: text };
@@ -549,7 +549,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
         playerMsg.message.date = "2026-10-31";
         playerMsg.message.time = `20:${String(playerMinute).padStart(2, "0")}`;
         setMsgs((old) => old.some((message) => message.id === playerMsg.message.id) ? old : [...old, playerMsg.message]);
-        updateNewStory({ seoyunStep: step === 4 ? 6 : step + 1 });
+        updateNewStory({ seoyunStep: step + 1 });
         return;
       }
       const introDone = msgs.filter((m) => m.contactId === "seoyun" && m.live && m.notified && m.id.startsWith("seoyun-after-anton-")).length >= 3;
@@ -878,7 +878,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     if (open.id === "seoyun") {
       if (newStory.xReplySent || newStory.stage === 6) {
         const step = newStory.seoyunStep;
-        const playerIndex = step === 1 ? 0 : step === 2 ? 1 : step === 4 ? 2 : -1;
+        const playerIndex = step === 1 ? 0 : step === 2 ? 1 : step === 4 ? 2 : step === 5 ? 3 : -1;
         return playerIndex >= 0 ? SEOYUN_PLAYER_STAGE3[playerIndex]?.[lang] : undefined;
       }
       const introDone = msgs.filter((m) => m.contactId === "seoyun" && m.live && m.notified && m.id.startsWith("seoyun-after-anton-")).length >= 3;
