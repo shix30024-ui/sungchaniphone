@@ -81,25 +81,6 @@ function loadStoryState(): NewStoryState {
     loaded = mergeStoryState(loaded, { stage: 10, yunaDmSent: true, yunaPostRemoved: true });
   }
 
-  // Seoyun's scripted plot messages are saved in the durable KKT message
-  // collection (not the temporary-reply cache). Recover only from the final
-  // incoming message so an interrupted progress write cannot hide Anton's story.
-  const savedKktMessages = readSavedArray("kkt-msgs-v1") as Array<{ id?: string; contactId?: string }>;
-  const seoyunEndingDelivered = savedKktMessages.some((message) =>
-    message.contactId === "seoyun" && message.id === "story3-seoyun-in-6-4"
-  );
-  if (seoyunEndingDelivered) {
-    loaded = mergeStoryState(loaded, { stage: 7, seoyunStep: 7 });
-  } else if (
-    loaded.stage === 6 &&
-    loaded.seoyunStep === 6 &&
-    !savedKktMessages.some((message) => message.contactId === "seoyun" && message.id === "story3-seoyun-player-5")
-  ) {
-    // Older builds advanced directly from the third to the final Seoyun reply.
-    // Restore the missing fourth player line as the next available preset.
-    loaded.seoyunStep = 5;
-  }
-
   // Older builds recorded the X reply flag without advancing the stage.
   // Keep the active-chat router in sync after refreshes.
   if (loaded.xReplySent && loaded.stage < 6) {
