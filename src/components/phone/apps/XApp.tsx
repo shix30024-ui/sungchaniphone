@@ -113,7 +113,8 @@ export default function XApp({ lang, onHome }: AppProps) {
             readOnly
             value={story3Reply[lang]}
             onClick={() => {
-              updateNewStory({ xReplySent: true, xPostPublished: true });
+              // The X reply is the explicit hand-off from Plot 2 to Seoyun's KKT chat.
+              updateNewStory({ stage: 6, xReplySent: true, xPostPublished: true });
               const now = new Date();
               window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: {
                 id: "new-story-seoyun-notice", contactId: "seoyun", sender: "them", type: "text",
