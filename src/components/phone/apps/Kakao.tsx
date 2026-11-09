@@ -937,12 +937,6 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     return undefined;
   };
 
-  const fillSuggestedReply = () => {
-    if (compose.trim()) return;
-    const suggested = suggestedReply();
-    if (suggested) setCompose(suggested);
-  };
-
   const submitMessage = () => {
     const text = compose.trim();
     if (!text) return;
