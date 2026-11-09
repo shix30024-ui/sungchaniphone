@@ -11,6 +11,6 @@ describe("new notes translations", () => {
       expect(c.title.length).toBeGreaterThan(0);
       expect(c.body.length).toBeGreaterThan(0);
     }
-    expect(noteContent(n, "en").title).not.toBe(noteContent(n, "zh").title);
+    expect(noteContent(n, "en").body).not.toBe(noteContent(n, "zh").body);
   });
 });
