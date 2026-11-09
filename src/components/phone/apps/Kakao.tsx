@@ -1033,6 +1033,18 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
 
       {emoji && <div className="kkt-emoji-panel">{["😊", "ㅋㅋ", "❤️", "👍", "😭", "😂"].map((face) => <Button variant="ghost" key={face} onClick={() => { setCompose((text) => text + face); setEmoji(false); }}>{face}</Button>)}</div>}
 
+      {open.id === "anton" && suggestedReply() && (
+        <div className="px-3 pt-2 bg-background">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full justify-start text-left whitespace-normal h-auto min-h-10 py-2"
+            onClick={() => setCompose(suggestedReply() ?? "")}
+          >
+            {suggestedReply()}
+          </Button>
+        </div>
+      )}
       <form className="kkt-input" onSubmit={(event) => {
         event.preventDefault();
         submitMessage();
