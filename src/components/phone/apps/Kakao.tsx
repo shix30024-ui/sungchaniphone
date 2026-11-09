@@ -174,7 +174,13 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
         (reply.message.zh === line.zh || reply.message.ko === line.ko || reply.message.en === line.en)
       )
     );
-    if (hasOpening) return;
+    // Existing opening messages prove that Plot 1 has already started.
+    // Restore the stage flag before returning, otherwise the chat can show
+    // Anton's messages while all player preset replies remain unavailable.
+    if (hasOpening) {
+      if (newStory.stage < 1) updateNewStory({ stage: 1 });
+      return;
+    }
     let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), savedTemporary).at(-1);
     let index = 0;
     let cancelled = false;
