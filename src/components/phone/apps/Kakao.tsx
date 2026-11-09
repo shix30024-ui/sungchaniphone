@@ -133,59 +133,18 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   const [scene, setScene] = useState<AntonSceneState>(() => readAntonScene());
   const [newStory, setNewStory] = useState(() => readNewStory());
   useEffect(() => subscribeNewStory(() => setNewStory(readNewStory())), []);
-  // KKT messages are cloud-backed rows, so recover Seoyun progress from the
-  // hydrated message list rather than trying to read a legacy local snapshot.
-  useEffect(() => {
-    if (!msgsReady) return;
-    const seoyunEndingDelivered = msgs.some((message) =>
-      message.contactId === "seoyun" && message.id === "story3-seoyun-in-6-4"
-    );
-    if (seoyunEndingDelivered && (newStory.stage < 7 || newStory.seoyunStep < 7)) {
-      updateNewStory({ stage: 7, seoyunStep: 7 });
-    }
-  }, [msgs, msgsReady, newStory.stage, newStory.seoyunStep]);
-  // One-time migration for users whose previous build skipped the fourth
-  // Sungchan reply and left Seoyun at step 6 without saving that player line.
-  const seoyunLegacyMigrationChecked = useRef(false);
-  useEffect(() => {
-    if (!msgsReady || seoyunLegacyMigrationChecked.current) return;
-    seoyunLegacyMigrationChecked.current = true;
-    const fourthPlayerReplyExists = msgs.some((message) =>
-      message.contactId === "seoyun" && message.id === "story3-seoyun-player-5"
-    );
-    if (newStory.stage === 6 && newStory.seoyunStep === 6 && !fourthPlayerReplyExists) {
-      updateNewStory({ seoyunStep: 5 });
-    }
-  }, [msgsReady]);
   const patchScene = (patch: Partial<AntonSceneState>) => setScene(updateAntonScene(patch));
   const [progress] = usePersist<FixedProgress>(ANTON_PROGRESS_KEY, EMPTY_PROGRESS);
   // One-time: move large chat images out of the small browser storage. Text and order are untouched.
   useEffect(() => { void moveKktImagesToDb(); }, []);
   useEffect(() => { setActiveChat(openId); return () => setActiveChat(null); }, [openId]);
-  // Stage 1 starts when Anton's chat is opened. If its temporary messages were
-  // lost while the progress flag survived, restore the opening without resetting later progress.
+  // Stage 1 begins only when the player opens Anton's existing KKT chat.
   useEffect(() => {
-    if (openId !== "anton") return;
-    const savedTemporary = readTemporaryReplies("anton");
-    const hasOpening = savedTemporary.some((reply) =>
-      reply.message.id.startsWith("story1-opening-") ||
-      OPENING_ANTON.some((line) =>
-        reply.message.sender === "them" &&
-        (reply.message.zh === line.zh || reply.message.ko === line.ko || reply.message.en === line.en)
-      )
-    );
-    // Existing opening messages prove that Plot 1 has already started.
-    // Restore the stage flag before returning, otherwise the chat can show
-    // Anton's messages while all player preset replies remain unavailable.
-    if (hasOpening) {
-      if (newStory.stage < 1) updateNewStory({ stage: 1 });
-      return;
-    }
-    let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), savedTemporary).at(-1);
+    if (openId !== "anton" || newStory.stage !== 0) return;
+    let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "anton")), readTemporaryReplies("anton")).at(-1);
     let index = 0;
     let cancelled = false;
     let timer: number | undefined;
-    const restoringExistingProgress = newStory.stage >= 1;
     const deliverNext = () => {
       if (cancelled) return;
       setAntonTyping(true);
@@ -194,18 +153,15 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
         const line = OPENING_ANTON[index];
         if (!line) { setAntonTyping(false); return; }
         const incoming = temporaryReply(line.zh, lang, anchor);
-        incoming.message.id = `story1-opening-${index + 1}`;
-        incoming.message.date = "2026-10-31";
-        incoming.message.time = `17:${String(30 + index).padStart(2, "0")}`;
         incoming.message.sender = "them";
         incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
-        setTemporary((old) => old.some((reply) => reply.message.id === incoming.message.id) ? old : [...old, incoming]);
+        setTemporary((old) => [...old, incoming]);
         anchor = incoming.message;
         index += 1;
         if (index < OPENING_ANTON.length) deliverNext();
         else {
           setAntonTyping(false);
-          if (!restoringExistingProgress) updateNewStory({ stage: 1 });
+          updateNewStory({ stage: 1 });
         }
       }, 950);
     };
@@ -264,7 +220,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     let anchor = withTemporaryReplies(sortMsgs(msgs.filter((m) => m.contactId === "seoyun")), readTemporaryReplies("seoyun")).at(-1);
     const finish = () => {
       setSeoyunTyping(false);
-      updateNewStory({ seoyunStep: step === 0 ? 1 : step === 3 ? 4 : 7, ...(step === 6 ? { stage: 7 } : {}) });
+      updateNewStory({ seoyunStep: step === 0 ? 1 : step === 3 ? 4 : 7, ...(step === 6 && newStory.stage === 6 ? { stage: 7 } : {}) });
     };
     const deliverNext = () => {
       if (cancelled) return;
@@ -377,7 +333,6 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   const [draftC, setDraftC] = useState<Contact | null>(null);
   const [addingContact, setAddingContact] = useState(false);
   const [compose, setCompose] = useState("");
-  const [presetRepliesOpen, setPresetRepliesOpen] = useState(false);
   const [call, setCall] = useState<"outgoing" | "incoming" | null>(null);
   const [blockedActionOpen, setBlockedActionOpen] = useState(false);
   const [, setRecents] = usePersist<RecentCall[]>(RECENTS_KEY, []);
@@ -391,7 +346,6 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   // refresh or close clears them. Compose/typing UI state still resets.
   useEffect(() => {
     setCompose("");
-    setPresetRepliesOpen(false);
     setEmoji(false);
     if (openId !== "anton" || editing || call) setAntonTyping(false);
   }, [openId, editing, call]);
@@ -547,15 +501,6 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   };
 
   const send = (text: string, image?: string) => {
-    // Plot 2 requires the player to initiate the missed voice call manually.
-    // The three follow-up texts become available only after the call attempt ends.
-    if (open.id === "anton" && newStory.stage === 4 &&
-      newStory.stage2Replies >= STAGE2_CHOICES.length && newStory.stage2Reassurance === 0 &&
-      text === tr(lang, { en: "Voice call", ko: "보이스톡", zh: "语音电话" })) {
-      updateNewStory({ stage2Reassurance: 1 });
-      startCall("outgoing");
-      return;
-    }
     if (open.id === "seoyun" && !image) {
       if (newStory.xReplySent || newStory.stage === 6) {
         const step = readNewStory().seoyunStep;
@@ -616,7 +561,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       }
       const next = step + 1;
       if (next === 2 || next === 6 || next === 10) {
-        const replyIndexes = next === 2 ? [0, 1, 2, 3] : next === 6 ? [4] : [5, 6, 7];
+        const replyIndexes = next === 2 ? [0, 1] : next === 6 ? [4] : [8, 9, 10];
         let index = 0;
         let anchor = outgoing.message;
         const deliver = () => {
@@ -689,13 +634,6 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     if (open.id !== "anton") { sendChat("kkt", open.id, text, lang, Date.now(), image); return; }
     const visibleThread = withTemporaryReplies(fixedThread, readTemporaryReplies("anton"));
     const playerMsg = temporaryReply(text, lang, visibleThread.at(-1), image);
-    if (open.id === "anton" && newStory.stage === 1 && !image) {
-      playerMsg.message.date = "2026-10-31";
-      const minute = newStory.openingReplies < OPENING_CHOICES.length
-        ? 33 + newStory.openingReplies
-        : 37 + newStory.reassuranceReplies;
-      playerMsg.message.time = `17:${String(minute).padStart(2, "0")}`;
-    }
     if (open.id === "anton" && newStory.stage === 4 && newStory.stage2Replies >= STAGE2_CHOICES.length) playerMsg.message.read = false;
     setTemporary((old) => [...old, playerMsg]);
     if (open.id === "anton" && (newStory.stage === 1 || newStory.stage === 4) && !image) {
@@ -708,9 +646,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
           const incoming = temporaryReply(line.zh, lang, anchor);
           incoming.message.sender = "them";
           incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
-          if (line === OPENING_ANTON_2) { incoming.message.id = "story1-anton-2"; incoming.message.date = "2026-10-31"; incoming.message.time = "17:36"; }
-          if (line === OPENING_ANTON_3) { incoming.message.id = "story1-anton-3"; incoming.message.date = "2026-10-31"; incoming.message.time = "17:40"; }
-          setTemporary((old) => old.some((reply) => reply.message.id === incoming.message.id) ? old : [...old, incoming]);
+          setTemporary((old) => [...old, incoming]);
           setAntonTyping(false);
         }, 950);
       };
@@ -743,16 +679,16 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
               if (index < followUps.length) deliverNext();
               else {
                 setAntonTyping(false);
-                // Wait for the player to tap the voice-call preset after Anton's two messages.
+                // Let Anton's last jealous message appear before opening the outgoing call screen.
+                window.setTimeout(() => startCall("outgoing"), 350);
               }
             }, 950);
           };
           deliverNext();
         }
-      } else if (currentStory.stage === 4 && currentStory.stage2Replies >= STAGE2_CHOICES.length &&
-        currentStory.stage2Reassurance >= 1 && currentStory.stage2Reassurance < STAGE2_REASSURE.length + 1) {
+      } else if (currentStory.stage === 4 && currentStory.stage2Reassurance < STAGE2_REASSURE.length) {
         const count = currentStory.stage2Reassurance + 1;
-        updateNewStory({ stage2Reassurance: count, ...(count === STAGE2_REASSURE.length + 1 ? { stage: 5 } : {}) });
+        updateNewStory({ stage2Reassurance: count, ...(count === STAGE2_REASSURE.length ? { stage: 5 } : {}) });
       }
     }
     if (flow.waiting) acknowledgeFixedNode(flow.waiting.id);
@@ -892,8 +828,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     }
     if (open.id === "anton" && newStory.stage === 4) {
       if (newStory.stage2Replies < STAGE2_CHOICES.length) return STAGE2_CHOICES[newStory.stage2Replies]?.[lang];
-      if (newStory.stage2Reassurance === 0) return tr(lang, { en: "Voice call", ko: "보이스톡", zh: "语音电话" });
-      if (newStory.stage2Reassurance <= STAGE2_REASSURE.length) return STAGE2_REASSURE[newStory.stage2Reassurance - 1]?.[lang];
+      if (newStory.stage2Reassurance < STAGE2_REASSURE.length) return STAGE2_REASSURE[newStory.stage2Reassurance]?.[lang];
     }
     const current = readAntonScene();
     if (open.id === "seoyun") {
@@ -935,6 +870,12 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     if (current.phase === "first-replies") return FIRST_PLAYER_REPLIES[current.firstReplyCount]?.[lang];
     if (current.phase === "final-replies") return FINAL_PLAYER_REPLIES[current.finalReplyCount]?.[lang];
     return undefined;
+  };
+
+  const fillSuggestedReply = () => {
+    if (compose.trim()) return;
+    const suggested = suggestedReply();
+    if (suggested) setCompose(suggested);
   };
 
   const submitMessage = () => {
@@ -1029,29 +970,13 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
 
       {emoji && <div className="kkt-emoji-panel">{["😊", "ㅋㅋ", "❤️", "👍", "😭", "😂"].map((face) => <Button variant="ghost" key={face} onClick={() => { setCompose((text) => text + face); setEmoji(false); }}>{face}</Button>)}</div>}
 
-      {open.id === "anton" && presetRepliesOpen && suggestedReply() && (
-        <div className="px-3 pt-2 bg-background">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full justify-start text-left whitespace-normal h-auto min-h-10 py-2"
-            onClick={() => {
-              setCompose(suggestedReply() ?? "");
-              setPresetRepliesOpen(false);
-              composeInput.current?.focus();
-            }}
-          >
-            {suggestedReply()}
-          </Button>
-        </div>
-      )}
       <form className="kkt-input" onSubmit={(event) => {
         event.preventDefault();
         submitMessage();
       }}>
         <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Send photo", ko: "사진 보내기", zh: "发送图片" })} onClick={() => upload.current?.click()}><SquarePlus /></Button>
         <input ref={upload} type="file" accept="image/*" className="hidden" onChange={async (e) => { const input = e.currentTarget; const file = input.files?.[0]; try { if (file) { const image = await fileToDataUrl(file); send(compose, image); setCompose(""); } } catch { alert(tr(lang, { en: "Could not send photo", ko: "사진을 보낼 수 없습니다", zh: "图片未发送，请重试" })); } finally { input.value = ""; } }} />
-        <input ref={composeInput} aria-label={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} placeholder={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} disabled={open.id === "anton" && ![1, 4, 8, 10].includes(newStory.stage) && ["warm-opening", "anger-opening", "choose-ending", "anton-typing", "blocked"].includes(scene.phase)} className="kkt-compose" value={compose} onClick={() => setPresetRepliesOpen(true)} onChange={(event) => setCompose(event.target.value)} />
+        <input ref={composeInput} aria-label={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} placeholder={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} disabled={open.id === "anton" && ["warm-opening", "anger-opening", "choose-ending", "anton-typing", "blocked"].includes(scene.phase)} className="kkt-compose" value={compose} onClick={fillSuggestedReply} onChange={(event) => setCompose(event.target.value)} />
         <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Emoji", ko: "이모티콘", zh: "表情" })} aria-expanded={emoji} onClick={() => setEmoji(!emoji)}><Smile size={21} /></Button>
         <Button type="button" size="icon" aria-label={tr(lang, { en: "Send message", ko: "메시지 보내기", zh: "发送消息" })} className="kkt-send" onClick={submitMessage} disabled={!compose.trim() || (open.id === "anton" && ["warm-opening", "anger-opening", "choose-ending", "anton-typing", "blocked"].includes(scene.phase))}><Send size={17} /></Button>
       </form>

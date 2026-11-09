@@ -2,7 +2,6 @@ import { STORY_DATE, sortMessages } from "./chronology";
 import type { Lang } from "./i18n";
 import type { Msg } from "./story";
 import { readStored, updateStored, uid } from "./store";
-import { queueSharedSave } from "./shared-state";
 
 export const ANTON_PROGRESS_KEY = "kkt-anton-fixed-progress-v1";
 export type FixedProgress = { answeredIds: string[] };
@@ -48,47 +47,20 @@ export function temporaryIncoming(reply: { ko: string; zh: string; en: string },
   } };
 }
 
-// Temporary replies stay separate from authored KKT records, while their
-// local cache preserves already-triggered conversations across page refreshes.
-const TEMPORARY_KEY_PREFIX = "kkt-temporary-replies-v1:";
+// Module-memory temporary replies: they survive leaving and re-entering the
+// chat inside the app, and disappear naturally when the page refreshes or
+// closes. They are never written to localStorage or any persistent storage.
 const temporaryStore = new Map<string, TemporaryReply[]>();
 
-// Shared phone content may arrive after the app module has initialized.
-// Drop only this in-memory cache so the next render reads the latest shared thread.
-if (typeof window !== "undefined") {
-  window.addEventListener("phone-shared-refresh", () => temporaryStore.clear());
-}
-
 export function readTemporaryReplies(contactId: string): TemporaryReply[] {
-  const cached = temporaryStore.get(contactId);
-  if (cached) return cached;
-  let saved: TemporaryReply[] = [];
-  if (typeof window !== "undefined") {
-    try {
-      // Read through the shared phone store first, while retaining compatibility
-      // with temporary conversations saved by earlier local-only versions.
-      const stored = readStored<TemporaryReply[]>(`${TEMPORARY_KEY_PREFIX}${contactId}`, []);
-      if (Array.isArray(stored)) saved = stored;
-    } catch { /* Keep the current conversation usable if this optional cache is unreadable. */ }
-  }
-  temporaryStore.set(contactId, saved);
-  return saved;
+  return temporaryStore.get(contactId) ?? [];
 }
 
 export function writeTemporaryReplies(contactId: string, replies: TemporaryReply[]) {
   temporaryStore.set(contactId, replies);
-  if (typeof window !== "undefined") {
-    try {
-      // The same shared persistence path as story progress prevents the two
-      // records from drifting between the editor and the published phone.
-      const key = `${TEMPORARY_KEY_PREFIX}${contactId}`;
-      updateStored<TemporaryReply[]>(key, [], () => replies);
-      queueSharedSave(key, replies);
-    } catch { /* A storage failure must not interrupt the open conversation. */ }
-  }
 }
 
-/** Test helper: clears only the in-memory cache; saved conversation history remains intact. */
+/** Test helper: simulates a page refresh by clearing module memory. */
 export function resetTemporaryReplies() { temporaryStore.clear(); }
 
 export function withTemporaryReplies(fixed: Msg[], temporary: TemporaryReply[]): Msg[] {

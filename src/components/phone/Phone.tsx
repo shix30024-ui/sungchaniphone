@@ -427,17 +427,8 @@ export default function Phone() {
     setInstagramTarget(a.id === "ig" && readNewStory().stage === 2 ? "yuna" : null);
     if (editMode && a.id !== "settings") setEditing(apps.find((original) => original.id === a.id) ?? a);
     else if (!editMode) {
-      // Route KakaoTalk to the character whose scripted conversation is active.
-      // Stage 2 waits for Yuna's Instagram post; stage 5 waits for the X reply;
-      // stage 7 waits for Anton's story; stage 9 waits for Yuna's DM.
-      if (a.id === "kkt") {
-        const storyProgress = readNewStory();
-        if ([0, 1, 3, 4, 8, 10].includes(storyProgress.stage)) {
-          setChatTarget("anton");
-        } else if (storyProgress.stage === 6) {
-          setChatTarget("seoyun");
-        }
-      }
+      if (a.id === "kkt" && (readNewStory().stage === 0 || readNewStory().stage === 3)) setChatTarget("anton");
+      if (a.id === "kkt" && (readNewStory().xReplySent || readNewStory().stage === 6)) setChatTarget("seoyun");
       setOpen(a);
     }
   };

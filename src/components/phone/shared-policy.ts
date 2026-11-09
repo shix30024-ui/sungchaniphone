@@ -4,8 +4,7 @@ export const SHARED_KEYS = new Set([
   "ig-stories-v1", "ig-friend-stories-v1", "x-tweets-v1", "photos-v1",
   "notes-v1", "phone-note-folders-v1", "calendar-events-v1", "music-library-v1",
   "phone-device-contacts-v1", "phone-browser-pages-v1", "phone-sms-threads-v1",
-  "kkt-temporary-replies-v1:anton", "kkt-temporary-replies-v1:seoyun",
-  "phone-sms-messages-v1", "phone-call-recents-v1", "fiction-story-progress-v1",
+  "phone-sms-messages-v1", "phone-call-recents-v1",
 ]);
 
 /** Bootstrap only from an authenticated owner's existing authored records, never a fresh visitor's defaults. */

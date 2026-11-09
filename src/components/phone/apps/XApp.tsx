@@ -17,12 +17,7 @@ export default function XApp({ lang, onHome }: AppProps) {
   const [draft, setDraft] = useState<Tweet | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [story3ReplySent, setStory3ReplySent] = useState(() => readNewStory().xReplySent);
-  const [storyStage, setStoryStage] = useState(() => readNewStory().stage);
-  useEffect(() => subscribeNewStory(() => {
-    const progress = readNewStory();
-    setStory3ReplySent(progress.xReplySent);
-    setStoryStage(progress.stage);
-  }), []);
+  useEffect(() => subscribeNewStory(() => setStory3ReplySent(readNewStory().xReplySent)), []);
   const story3Post: Tweet = {
     id: "new-story-stage3-post",
     text: "나 여자친구 같은 거 없어. 내가 제일 좋아하는 사람은 따로 있는데. 내 마음도 모르면서 멋대로 오해하고 있어!!!",
@@ -48,13 +43,10 @@ export default function XApp({ lang, onHome }: AppProps) {
   };
   const story3Reply = {
     ko: "거절당할까 봐。。。",
-    zh: "怕他拒绝。",
-    en: "I'm afraid he'll reject me.",
+    zh: "怕他拒绝我。。。",
+    en: "I'm afraid he'll reject me...",
   };
-  const visibleTweets = [
-    ...(storyStage >= 5 ? [story3Post] : []),
-    ...tweets.filter((tweet) => tweet.id !== story3Post.id),
-  ];
+  const visibleTweets = [story3Post, ...tweets.filter((tweet) => tweet.id !== story3Post.id)];
   const open = visibleTweets.find((tweet) => tweet.id === openId);
   const sorted = [...visibleTweets].sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
 
@@ -113,8 +105,7 @@ export default function XApp({ lang, onHome }: AppProps) {
             readOnly
             value={story3Reply[lang]}
             onClick={() => {
-              // The X reply is the explicit hand-off from Plot 2 to Seoyun's KKT chat.
-              updateNewStory({ stage: 6, xReplySent: true, xPostPublished: true });
+              updateNewStory({ xReplySent: true, xPostPublished: true });
               const now = new Date();
               window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: {
                 id: "new-story-seoyun-notice", contactId: "seoyun", sender: "them", type: "text",

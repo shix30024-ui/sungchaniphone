@@ -1,5 +1,5 @@
 import type { Lang } from "./i18n";
-import { sharedRead, sharedWrite, queueSharedSave } from "./shared-state";
+import { sharedRead } from "./shared-state";
 
 export type StoryText = Record<Lang, string>;
 export type NewStoryState = {
@@ -31,100 +31,48 @@ const INITIAL: NewStoryState = {
 // This keeps the story stage across refreshes without rewriting chats, posts, or contacts.
 const STORAGE_KEY = "fiction-story-progress-v1";
 const EVENT = "fiction-story-update";
-function mergeStoryState(base: NewStoryState, next: Partial<NewStoryState>): NewStoryState {
-  const merged = { ...base, ...next };
-  const counters: (keyof NewStoryState)[] = [
-    "stage", "openingReplies", "reassuranceReplies", "stage2Replies", "stage2Reassurance",
-    "finalReplies", "seoyunReplies", "seoyunStep", "stage4Step", "stage6Step",
-  ];
-  for (const key of counters) {
-    merged[key] = Math.max(Number(base[key]) || 0, Number(next[key]) || 0) as never;
-  }
-  const flags: (keyof NewStoryState)[] = [
-    "yunaDmSent", "xPostPublished", "xReplySent", "antonStoryViewed", "yunaPostRemoved", "endingPosted",
-  ];
-  for (const key of flags) merged[key] = Boolean(base[key] || next[key]) as never;
-  return merged;
-}
-
-function readSavedArray(key: string): unknown[] {
-  try {
-    const shared = sharedRead(key);
-    const raw = shared.found ? shared.value : localStorage.getItem(key);
-    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-    return Array.isArray(parsed) ? parsed : [];
-  } catch { return []; }
-}
-
-function persistStoryState(value: NewStoryState) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(value)); } catch { /* Keep phone content independent of story progress. */ }
-  if (!sharedWrite(STORAGE_KEY, value)) queueSharedSave(STORAGE_KEY, value);
-}
-
 function loadStoryState(): NewStoryState {
   if (typeof window === "undefined") return { ...INITIAL };
-  let loaded = { ...INITIAL };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) loaded = mergeStoryState(loaded, JSON.parse(raw) as Partial<NewStoryState>);
-  } catch { /* Continue with other independent recovery evidence. */ }
-  try {
-    const shared = sharedRead(STORAGE_KEY);
-    if (shared.found && shared.value && typeof shared.value === "object") {
-      loaded = mergeStoryState(loaded, shared.value as Partial<NewStoryState>);
+    if (raw) return { ...INITIAL, ...JSON.parse(raw) };
+    // Recover the unlock if the final Yuna DM was already saved before progress persistence existed.
+    const dmRaw = localStorage.getItem("ig-dm-messages-v1");
+    if (dmRaw) {
+      const messages = JSON.parse(dmRaw) as Array<{ id?: string }>;
+      if (messages.some((message) => message.id === "new-story-yuna-reply-4")) {
+        const recovered = { ...INITIAL, stage: 10, yunaDmSent: true, yunaPostRemoved: true };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(recovered));
+        return recovered;
+      }
     }
-  } catch { /* Local progress remains available. */ }
-
-  // Recover only from durable artifacts that prove a story event actually happened.
-  const dmMessages = readSavedArray("ig-dm-messages-v1") as Array<{ id?: string }>;
-  if (dmMessages.some((message) => message.id === "new-story-yuna-reply-4")) {
-    loaded = mergeStoryState(loaded, { stage: 10, yunaDmSent: true, yunaPostRemoved: true });
-  }
-
-  // Older builds recorded the X reply flag without advancing the stage.
-  // Keep the active-chat router in sync after refreshes.
-  if (loaded.xReplySent && loaded.stage < 6) {
-    loaded = mergeStoryState(loaded, { stage: 6 });
-  }
-
-  const seenStories = readSavedArray("ig-story-seen-v1") as string[];
-  if (seenStories.includes("new-story-anton-20261031")) {
-    loaded = mergeStoryState(loaded, { stage: 8, antonStoryViewed: true });
-  }
-
-  try {
-    if (localStorage.getItem("ig-follow-yuna-v1") === "true") {
-      loaded = mergeStoryState(loaded, { stage: 2 });
-    }
-  } catch { /* Optional recovery marker. */ }
-
-  return loaded;
+  } catch { /* Keep the safe initial state if stored progress is unreadable. */ }
+  return { ...INITIAL };
 }
-
 let state: NewStoryState = loadStoryState();
 
-if (typeof window !== "undefined") {
-  window.addEventListener("phone-shared-refresh", () => {
-    const refreshed = loadStoryState();
-    if (JSON.stringify(refreshed) !== JSON.stringify(state)) {
-      state = refreshed;
-      window.dispatchEvent(new CustomEvent(EVENT, { detail: { ...state } }));
-    }
-  });
+function recoverYunaUnlock(): boolean {
+  if (state.stage >= 7 || state.seoyunStep >= 7) return false;
+  try {
+    const sharedDm = sharedRead("ig-dm-messages-v1");
+    const rawDm = sharedDm.found ? sharedDm.value : localStorage.getItem("ig-dm-messages-v1");
+    const messages = typeof rawDm === "string" ? JSON.parse(rawDm) : rawDm;
+    if (!Array.isArray(messages) || !messages.some((message) => message?.id === "new-story-yuna-reply-4")) return false;
+    state = { ...state, stage: Math.max(state.stage, 10), yunaDmSent: true, yunaPostRemoved: true };
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+    if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(EVENT, { detail: { ...state } }));
+    return true;
+  } catch { return false; }
 }
 
 export const readNewStory = () => {
-  const recovered = loadStoryState();
-  if (JSON.stringify(recovered) !== JSON.stringify(state)) {
-    state = recovered;
-    persistStoryState(state);
-  }
+  recoverYunaUnlock();
   return { ...state };
 };
 export function updateNewStory(patch: Partial<NewStoryState>) {
   state = { ...state, ...patch };
   if (typeof window !== "undefined") {
-    persistStoryState(state);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* Story progress must not block phone data. */ }
     window.dispatchEvent(new CustomEvent(EVENT, { detail: readNewStory() }));
   }
   return readNewStory();
@@ -241,9 +189,12 @@ export const STAGE5_YUNA_REPLY: StoryText[] = [
 export const STAGE6_ANTON: StoryText[] = [
   { ko: "?", zh: "？", en: "?" },
   { ko: "형 남자친구가 누구야?", zh: "谁是男朋友", en: "Who is your boyfriend?" },
-  { ko: "뭐야 진짜!!", zh: "好奇怪！！", en: "That's so weird!!" },
-  { ko: "누가 형이랑 사귄대?", zh: "谁说要和你在一起了", en: "Who said I'd date you?" },
+  { ko: "천사", zh: "天使", en: "Angel." },
+  { ko: "형이랑 사귈래?", zh: "所以愿意和哥在一起吗？", en: "Will you be my boyfriend?" },
   { ko: ":)", zh: ":)", en: ":)" },
+  { ko: "뭐야", zh: "什么啊", en: "What?" },
+  { ko: "형이 너 얼마나 아끼는지 알지?", zh: "知道哥很珍惜你吧？", en: "You know how much I treasure you, right?" },
+  { ko: "그만 애태워", zh: "别折磨我了", en: "Don't keep me waiting." },
   { ko: "알았어", zh: "知道了", en: "I know." },
   { ko: "남자친구", zh: "男朋友", en: "Boyfriend." },
   { ko: "보고 싶어", zh: "想你了", en: "I miss you." },
