@@ -251,7 +251,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
         index += 1;
         if (index < lines.length) deliverNext();
         else finish();
-      }, 950);
+      }, 2800);
     };
     deliverNext();
     return () => { cancelled = true; if (timer !== undefined) window.clearTimeout(timer); setSeoyunTyping(false); };
