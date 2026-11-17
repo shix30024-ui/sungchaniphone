@@ -54,7 +54,7 @@ export default function XApp({ lang, onHome }: AppProps) {
     en: "I'm afraid he'll reject me...",
   };
   // Keep the scripted X post hidden until the player has completed stage 2 in KakaoTalk.
-  const story3Unlocked = storyStage >= 4;
+  const story3Unlocked = storyStage >= 5;
   const visibleTweets = [...(story3Unlocked ? [story3Post] : []), ...tweets.filter((tweet) => tweet.id !== story3Post.id)];
   const open = visibleTweets.find((tweet) => tweet.id === openId);
   const sorted = [...visibleTweets].sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
