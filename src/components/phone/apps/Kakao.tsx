@@ -93,31 +93,17 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       }
       return [...byId.values()];
     });
-    // Reconcile Anton's dated historical transcript without touching other contacts,
-    // live story messages, or the separately stored 2026-10-31 staged conversation.
-    // Match by content/time (not date) so previously misplaced rows are corrected in place.
+    // Replace Anton's dated historical transcript as one canonical set.
+    // Stale rows with earlier incorrect dates can no longer survive a correction.
+    // Other contacts, live rows, and the staged 2026-10-31 story stay untouched.
     const antonHistorySeeds = MESSAGES.filter((message) =>
-      message.contactId === "anton" && message.date <= "2026-10-29" && !message.live
+      message.contactId === "anton" && !message.live && message.date <= "2026-10-29"
     );
     setMsgs((current) => {
-      const signature = (message: Msg) =>
-        [message.sender, message.time, message.type, message.ko, message.zh, message.en ?? "", message.image ?? ""].join("|");
-      const seedBySignature = new Map(antonHistorySeeds.map((message) => [signature(message), message]));
-      const seen = new Set<string>();
-      const reconciled = current.map((message) => {
-        if (message.contactId !== "anton" || message.live || message.date > "2026-10-29") return message;
-        const key = signature(message);
-        const seed = seedBySignature.get(key);
-        if (!seed) return message;
-        seen.add(key);
-        return { ...message, date: seed.date, time: seed.time, type: seed.type, order: seed.order, image: seed.image };
-      });
-      // Remove the obsolete placeholder conversation that had been occupying Dec 3, 2022.
-      const kept = reconciled.filter((message) =>
-        !(message.contactId === "anton" && message.zh.includes("考完了吗") && message.date === "2022-12-03")
+      const preserved = current.filter((message) =>
+        message.contactId !== "anton" || message.live || message.date > "2026-10-29"
       );
-      const missing = antonHistorySeeds.filter((message) => !seen.has(signature(message)));
-      return missing.length || kept.length !== current.length ? [...kept, ...missing] : kept;
+      return [...preserved, ...antonHistorySeeds];
     });
   };
   useEffect(() => {
