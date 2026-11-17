@@ -8,6 +8,7 @@ import { STORY_DATE } from "./chronology";
 import { backupPhoneData, readStored, updateStored } from "./store";
 import { fixedFlow, readFixedProgress, readTemporaryReplies } from "./fixed-conversation";
 import { readAntonScene } from "./anton-scene";
+import { readNewStory } from "./new-story";
 
 export const MSGS_KEY = "kkt-msgs-v1";
 export const CONTACTS_KEY = "kkt-contacts-v1";
@@ -129,6 +130,8 @@ export function deliverLiveMessage(opts: { test?: boolean } = {}): Msg | null {
 
 /** Called on a timer: sends at most one message when due, then schedules the next. */
 export function tickLive(now = Date.now()): Msg | null {
+  // Keep unrelated background Anton messages out of the authored seven-stage story.
+  if (readNewStory().stage < 11) return null;
   const settings = loadLiveSettings();
   if (!settings.enabled) return null;
   // Let the current conversation finish instead of interrupting with an unrelated story node.
