@@ -296,7 +296,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     startAntonWarmup();
     setScene(readAntonScene());
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openId, scene.phase]);
+  }, [openId, scene.phase, newStory.stage]);
   useEffect(() => {
     if (newStory.stage > 0 || openId !== "anton" || scene.phase !== "warm-opening") return;
     const line = ANTON_WARM_OPENING[scene.antonReplyCount];
@@ -318,7 +318,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     }, 1150);
     return () => window.clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openId, scene.phase, scene.antonReplyCount]);
+  }, [openId, scene.phase, scene.antonReplyCount, newStory.stage]);
 
   // After the KKT push, finish Anton's jealous burst one message at a time when the chat is opened.
   useEffect(() => {
