@@ -619,12 +619,17 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       const playerMsg = temporaryReply(line.zh, lang, currentThread.at(-1));
       playerMsg.message.sender = "me";
       playerMsg.message.ko = line.ko; playerMsg.message.zh = line.zh; playerMsg.message.en = line.en;
-      const stage4Minute: Record<number, number> = { 0: 1, 1: 3, 2: 4, 3: 5, 4: 7, 5: 8, 6: 9, 7: 10, 8: 16, 9: 17, 10: 18, 11: 19, 12: 20 };
+      const stage4Minute: Record<number, number> = { 0: 1, 1: 3, 2: 4, 3: 5, 4: 7, 5: 8, 6: 9, 7: 10, 8: 16, 9: 17, 10: 18, 11: 19, 12: 20, 13: 22, 14: 23 };
       playerMsg.message.date = "2026-10-31";
       playerMsg.message.time = `21:${String(stage4Minute[step] ?? 1).padStart(2, "0")}`;
       setTemporary((old) => [...old, playerMsg]);
       const nextStep = step + 1;
       updateNewStory({ stage4Step: nextStep });
+      if (step === 14) {
+        updateNewStory({ stage: 9, stage4Step: 15 });
+        window.setTimeout(() => startCall("outgoing"), 350);
+        return;
+      }
       const incomingLines = nextStep === 1 ? [STAGE4_ANTON[1]!] 
         : nextStep === 4 ? [{ ko: "응", zh: "응", en: "Yeah." }]
         : nextStep === 8 ? STAGE4_ANTON.slice(7, 12)
@@ -649,7 +654,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
             if (index < incomingLines.length) deliverNext();
             else {
               setAntonTyping(false);
-              if (nextStep === 13) updateNewStory({ stage: 9 });
+              if (nextStep === 15) updateNewStory({ stage: 9 });
             }
           }, 950);
         };
