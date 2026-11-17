@@ -93,15 +93,31 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       }
       return [...byId.values()];
     });
-    // Add only the missing Oct 24 music-share conversation to existing KKT data.
-    // Match message content as well as time so older saved mN IDs cannot collide.
-    // Existing edits, replies, and every other date remain untouched.
-    const oct24Seeds = MESSAGES.filter((message) => message.contactId === "anton" && message.date === "2026-10-24");
+    // Reconcile Anton's dated historical transcript without touching other contacts,
+    // live story messages, or the separately stored 2026-10-31 staged conversation.
+    // Match by content/time (not date) so previously misplaced rows are corrected in place.
+    const antonHistorySeeds = MESSAGES.filter((message) =>
+      message.contactId === "anton" && message.date <= "2026-10-29" && !message.live
+    );
     setMsgs((current) => {
-      const signature = (message: Msg) => [message.contactId, message.date, message.time, message.sender, message.type, message.ko, message.zh].join("|");
-      const existing = new Set(current.map(signature));
-      const missing = oct24Seeds.filter((message) => !existing.has(signature(message)));
-      return missing.length ? [...current, ...missing] : current;
+      const signature = (message: Msg) =>
+        [message.sender, message.time, message.type, message.ko, message.zh, message.en ?? "", message.image ?? ""].join("|");
+      const seedBySignature = new Map(antonHistorySeeds.map((message) => [signature(message), message]));
+      const seen = new Set<string>();
+      const reconciled = current.map((message) => {
+        if (message.contactId !== "anton" || message.live || message.date > "2026-10-29") return message;
+        const key = signature(message);
+        const seed = seedBySignature.get(key);
+        if (!seed) return message;
+        seen.add(key);
+        return { ...message, date: seed.date, time: seed.time, type: seed.type, order: seed.order, image: seed.image };
+      });
+      // Remove the obsolete placeholder conversation that had been occupying Dec 3, 2022.
+      const kept = reconciled.filter((message) =>
+        !(message.contactId === "anton" && message.zh.includes("考完了吗") && message.date === "2022-12-03")
+      );
+      const missing = antonHistorySeeds.filter((message) => !seen.has(signature(message)));
+      return missing.length || kept.length !== current.length ? [...kept, ...missing] : kept;
     });
   };
   useEffect(() => {
