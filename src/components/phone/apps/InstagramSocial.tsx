@@ -163,16 +163,16 @@ export function InstagramDM({ accounts, lang, onClose, onYunaProfile, initialCon
       else if (contact.id === "yuna" && readNewStory().stage === 9) {
         const currentCount = thread.filter((m) => m.id.startsWith("new-story-v2-yuna-player-")).length;
         const now = new Date();
-        const playerMessage: Msg = { id: `new-story-v2-yuna-player-${currentCount + 1}`, contactId: "yuna", sender: "me", type: "text", ko: lang === "ko" ? outgoingText : "", zh: lang === "zh" ? outgoingText : "", en: lang === "en" ? outgoingText : "", originalText: outgoingText, date: "2026-10-31", time: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`, order: thread.length + 1, read: true };
+        const playerMessage: Msg = { id: `new-story-v2-yuna-player-${currentCount + 1}`, contactId: "yuna", sender: "me", type: "text", ko: lang === "ko" ? outgoingText : "", zh: lang === "zh" ? outgoingText : "", en: lang === "en" ? outgoingText : "", originalText: outgoingText, date: "2026-10-31", time: `21:${String(10 + currentCount).padStart(2, "0")}`, order: thread.length + 1, read: true };
         setMsgs((current) => [...current, playerMessage]);
         if (currentCount + 1 >= 4) {
-          const replies = STAGE5_YUNA_REPLY.map((line, index) => ({ id: `new-story-v2-yuna-reply-${index + 1}`, contactId: "yuna", sender: "them" as const, type: "text" as const, ko: line.ko, zh: line.zh, en: line.en, date: "2026-10-31", time: `21:${String(30 + index).padStart(2, "0")}`, order: thread.length + index + 2, read: true }));
+          const replies = STAGE5_YUNA_REPLY.map((line, index) => ({ id: `new-story-v2-yuna-reply-${index + 1}`, contactId: "yuna", sender: "them" as const, type: "text" as const, ko: line.ko, zh: line.zh, en: line.en, date: "2026-10-31", time: `21:${String(14 + index).padStart(2, "0")}`, order: thread.length + index + 2, read: true }));
           setMsgs((current) => [...current, ...replies.filter((reply) => !current.some((m) => m.id === reply.id))]);
           updateNewStory({ stage: 10, yunaDmSent: true, yunaPostRemoved: true });
           window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: {
             id: "new-story-anton-final-notice", contactId: "anton", sender: "them", type: "text",
             ko: "형 카톡 봐 줘", zh: "哥，看看KKT", en: "Check KakaoTalk, hyung.",
-            date: "2026-10-31", time: "21:35", order: 900002, live: true, read: false, notified: true,
+            date: "2026-10-31", time: "21:27", order: 900002, live: true, read: false, notified: true,
             createdAt: now.toISOString(),
           } }));
         }
