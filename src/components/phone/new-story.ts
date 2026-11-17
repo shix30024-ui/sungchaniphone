@@ -161,8 +161,8 @@ export const STAGE5_YUNA_REPLY: StoryText[] = [
 export const STAGE6_ANTON: StoryText[] = [
   { ko: "?", zh: "？", en: "?" },
   { ko: "형 남자친구가 누구야?", zh: "谁是男朋友", en: "Who is your boyfriend?" },
-  { ko: "천사", zh: "天使", en: "Angel." },
-  { ko: "형이랑 사귈래?", zh: "所以愿意和哥在一起吗？", en: "Will you be my boyfriend?" },
+  { ko: "이상해!!", zh: "好奇怪！！", en: "That is so weird!!" },
+  { ko: "누가 너랑 사귄대?", zh: "谁说要和你在一起了", en: "Who said I would date you?" },
   { ko: ":)", zh: ":)", en: ":)" },
   { ko: "뭐야", zh: "什么啊", en: "What?" },
   { ko: "형이 너 얼마나 아끼는지 알지?", zh: "知道哥很珍惜你吧？", en: "You know how much I treasure you, right?" },
