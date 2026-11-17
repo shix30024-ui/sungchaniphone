@@ -149,8 +149,6 @@ export const STAGE4_PLAYER_CHOICES: StoryText[] = [
   { ko: "맞지?", zh: "对吗？", en: "Right?" },
   { ko: "그냥 그런 거 말고", zh: "不是那种喜欢", en: "Not just that kind of like." },
   { ko: "무슨 말인지 알잖아", zh: "你知道哥再说什么", en: "You know what I mean." },
-  { ko: "?", zh: "？", en: "?" },
-  { ko: "보이스톡", zh: "语音电话", en: "Voice call" },
 ];
 
 export const STAGE5_YUNA_REPLY: StoryText[] = [
