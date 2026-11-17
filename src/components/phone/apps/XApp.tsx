@@ -43,15 +43,15 @@ export default function XApp({ lang, onHome }: AppProps) {
       date: "2026-10-31",
       time: "20:26",
       translations: {
-        zh: "你快点表白啊。在等什么呢。",
-        en: "Hurry up and confess. What are you waiting for?",
+        zh: "去表白啊！！！在等什么",
+        en: "Go confess already!!! What are you waiting for?"
       },
     }],
   };
   const story3Reply = {
     ko: "거절당할까 봐。。。",
-    zh: "怕他拒绝我。。。",
-    en: "I'm afraid he'll reject me...",
+    zh: "怕他拒绝。",
+    en: "I'm afraid he'll reject me.",
   };
   // Keep the scripted X post hidden until the player has completed stage 2 in KakaoTalk.
   const story3Unlocked = storyStage >= 5;
