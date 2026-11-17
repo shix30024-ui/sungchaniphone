@@ -132,12 +132,23 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   // Keep the scripted Anton transcript in a separate local/shared key, not in the
   // cloud KKT message rows, so it survives refresh without rewriting other chats.
   const [temporary, setTemporaryState] = useState<TemporaryReply[]>(() => {
+    const isCurrentStoryMessage = (reply: TemporaryReply) =>
+      !reply.message.id.startsWith("anton-scene-") &&
+      !reply.message.id.startsWith("anton-scene-system-");
     const memory = readTemporaryReplies("anton");
-    if (memory.length || typeof window === "undefined") return memory;
+    if (memory.length || typeof window === "undefined") {
+      const current = memory.filter(isCurrentStoryMessage);
+      if (current.length !== memory.length) writeTemporaryReplies("anton", current);
+      return current;
+    }
     let saved: TemporaryReply[] = [];
     try { saved = readStored<TemporaryReply[]>("fiction-story-anton-messages-v2", []); } catch {}
-    writeTemporaryReplies("anton", saved);
-    return saved;
+    const current = saved.filter(isCurrentStoryMessage);
+    writeTemporaryReplies("anton", current);
+    if (current.length !== saved.length) {
+      try { updateStored<TemporaryReply[]>("fiction-story-anton-messages-v2", [], () => current); } catch {}
+    }
+    return current;
   });
   const [seoyunTemporary, setSeoyunTemporaryState] = useState<TemporaryReply[]>(() => readTemporaryReplies("seoyun"));
   const setSeoyunTemporary = (updater: (old: TemporaryReply[]) => TemporaryReply[]) => {
@@ -437,6 +448,9 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   const displayMsgs = mergedMsgs.filter((message) => {
     // Keep prior experimental Seoyun scene rows archived; the new v2 sequence has its own IDs.
     if (message.contactId === "seoyun" && (message.id.startsWith("story3-seoyun-") || message.id.startsWith("seoyun-after-anton-"))) return false;
+    // Hide archived rows from the retired Anton scene engine; the active 7-stage
+    // storyline is stored independently and must not interleave with legacy scenes.
+    if (message.contactId === "anton" && (message.id.startsWith("anton-scene-") || message.id.startsWith("anton-scene-system-"))) return false;
     // These Anton story dates were explicitly removed; exclude stale local/shared
     // copies too, so a previous save cannot bring them back into the thread.
     if (message.contactId === "anton" && message.date === "2026-10-26") return false;
