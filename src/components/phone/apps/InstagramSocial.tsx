@@ -11,8 +11,7 @@ import { ImageField, KktAvatar, resolveImg, TopBar, EditBar } from "../ui";
 import { SELF_ID, dmAccount, type SocialAccount } from "../social";
 import { postImages } from "../media";
 import { useOwner } from "../owner";
-import { readNewStory, updateNewStory, subscribeNewStory, STAGE5_YUNA_REPLY } from "../new-story";
-import { LIVE_EVENT } from "../live";
+import { readNewStory, subscribeNewStory, STAGE5_YUNA_REPLY } from "../new-story";
 
 type Story = { id: string; user: string; image: string; text: string; date: string; authorId?: string };
 export const STORIES_KEY = "ig-stories-v1";
@@ -27,7 +26,6 @@ export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: 
   // Derive a small gallery from existing posts, never altering or copying over the posts themselves.
   const ownStories = stored ?? posts.filter((p) => !p.authorId || p.authorId === SELF_ID).slice(0, 4).map((p) => ({ id: `story-${p.id}`, authorId: SELF_ID, user: profile.username, image: postImages(p)[0] ?? "", text: p.caption, date: p.date }));
   const friendStories = friendStored ?? posts.filter((p, i, all) => p.authorId && p.authorId !== SELF_ID && all.findIndex((other) => other.authorId === p.authorId) === i).map((p) => ({ id: `friend-story-${p.id}`, authorId: p.authorId ?? SELF_ID, user: accounts.find((a) => a.id === p.authorId)?.username ?? "", image: postImages(p)[0] ?? "", text: p.caption, date: p.date }));
-  const storyProgress = readNewStory();
   // The seventh story beat is an Instagram activity notification, not an Anton Story.
   const stories = [...ownStories, ...friendStories];
   const saveStory = (draft: Story) => {
@@ -120,7 +118,12 @@ export function InstagramDM({ accounts, lang, onClose, onYunaProfile, initialCon
   const typing = queue.some((q) => !q.failed && q.channel === "ig" && q.contactId === open);
   const thread = msgs.filter((m) => m.contactId === open).sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`) || a.order - b.order);
   useEffect(() => { setShowYunaHistory(false); }, [open]);
-  const yunaHistoryIds = new Set<string>();
+  const yunaHistoryIds = new Set<string>([
+    "ig-yuna-festival-1-20261031", "ig-yuna-festival-2-20261031",
+    "ig-yuna-sungchan-busy-20261031", "ig-yuna-kkt-ask-20261031",
+    "new-story-yuna-player-1", "new-story-yuna-player-2", "new-story-yuna-player-3", "new-story-yuna-player-4",
+    "new-story-yuna-reply-1", "new-story-yuna-reply-2", "new-story-yuna-reply-3", "new-story-yuna-reply-4",
+  ]);
   const newStoryChoices = [
     { zh: "那个", ko: "저기", en: "Um..." },
     { zh: "可以把帖子删除吗？", ko: "게시물 삭제해 줄 수 있어요?", en: "Could you delete the post?" },
