@@ -641,7 +641,6 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       setTemporary((old) => [...old, playerMsg]);
       const nextStep = step + 1;
       updateNewStory({ stage4Step: nextStep });
-      if (step === 14) return; // The stage 4 conversation ends with Anton's two replies, not a call.
       const incomingLines = nextStep === 1 ? [STAGE4_ANTON[1]!] 
         : nextStep === 4 ? [{ ko: "응", zh: "응", en: "Yeah." }]
         : nextStep === 8 ? STAGE4_ANTON.slice(7, 12)
