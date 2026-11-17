@@ -14,7 +14,7 @@ import { BackBtn, EditBar, Field, ImageField, TopBar, resolveImg } from "../ui";
 import { useOwner } from "../owner";
 import { withLocalInteraction } from "../shared-state";
 import { instagramCaption, editInstagramCaption } from "../instagram-language";
-import { readNewStory } from "../new-story";
+import { readNewStory, updateNewStory } from "../new-story";
 
 export default function Instagram({ lang, onHome, initialDmContactId, onAntonPostViewed }: AppProps & { initialDmContactId?: string | null; onAntonPostViewed?: () => void }) {
   const owner = useOwner();
@@ -61,7 +61,7 @@ export default function Instagram({ lang, onHome, initialDmContactId, onAntonPos
   // This post was explicitly removed. Filter legacy local/shared copies as well
   // as the bundled seed so the deleted Seongsu café entry cannot reappear.
   const visiblePosts = posts.filter((p) => !(p.id === "p7" || (p.date === "2025-09-06" && /성수|咖啡店|cafe/i.test(p.caption))));
-  const storyEndingPost = readNewStory().stage >= 11 ? ({ id: "new-story-anton-ending-post", authorId: "anton", image: "", caption: "我和他。", captionTranslations: { ko: "나와 그 사람.", zh: "我和他。", en: "Me and him." }, date: "2026-10-31", time: "21:40", likes: 0, comments: [] } as SocialPost) : null;
+  const storyEndingPost = readNewStory().stage >= 11 ? ({ id: "new-story-anton-ending-post", authorId: "anton", image: "", caption: "我男朋友最小气^", captionTranslations: { ko: "내 남자친구 제일 소심해^", zh: "我男朋友最小气^", en: "My boyfriend is so petty^" }, date: "2026-10-31", time: "21:40", likes: 0, comments: [] } as SocialPost) : null;
   const storyFriendPosts = friendPosts.filter((p) => !(readNewStory().yunaPostRemoved && p.id === "friend-yuna-back-20261031"));
   const sorted = [...socialFeed(visiblePosts, storyFriendPosts), ...(storyEndingPost ? [storyEndingPost] : [])];
   const account = (id: string): Profile => id === SELF_ID ? prof : accounts.find((a) => a.id === id) ?? prof;
@@ -127,10 +127,15 @@ export default function Instagram({ lang, onHome, initialDmContactId, onAntonPos
       <TopBar title={tr(lang, { en: "Notifications", ko: "알림", zh: "通知" })} left={<BackBtn onClick={() => setActivity(false)} />} />
       <div className="flex-1 overflow-y-auto p-3">
         <p className="text-sm font-semibold px-1 py-2">{tr(lang, { en: "New", ko: "새 소식", zh: "最新" })}</p>
+        {readNewStory().stage === 7 && <Button variant="ghost" className="w-full h-auto justify-start gap-3 py-3 px-2" onClick={() => { updateNewStory({ stage: 8 }); setActivity(false); }}>
+          <span className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center font-semibold">A</span>
+          <span className="flex-1 text-left text-sm"><b>antinitony</b> {tr(lang, { en: "liked your post.", ko: "님이 회원님의 게시물을 좋아합니다.", zh: "赞了你的帖子。" })}<span className="block text-xs text-muted-foreground mt-1">2026.10.31</span></span>
+          <Heart size={18} className="text-rose-500" />
+        </Button>}
         {follower && <Button variant="ghost" className="w-full h-auto justify-start gap-3 py-3 px-2" onClick={() => { setActivity(false); showProfile(follower.id); }}>
           <img src={resolveImg(follower.avatar)} alt="" className="w-11 h-11 rounded-full object-cover" />
           <span className="flex-1 text-left text-sm"><b>{follower.username}</b> {tr(lang, { en: "started following you.", ko: "님이 회원님을 팔로우하기 시작했습니다.", zh: "开始关注了你。" })}<span className="block text-xs text-muted-foreground mt-1">{tr(lang, { en: "Yesterday", ko: "어제", zh: "昨天" })}</span></span>
-          <span role="button" className="text-xs text-primary font-semibold" onClick={(e) => { e.stopPropagation(); followYuna(); setActivity(false); setShowYunaDmPrompt(true); }}>{followedYuna ? tr(lang, { en: "Following", ko: "팔로잉", zh: "已关注" }) : tr(lang, { en: "Follow", ko: "팔로우", zh: "关注" })}</span>
+          <span role="button" className="text-xs text-primary font-semibold" onClick={(e) => { e.stopPropagation(); followYuna(); setActivity(false); setShowYunaDmPrompt(true); }}>{followedYuna ? tr(lang, { en: "Following", ko: "팔로잉", zh: "关注" }) : tr(lang, { en: "Follow", ko: "팔로우", zh: "关注" })}</span>
         </Button>}
       </div>
     </div>;
