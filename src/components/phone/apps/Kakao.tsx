@@ -292,13 +292,13 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   }, [openId, newStory.stage]);
   // The KKT-first route begins with a gentle two-message exchange, not the argument.
   useEffect(() => {
-    if (openId !== "anton" || scene.phase !== "idle" || scene.openingRoute !== "kkt") return;
+    if (newStory.stage > 0 || openId !== "anton" || scene.phase !== "idle" || scene.openingRoute !== "kkt") return;
     startAntonWarmup();
     setScene(readAntonScene());
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, scene.phase]);
   useEffect(() => {
-    if (openId !== "anton" || scene.phase !== "warm-opening") return;
+    if (newStory.stage > 0 || openId !== "anton" || scene.phase !== "warm-opening") return;
     const line = ANTON_WARM_OPENING[scene.antonReplyCount];
     if (!line) { finishAntonWarmup(); setScene(readAntonScene()); setAntonTyping(false); return; }
     setAntonTyping(true);
@@ -322,7 +322,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
 
   // After the KKT push, finish Anton's jealous burst one message at a time when the chat is opened.
   useEffect(() => {
-    if (openId !== "anton" || scene.phase !== "anger-opening") return;
+    if (newStory.stage > 0 || openId !== "anton" || scene.phase !== "anger-opening") return;
     const line = ANTON_OPENING[scene.antonReplyCount];
     if (!line) {
       patchScene({ phase: "first-replies", antonReplyCount: 0 });
@@ -420,7 +420,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
 
   // Anton's second set of fixed messages arrives one at a time with a typing indicator.
   useEffect(() => {
-    if (openId !== "anton" || scene.phase !== "anton-typing") { setAntonTyping(false); return; }
+    if (newStory.stage > 0 || openId !== "anton" || scene.phase !== "anton-typing") { setAntonTyping(false); return; }
     const line = ANTON_AFTER_REASSURANCE[scene.antonReplyCount];
     if (!line) { patchScene({ phase: "final-replies" }); setAntonTyping(false); return; }
     setAntonTyping(true);
@@ -1045,7 +1045,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
           <Button variant="ghost" className="w-full" onClick={() => setBlockedActionOpen(false)}>{tr(lang, { en: "Later", ko: "나중에", zh: "稍后" })}</Button>
         </div>
       </div>}
-      {open.id === "anton" && scene.phase === "choose-ending" && <div className="flex gap-2 px-3 py-3 border-t bg-background"><Button className="flex-1" variant="outline" onClick={() => chooseEnding("blocked")}>{tr(lang, { en: "Blocked", ko: "차단됨", zh: "被拉黑" })}</Button><Button className="flex-1" onClick={() => chooseEnding("not-blocked")}>{tr(lang, { en: "Not blocked", ko: "차단되지 않음", zh: "没有被拉黑" })}</Button></div>}
+      {open.id === "anton" && newStory.stage === 0 && scene.phase === "choose-ending" && <div className="flex gap-2 px-3 py-3 border-t bg-background"><Button className="flex-1" variant="outline" onClick={() => chooseEnding("blocked")}>{tr(lang, { en: "Blocked", ko: "차단됨", zh: "被拉黑" })}</Button><Button className="flex-1" onClick={() => chooseEnding("not-blocked")}>{tr(lang, { en: "Not blocked", ko: "차단되지 않음", zh: "没有被拉黑" })}</Button></div>}
 
       {emoji && <div className="kkt-emoji-panel">{["😊", "ㅋㅋ", "❤️", "👍", "😭", "😂"].map((face) => <Button variant="ghost" key={face} onClick={() => { setCompose((text) => text + face); setEmoji(false); }}>{face}</Button>)}</div>}
 
@@ -1055,9 +1055,9 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       }}>
         <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Send photo", ko: "사진 보내기", zh: "发送图片" })} onClick={() => upload.current?.click()}><SquarePlus /></Button>
         <input ref={upload} type="file" accept="image/*" className="hidden" onChange={async (e) => { const input = e.currentTarget; const file = input.files?.[0]; try { if (file) { const image = await fileToDataUrl(file); send(compose, image); setCompose(""); } } catch { alert(tr(lang, { en: "Could not send photo", ko: "사진을 보낼 수 없습니다", zh: "图片未发送，请重试" })); } finally { input.value = ""; } }} />
-        <input ref={composeInput} aria-label={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} placeholder={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} disabled={open.id === "anton" && ["warm-opening", "anger-opening", "choose-ending", "anton-typing", "blocked"].includes(scene.phase)} className="kkt-compose" value={compose} onClick={fillSuggestedReply} onChange={(event) => setCompose(event.target.value)} />
+        <input ref={composeInput} aria-label={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} placeholder={tr(lang, { en: "Message", ko: "메시지 입력", zh: "输入消息" })} disabled={open.id === "anton" && newStory.stage === 0 && ["warm-opening", "anger-opening", "choose-ending", "anton-typing", "blocked"].includes(scene.phase)} className="kkt-compose" value={compose} onClick={fillSuggestedReply} onChange={(event) => setCompose(event.target.value)} />
         <Button type="button" variant="ghost" size="icon" aria-label={tr(lang, { en: "Emoji", ko: "이모티콘", zh: "表情" })} aria-expanded={emoji} onClick={() => setEmoji(!emoji)}><Smile size={21} /></Button>
-        <Button type="button" size="icon" aria-label={tr(lang, { en: "Send message", ko: "메시지 보내기", zh: "发送消息" })} className="kkt-send" onClick={submitMessage} disabled={!compose.trim() || (open.id === "anton" && ["warm-opening", "anger-opening", "choose-ending", "anton-typing", "blocked"].includes(scene.phase))}><Send size={17} /></Button>
+        <Button type="button" size="icon" aria-label={tr(lang, { en: "Send message", ko: "메시지 보내기", zh: "发送消息" })} className="kkt-send" onClick={submitMessage} disabled={!compose.trim() || (open.id === "anton" && newStory.stage === 0 && ["warm-opening", "anger-opening", "choose-ending", "anton-typing", "blocked"].includes(scene.phase))}><Send size={17} /></Button>
       </form>
     </div>
   );
