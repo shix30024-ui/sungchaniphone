@@ -114,7 +114,7 @@ export const SEOYUN_PLAYER_STAGE3: StoryText[] = [
 ];
 
 export const STAGE4_ANTON: StoryText[] = [
-  { ko: "스토리 올리면서 내 메시지는 안 읽어?", zh: "点赞我的帖子都不回信息？", en: "You can like my post but still not reply to me?" },
+  { ko: "내 게시물에 좋아요 누르고 답장은 안 해?", zh: "点赞我的帖子都不回信息？", en: "You can like my post but still not reply to me?" },
   { ko: "그냥 답하기 싫었어", zh: "就是不想", en: "I just didn't want to." },
   { ko: "응", zh: "嗯？", en: "Yeah?" },
   { ko: "형은 원래 먼저 다가가는 사람 아니잖아", zh: "哥不算主动的人", en: "You're not usually the one to make the first move." },
@@ -136,7 +136,7 @@ export const STAGE4_ANTON: StoryText[] = [
 ];
 
 export const STAGE4_PLAYER_CHOICES: StoryText[] = [
-  { ko: "스토리 올리면서 내 메시지는 안 읽어?", zh: "点赞我的帖子都不回信息？", en: "You can like my post but still not reply to me?" },
+  { ko: "내 게시물에 좋아요 누르고 답장은 안 해?", zh: "点赞我的帖子都不回信息？", en: "You can like my post but still not reply to me?" },
   { ko: "천사", zh: "天使", en: "Angel." },
   { ko: "우리 얘기 좀 하자", zh: "我们要把话说开啊", en: "We need to talk this through." },
   { ko: "응?", zh: "嗯？", en: "Hm?" },
