@@ -640,7 +640,21 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     if (open.id !== "anton") { sendChat("kkt", open.id, text, lang, Date.now(), image); return; }
     const visibleThread = withTemporaryReplies(fixedThread, readTemporaryReplies("anton"));
     const playerMsg = temporaryReply(text, lang, visibleThread.at(-1), image);
-    if (open.id === "anton" && newStory.stage === 4 && newStory.stage2Replies >= STAGE2_CHOICES.length) playerMsg.message.read = false;
+    const progressNow = readNewStory();
+    if (progressNow.stage === 1) {
+      const minute = progressNow.openingReplies < OPENING_CHOICES.length
+        ? 33 + progressNow.openingReplies
+        : 37 + progressNow.reassuranceReplies;
+      playerMsg.message.date = "2026-10-31";
+      playerMsg.message.time = `17:${String(minute).padStart(2, "0")}`;
+    } else if (progressNow.stage === 4) {
+      const minute = progressNow.stage2Replies < STAGE2_CHOICES.length
+        ? 26 + progressNow.stage2Replies
+        : 33 + progressNow.stage2Reassurance;
+      playerMsg.message.date = "2026-10-31";
+      playerMsg.message.time = `20:${String(minute).padStart(2, "0")}`;
+    }
+    if (open.id === "anton" && progressNow.stage === 4 && progressNow.stage2Replies >= STAGE2_CHOICES.length) playerMsg.message.read = false;
     setTemporary((old) => [...old, playerMsg]);
     if (open.id === "anton" && (newStory.stage === 1 || newStory.stage === 4) && !image) {
       const currentStory = readNewStory();
