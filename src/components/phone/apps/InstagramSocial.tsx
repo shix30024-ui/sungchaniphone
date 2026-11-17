@@ -28,8 +28,8 @@ export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: 
   const ownStories = stored ?? posts.filter((p) => !p.authorId || p.authorId === SELF_ID).slice(0, 4).map((p) => ({ id: `story-${p.id}`, authorId: SELF_ID, user: profile.username, image: postImages(p)[0] ?? "", text: p.caption, date: p.date }));
   const friendStories = friendStored ?? posts.filter((p, i, all) => p.authorId && p.authorId !== SELF_ID && all.findIndex((other) => other.authorId === p.authorId) === i).map((p) => ({ id: `friend-story-${p.id}`, authorId: p.authorId ?? SELF_ID, user: accounts.find((a) => a.id === p.authorId)?.username ?? "", image: postImages(p)[0] ?? "", text: p.caption, date: p.date }));
   const storyProgress = readNewStory();
-  const newAntonStory: Story[] = storyProgress.stage >= 7 || storyProgress.seoyunStep >= 7 ? [{ id: "new-story-anton-20261031", user: "antinitony", image: "", text: "", date: "2026-10-31", authorId: "anton" }] : [];
-  const stories = [...ownStories, ...friendStories, ...newAntonStory];
+  // The seventh story beat is an Instagram activity notification, not an Anton Story.
+  const stories = [...ownStories, ...friendStories];
   const saveStory = (draft: Story) => {
     if (friendStories.some((s) => s.id === draft.id)) setFriendStored(friendStories.map((s) => s.id === draft.id ? draft : s));
     else setStored(ownStories.some((s) => s.id === draft.id) ? ownStories.map((s) => s.id === draft.id ? draft : s) : [...ownStories, draft]);
@@ -41,16 +41,7 @@ export function Stories({ posts, profile, accounts, lang, onProfile }: { posts: 
   const active = index === null ? undefined : stories[index];
   useEffect(() => {
     if (active && !seen.includes(active.id)) setSeen((current) => [...current, active.id]);
-    if (active?.id === "new-story-anton-20261031" && !readNewStory().antonStoryViewed) {
-      updateNewStory({ stage: 8, antonStoryViewed: true });
-      const now = new Date();
-      window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: {
-        id: "new-story-anton-story-notice", contactId: "anton", sender: "them", type: "text",
-        ko: "형, 나랑 얘기 좀 해", zh: "哥，我想和你聊聊", en: "Hyung, can we talk?",
-        date: "2026-10-31", time: "21:25", order: 900001, live: true, read: false, notified: true,
-        createdAt: now.toISOString(),
-      } }));
-    }
+
   }, [active?.id]);
   if (draft) return <div className="ig-overlay app-page bg-background">
     <TopBar title={label(lang, "edit")} /><div className="flex-1 overflow-y-auto p-4 space-y-3">
