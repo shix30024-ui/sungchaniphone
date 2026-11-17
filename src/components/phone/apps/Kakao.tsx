@@ -113,12 +113,13 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contactsReady, msgsReady]);
   const [openId, setOpenId] = useState<string | null>(initialChat ?? null);
-  // Temporary replies live in page memory (fixed-conversation module), so they
-  // survive leaving/re-entering the chat but vanish on refresh or close.
+  // Keep the scripted Anton transcript in a separate local/shared key, not in the
+  // cloud KKT message rows, so it survives refresh without rewriting other chats.
   const [temporary, setTemporaryState] = useState<TemporaryReply[]>(() => {
     const memory = readTemporaryReplies("anton");
     if (memory.length || typeof window === "undefined") return memory;
-    const saved = readStored<TemporaryReply[]>("fiction-story-anton-messages-v2", []);
+    let saved: TemporaryReply[] = [];
+    try { saved = readStored<TemporaryReply[]>("fiction-story-anton-messages-v2", []); } catch {}
     writeTemporaryReplies("anton", saved);
     return saved;
   });
