@@ -424,7 +424,7 @@ export default function Phone() {
 
   const tap = (a: App) => {
     setChatTarget(null);
-    setInstagramTarget(a.id === "ig" && readNewStory().stage === 2 ? "yuna" : null);
+    setInstagramTarget(a.id === "ig" && (readNewStory().stage === 2 || readNewStory().stage === 9) ? "yuna" : null);
     if (editMode && a.id !== "settings") setEditing(apps.find((original) => original.id === a.id) ?? a);
     else if (!editMode) {
       if (a.id === "kkt" && (readNewStory().stage === 0 || readNewStory().stage === 3)) setChatTarget("anton");
