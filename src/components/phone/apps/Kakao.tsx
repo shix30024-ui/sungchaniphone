@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { setActiveChat } from "../live";
 import { type AppProps, tr } from "../i18n";
 import { CONTACTS, MESSAGES, type Contact, type Msg, type MsgType } from "../story";
-import { uid, usePersist } from "../store";
+import { uid, usePersist, readStored, updateStored } from "../store";
 import { useCloudKkt } from "../kkt-cloud-store";
 import { RECENTS_KEY, type RecentCall } from "../contacts";
 import { PhotoImg } from "../photo-db";
@@ -115,7 +115,13 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
   const [openId, setOpenId] = useState<string | null>(initialChat ?? null);
   // Temporary replies live in page memory (fixed-conversation module), so they
   // survive leaving/re-entering the chat but vanish on refresh or close.
-  const [temporary, setTemporaryState] = useState<TemporaryReply[]>(() => readTemporaryReplies("anton"));
+  const [temporary, setTemporaryState] = useState<TemporaryReply[]>(() => {
+    const memory = readTemporaryReplies("anton");
+    if (memory.length || typeof window === "undefined") return memory;
+    const saved = readStored<TemporaryReply[]>("fiction-story-anton-messages-v2", []);
+    writeTemporaryReplies("anton", saved);
+    return saved;
+  });
   const [seoyunTemporary, setSeoyunTemporaryState] = useState<TemporaryReply[]>(() => readTemporaryReplies("seoyun"));
   const setSeoyunTemporary = (updater: (old: TemporaryReply[]) => TemporaryReply[]) => {
     const next = updater(readTemporaryReplies("seoyun"));
@@ -127,6 +133,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     setTemporaryState((old) => {
       const next = updater(old);
       writeTemporaryReplies("anton", next);
+      try { updateStored<TemporaryReply[]>("fiction-story-anton-messages-v2", [], () => next); } catch { /* Keep the in-memory conversation if local storage is unavailable. */ }
       window.dispatchEvent(new CustomEvent("phone-store", { detail: "kkt-temporary" }));
       return next;
     });
