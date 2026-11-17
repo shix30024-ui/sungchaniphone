@@ -40,10 +40,7 @@ function loadStoryState(): NewStoryState {
 }
 let state: NewStoryState = loadStoryState();
 
-export const readNewStory = () => {
-  recoverYunaUnlock();
-  return { ...state };
-};
+export const readNewStory = () => ({ ...state });
 export function updateNewStory(patch: Partial<NewStoryState>) {
   state = { ...state, ...patch };
   if (typeof window !== "undefined") {
