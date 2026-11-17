@@ -101,7 +101,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     );
     setMsgs((current) => {
       const preserved = current.filter((message) =>
-        message.contactId !== "anton" || message.live || message.date > "2026-10-29"
+        message.contactId !== "anton" || (message.live && message.date === "2026-10-31")
       );
       return [...preserved, ...antonHistorySeeds];
     });
