@@ -123,7 +123,7 @@ export default function XApp({ lang, onHome }: AppProps) {
             </Button>
           )}
           <Button type="button" className="w-full" disabled={!story3ReplyDraft.trim()} onClick={() => {
-            updateNewStory({ xReplySent: true, xPostPublished: true });
+            updateNewStory({ stage: 6, xReplySent: true, xPostPublished: true });
             const now = new Date();
             window.dispatchEvent(new CustomEvent(LIVE_EVENT, { detail: {
               id: "new-story-seoyun-notice", contactId: "seoyun", sender: "them", type: "text",
