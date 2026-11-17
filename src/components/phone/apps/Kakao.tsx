@@ -541,7 +541,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
         { ko: "학妹 게시물은 삭제해 달라고 했어", zh: "学妹的那条帖子已经让她删除了", en: "I asked her to take the post down." },
         { ko: "내 남자친구가 화났다고도 했고", zh: "也告诉他我的小男朋友生气了", en: "And I told her my boyfriend was upset." },
         { ko: "천사", zh: "天使", en: "Angel." },
-        { ko: "그래서 형이랑 사귈래?", zh: "所以愿意和哥在一起吗？", en: "So, will you be with me?" },
+        { ko: "그래서 형이랑 사귈래?", zh: "所以愿意和哥谈恋爱吗？", en: "So, will you be my boyfriend?" },
         { ko: "뭐야", zh: "什么啊", en: "What?" },
         { ko: "형이 너 얼마나 아끼는지 알지?", zh: "知道哥很珍惜你吧？", en: "You know how much I treasure you, right?" },
         { ko: "그만 애태워", zh: "别折磨我了", en: "Don't keep me waiting." },
@@ -563,7 +563,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       }
       const next = step + 1;
       if (next === 2 || next === 6 || next === 10) {
-        const replyIndexes = next === 2 ? [0, 1] : next === 6 ? [4] : [8, 9, 10];
+        const replyIndexes = next === 2 ? [0, 1, 2, 3] : next === 6 ? [4] : [8, 9, 10];
         let index = 0;
         let anchor = outgoing.message;
         const deliver = () => {
