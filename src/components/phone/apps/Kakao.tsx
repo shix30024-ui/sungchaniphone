@@ -155,6 +155,8 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
         const incoming = temporaryReply(line.zh, lang, anchor);
         incoming.message.sender = "them";
         incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
+        incoming.message.date = "2026-10-31";
+        incoming.message.time = `17:${String(30 + index).padStart(2, "0")}`;
         setTemporary((old) => [...old, incoming]);
         anchor = incoming.message;
         index += 1;
@@ -190,6 +192,8 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
         const incoming = temporaryReply(line.zh, lang, anchor);
         incoming.message.sender = "them";
         incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
+        incoming.message.date = "2026-10-31";
+        incoming.message.time = `20:${String(23 + index).padStart(2, "0")}`;
         setTemporary((old) => [...old, incoming]);
         anchor = incoming.message;
         index += 1;
@@ -640,7 +644,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
     setTemporary((old) => [...old, playerMsg]);
     if (open.id === "anton" && (newStory.stage === 1 || newStory.stage === 4) && !image) {
       const currentStory = readNewStory();
-      const appendAnton = (line: { zh: string; ko: string; en: string }) => {
+      const appendAnton = (line: { zh: string; ko: string; en: string }, time: string) => {
         setAntonTyping(true);
         window.setTimeout(() => {
           if (openId !== "anton") { setAntonTyping(false); return; }
@@ -648,6 +652,8 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
           const incoming = temporaryReply(line.zh, lang, anchor);
           incoming.message.sender = "them";
           incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
+          incoming.message.date = "2026-10-31";
+          incoming.message.time = time;
           setTemporary((old) => [...old, incoming]);
           setAntonTyping(false);
         }, 950);
@@ -655,11 +661,11 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       if (currentStory.stage === 1 && currentStory.openingReplies < OPENING_CHOICES.length) {
         const count = currentStory.openingReplies + 1;
         updateNewStory({ openingReplies: count });
-        if (count === OPENING_CHOICES.length) appendAnton(OPENING_ANTON_2);
+        if (count === OPENING_CHOICES.length) appendAnton(OPENING_ANTON_2, "17:36");
       } else if (currentStory.stage === 1 && currentStory.reassuranceReplies < OPENING_CHOICES_2.length) {
         const count = currentStory.reassuranceReplies + 1;
         updateNewStory({ reassuranceReplies: count });
-        if (count === OPENING_CHOICES_2.length) { appendAnton(OPENING_ANTON_3); updateNewStory({ stage: 2 }); }
+        if (count === OPENING_CHOICES_2.length) { appendAnton(OPENING_ANTON_3, "17:40"); updateNewStory({ stage: 2 }); }
       } else if (currentStory.stage === 4 && currentStory.stage2Replies < STAGE2_CHOICES.length) {
         const count = currentStory.stage2Replies + 1;
         updateNewStory({ stage2Replies: count });
