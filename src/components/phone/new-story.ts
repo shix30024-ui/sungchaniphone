@@ -1,5 +1,4 @@
 import type { Lang } from "./i18n";
-import { sharedRead } from "./shared-state";
 
 export type StoryText = Record<Lang, string>;
 export type NewStoryState = {
@@ -29,41 +28,17 @@ const INITIAL: NewStoryState = {
 
 // Story progress is stored separately from the owner's phone content.
 // This keeps the story stage across refreshes without rewriting chats, posts, or contacts.
-const STORAGE_KEY = "fiction-story-progress-v1";
+const STORAGE_KEY = "fiction-story-progress-v2";
 const EVENT = "fiction-story-update";
 function loadStoryState(): NewStoryState {
   if (typeof window === "undefined") return { ...INITIAL };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return { ...INITIAL, ...JSON.parse(raw) };
-    // Recover the unlock if the final Yuna DM was already saved before progress persistence existed.
-    const dmRaw = localStorage.getItem("ig-dm-messages-v1");
-    if (dmRaw) {
-      const messages = JSON.parse(dmRaw) as Array<{ id?: string }>;
-      if (messages.some((message) => message.id === "new-story-yuna-reply-4")) {
-        const recovered = { ...INITIAL, stage: 10, yunaDmSent: true, yunaPostRemoved: true };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(recovered));
-        return recovered;
-      }
-    }
   } catch { /* Keep the safe initial state if stored progress is unreadable. */ }
   return { ...INITIAL };
 }
 let state: NewStoryState = loadStoryState();
-
-function recoverYunaUnlock(): boolean {
-  if (state.stage >= 7 || state.seoyunStep >= 7) return false;
-  try {
-    const sharedDm = sharedRead("ig-dm-messages-v1");
-    const rawDm = sharedDm.found ? sharedDm.value : localStorage.getItem("ig-dm-messages-v1");
-    const messages = typeof rawDm === "string" ? JSON.parse(rawDm) : rawDm;
-    if (!Array.isArray(messages) || !messages.some((message) => message?.id === "new-story-yuna-reply-4")) return false;
-    state = { ...state, stage: Math.max(state.stage, 10), yunaDmSent: true, yunaPostRemoved: true };
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
-    if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(EVENT, { detail: { ...state } }));
-    return true;
-  } catch { return false; }
-}
 
 export const readNewStory = () => {
   recoverYunaUnlock();
