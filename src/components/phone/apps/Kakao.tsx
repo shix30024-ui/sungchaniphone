@@ -559,6 +559,9 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       const outgoing = temporaryReply(line.zh, lang, withTemporaryReplies(fixedThread, readTemporaryReplies("anton")).at(-1));
       outgoing.message.sender = "me";
       outgoing.message.ko = line.ko; outgoing.message.zh = line.zh; outgoing.message.en = line.en;
+      const stage6Minute: Record<number, number> = { 0: 27, 1: 28, 4: 33, 5: 34, 7: 36, 8: 37, 9: 38, 13: 42, 14: 43 };
+      outgoing.message.date = "2026-10-31";
+      outgoing.message.time = `21:${String(stage6Minute[step] ?? 27).padStart(2, "0")}`;
       setTemporary((old) => [...old, outgoing]);
       if (step === 14) {
         updateNewStory({ stage: 11, stage6Step: 15 });
@@ -582,6 +585,9 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
             const incoming = temporaryReply(reply.zh, lang, anchor);
             incoming.message.sender = "them";
             incoming.message.ko = reply.ko; incoming.message.zh = reply.zh; incoming.message.en = reply.en;
+            incoming.message.date = "2026-10-31";
+            const incomingMinute = next === 2 ? 29 + index : next === 6 ? 35 : 39 + index;
+            incoming.message.time = `21:${String(incomingMinute).padStart(2, "0")}`;
             setTemporary((old) => [...old, incoming]);
             anchor = incoming.message;
             index += 1;
@@ -605,6 +611,9 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
       const playerMsg = temporaryReply(line.zh, lang, currentThread.at(-1));
       playerMsg.message.sender = "me";
       playerMsg.message.ko = line.ko; playerMsg.message.zh = line.zh; playerMsg.message.en = line.en;
+      const stage4Minute: Record<number, number> = { 0: 1, 1: 3, 2: 4, 3: 5, 4: 7, 5: 8, 6: 9, 7: 10, 8: 16, 9: 17, 10: 18, 11: 19, 12: 20 };
+      playerMsg.message.date = "2026-10-31";
+      playerMsg.message.time = `21:${String(stage4Minute[step] ?? 1).padStart(2, "0")}`;
       setTemporary((old) => [...old, playerMsg]);
       const nextStep = step + 1;
       updateNewStory({ stage4Step: nextStep });
@@ -623,6 +632,9 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
             const incoming = temporaryReply(incomingLine.zh, lang, anchor);
             incoming.message.sender = "them";
             incoming.message.ko = incomingLine.ko; incoming.message.zh = incomingLine.zh; incoming.message.en = incomingLine.en;
+            incoming.message.date = "2026-10-31";
+            const incomingMinute = nextStep === 1 ? 2 : nextStep === 4 ? 6 : nextStep === 8 ? 11 + index : 21 + index;
+            incoming.message.time = `21:${String(incomingMinute).padStart(2, "0")}`;
             setTemporary((old) => [...old, incoming]);
             anchor = incoming.message;
             index += 1;
@@ -696,6 +708,8 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
               if (!line) { setAntonTyping(false); return; }
               const incoming = temporaryReply(line.zh, lang, anchor);
               incoming.message.sender = "them"; incoming.message.ko = line.ko; incoming.message.zh = line.zh; incoming.message.en = line.en;
+              incoming.message.date = "2026-10-31";
+              incoming.message.time = `20:${String(29 + index).padStart(2, "0")}`;
               setTemporary((old) => [...old, incoming]);
               anchor = incoming.message;
               if (index < followUps.length) deliverNext();
