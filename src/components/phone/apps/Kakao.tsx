@@ -246,7 +246,7 @@ export default function Kakao({ lang, onHome, initialChat, onOpenInstagram }: Ap
         const minuteOffset = step === 0 ? index : step === 3 ? index + 5 : index + 10;
         incoming.message.date = "2026-10-31";
         incoming.message.time = `20:${String(30 + minuteOffset).padStart(2, "0")}`;
-        setMsgs((old) => old.some((message) => message.id === incoming.message.id) ? old : [...old, incoming.message]);
+        setSeoyunTemporary((old) => old.some((reply) => reply.message.id === incoming.message.id) ? old : [...old, incoming]);
         anchor = incoming.message;
         index += 1;
         if (index < lines.length) deliverNext();
